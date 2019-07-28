@@ -1,0 +1,6 @@
+{
+    "bracketSpacing": false,
+    "jsxBracketSameLine": true,
+    "parser": "typescript",
+    "tabWidth": 2,
+}
