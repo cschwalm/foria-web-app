@@ -1,5 +1,5 @@
 import React from "react";
-import Auth0Lock from "auth0-lock";
+// import Auth0Lock from "auth0-lock";
 import foriaLogo from "./foria_logo.png";
 import heroImage from "./example_hero.jpg";
 import calendarIcon from "./calendar_icon.png";
