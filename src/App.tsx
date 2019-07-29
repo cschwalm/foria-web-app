@@ -1,5 +1,7 @@
 import React from "react";
+import { BrowserRouter as Router, Route, Link } from "react-router-dom";
 // import Auth0Lock from "auth0-lock";
+
 import foriaLogo from "./foria_logo.png";
 import heroImage from "./example_hero.jpg";
 import calendarIcon from "./calendar_icon.png";
@@ -70,7 +72,7 @@ function getLayout() {
 const byLayout = (layout: Layout, a: any, b: any) =>
   layout === Layout.Mobile ? a : b;
 
-class App extends React.Component<{}, AppStateT> {
+class Home extends React.Component<{}, AppStateT> {
   constructor(props: object) {
     super(props);
     this.state = {
@@ -412,9 +414,13 @@ class App extends React.Component<{}, AppStateT> {
         fontFamily: "Roboto",
         fontSize: "1em",
         lineHeight: "1.2em",
-        cursor: "pointer"
+        cursor: "pointer",
+        textDecoration: "none"
       },
       loginAnchor: {
+        background: 'none',
+        border:'none',
+        padding: 0,
         marginLeft: byLayout(layout, "1.5em", "3em"),
         fontFamily: "Roboto",
         fontSize: "1em",
@@ -449,8 +455,8 @@ class App extends React.Component<{}, AppStateT> {
               alignItems: "center",
               justifyContent: "flex-end"
             }}>
-            <a style={styles.helpAnchor}>Help</a>
-            <a style={styles.loginAnchor}>{signInMessage}</a>
+            <Link to="/help/" style={styles.helpAnchor}>Help</Link>
+            <button style={styles.loginAnchor}>{signInMessage}</button>
           </div>
         </div>
       </div>
@@ -618,5 +624,15 @@ const VIPInfoToggle: React.FC<VIPInfoToggleProps> = ({
     </div>
   );
 };
+
+// TODO
+const Help = () => <div>This page could use some help!</div>
+
+const App = () => (
+  <Router>
+    <Route exact path="/" component={Home} />
+    <Route path="/help/" component={Help} />
+  </Router>
+)
 
 export default App;
