@@ -1,10 +1,10 @@
 import React from "react";
 import {connect} from "react-redux";
 import {Link} from "react-router-dom";
-import { AppState } from "./redux/store"
-// import Auth0Lock from "auth0-lock";
+import {AppState} from "./redux/store";
 
-import { byLayout } from "./layout"
+import {initiateLogin as initiateLoginAction, initiateLogout as initiateLogoutAction} from "./redux/reducers/home";
+import {byLayout} from "./layout";
 import foriaLogo from "./foria_logo.png";
 import heroImage from "./example_hero.jpg";
 import calendarIcon from "./calendar_icon.png";
@@ -15,36 +15,6 @@ import IncrementIcon from "./incrementIcon";
 const ticketOverlayWidth = 376;
 const bodyWidth = 960;
 const pink = "#FF0266";
-
-//const lock = new Auth0Lock(
-//  "6btWupF5RfQPPMyRL08DWOF7wZ8ZDjzr",
-//  "auth.foriatickets.com",
-//  {configurationBaseUrl: "https://cdn.auth0.com"}
-//);
-
-//// Listening for the authenticated event
-//lock.on("authenticated", function(authResult) {
-//  // Use the token in authResult to getUserInfo() and save it if necessary
-//  this.getUserInfo(authResult.accessToken, function(error, profile) {
-//    if (error) {
-//      // Handle error
-//      return;
-//    }
-
-//    //we recommend not storing Access Tokens unless absolutely necessary
-//    wm.set(privateStore, {
-//      accessToken: authResult.accessToken
-//    });
-
-//    wm.set(privateStore, {
-//      profile: profile
-//    });
-//  });
-//});
-
-//window.setTimeout(function() {
-//  lock.show();
-//}, 1000);
 
 enum View {
   Tickets,
@@ -60,6 +30,9 @@ interface AppStateT {
 interface AppPropsT {
   // TODO can return a more specific type (a | b)
   byLayout: (a: any, b: any) => any;
+  initiateLogin: () => void;
+  initiateLogout: () => void;
+  profile?: auth0.Auth0UserProfile;
 }
 
 class Home extends React.Component<AppPropsT, AppStateT> {
@@ -376,7 +349,7 @@ class Home extends React.Component<AppPropsT, AppStateT> {
   };
 
   renderHeader = () => {
-    let {byLayout} = this.props;
+    let {byLayout, initiateLogin, initiateLogout, profile = null} = this.props;
     let styles = {
       header: {
         backgroundColor: "#fff",
@@ -407,7 +380,9 @@ class Home extends React.Component<AppPropsT, AppStateT> {
       }
     };
 
-    let signInMessage = byLayout("Sign In", "Sign Up/Sign In");
+    let signInMessage = profile
+      ? "Log Out"
+      : byLayout("Sign In", "Sign Up/Sign In");
     return (
       <div style={styles.header}>
         <div
@@ -435,7 +410,13 @@ class Home extends React.Component<AppPropsT, AppStateT> {
             <Link to="/help/" style={styles.helpAnchor}>
               Help
             </Link>
-            <button style={styles.loginAnchor}>{signInMessage}</button>
+            <button
+              onClick={
+                () => (profile ? initiateLogout() : initiateLogin())
+              }
+              style={styles.loginAnchor}>
+              {signInMessage}
+            </button>
           </div>
         </div>
       </div>
@@ -603,6 +584,13 @@ const VIPInfoToggle: React.FC<VIPInfoToggleProps> = ({
   );
 };
 
-export default connect(({ root } : AppState ) => ({
-  byLayout: byLayout(root.layout)
-}))(Home);
+export default connect(
+  ({root}: AppState) => ({
+    byLayout: byLayout(root.layout),
+    profile: root.profile
+  }),
+  dispatch => ({
+    initiateLogin: initiateLoginAction(dispatch),
+    initiateLogout: initiateLogoutAction(dispatch)
+  })
+)(Home);
