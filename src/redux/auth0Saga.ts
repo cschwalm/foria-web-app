@@ -1,16 +1,17 @@
 import Auth0Lock from "auth0-lock";
 import {call, put, takeEvery} from "redux-saga/effects";
+import { auth0 as Auth0Config} from '../Config.json'
 
 import {ActionType as RootActionType} from "./reducers/root";
 import {ActionType as HomeActionType} from "./reducers/home";
 
 function createLock() {
   return new Auth0Lock(
-    "6btWupF5RfQPPMyRL08DWOF7wZ8ZDjzr",
-    "auth.foriatickets.com",
+    Auth0Config.clientId,
+    Auth0Config.domain,
     {
-      configurationBaseUrl: "https://cdn.auth0.com",
-      auth: {responseType: "token", audience: "api.foriatickets.com"}
+      configurationBaseUrl: Auth0Config.configurationBaseUrl,
+      auth: {responseType: "token", audience: Auth0Config.authAudience }
     }
   );
 }
@@ -78,14 +79,7 @@ function* handleLogin() {
 
 function handleLogout() {
   let lock = createLock();
-  let logoutOptions = {};
-  if (window && window.location.href) {
-    let match = window.location.href.match(/^.*\//)
-    if (match) {
-      logoutOptions = { returnTo: match[0] };
-    }
-  }
-  lock.logout(logoutOptions);
+  lock.logout({ redirectTo: Auth0Config.redirectTo });
 }
 
 function* checkAlreadyLoggedIn() {

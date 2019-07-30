@@ -1,0 +1,9 @@
+{
+  "auth0": {
+    "clientId": "<Auth0 application clientID>",
+    "domain": "<Auth0 application domain>",
+    "configurationBaseUrl": "See https://auth0.com/docs/libraries/lock/v11/configuration#configurationbaseurl-string",
+    "authAudience": "See https://auth0.com/docs/libraries/lock/v11/configuration#audience-string",
+    "redirectTo": "<fully qualifed url to redirect to>"
+  }
+}
