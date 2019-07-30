@@ -8,13 +8,6 @@ p {
     margin: 0rem 0rem 1rem 0rem;
 }
 
-.App {
-    background-color: #f2f2f2;
-    overflow: scroll;
-    display: flex;
-    flex-direction: column;
-}
-
 .column {
     display: flex;
     flex-direction: column;
