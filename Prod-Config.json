@@ -4,6 +4,6 @@
     "domain": "auth.foriatickets.com",
     "configurationBaseUrl": "https://cdn.auth0.com",
     "authAudience": "api.foriatickets.com",
-    "redirectTo": "https://events.foriatickets.com"
+    "returnTo": "https://events.foriatickets.com"
   }
 }
