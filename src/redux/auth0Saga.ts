@@ -1,17 +1,20 @@
 import Auth0Lock from "auth0-lock";
 import {call, put, takeEvery} from "redux-saga/effects";
-import { auth0 as Auth0Config} from '../Config.json'
 
 import {ActionType as RootActionType} from "./reducers/root";
 import {ActionType as HomeActionType} from "./reducers/home";
 
 function createLock() {
   return new Auth0Lock(
-    Auth0Config.clientId,
-    Auth0Config.domain,
+    process.env.REACT_APP_AUTH0_CLIENTID as string,
+    process.env.REACT_APP_AUTH0_DOMAIN as string,
     {
-      configurationBaseUrl: Auth0Config.configurationBaseUrl,
-      auth: {responseType: "token", audience: Auth0Config.authAudience }
+      configurationBaseUrl: process.env
+        .REACT_APP_AUTH0_CONFIGURATION_BASE_URL as string,
+      auth: {
+        responseType: "token",
+        audience: process.env.REACT_APP_AUTH0_AUDIENCE as string
+      }
     }
   );
 }
@@ -79,7 +82,7 @@ function* handleLogin() {
 
 function handleLogout() {
   let lock = createLock();
-  lock.logout({ returnTo: Auth0Config.returnTo });
+  lock.logout({returnTo: process.env.REACT_APP_AUTH0_RETURN_TO as string});
 }
 
 function* checkAlreadyLoggedIn() {
