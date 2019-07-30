@@ -235,7 +235,10 @@ class Home extends React.Component<AppPropsT, AppStateT> {
     return (
       <div
         style={{
-          flex: "0 0 100px"
+          // Create a 100px white rectangle, so that content does not run
+          // under the fixed position pullup menu
+          height: "100px",
+          backgroundColor: "white"
         }}>
         <div
           style={{
@@ -246,7 +249,7 @@ class Home extends React.Component<AppPropsT, AppStateT> {
           <div
             style={{
               height: "4em",
-              backgroundImage: "linear-gradient(to top, white, rgba(255,0,0,0))"
+              backgroundImage: "linear-gradient(to top, white, rgba(255,255,255,0))"
             }}
           />
           <div
@@ -493,7 +496,6 @@ class Home extends React.Component<AppPropsT, AppStateT> {
             backgroundColor: "white",
             margin: byLayout("0", "0 0.6em"),
             padding: byLayout("2em 1.5em", "2em 0em 2em 1.5em"),
-            position: "relative",
             alignItems: "flex-start"
           }}>
           <div className="column">
@@ -553,7 +555,9 @@ class Home extends React.Component<AppPropsT, AppStateT> {
       <div
         className="App"
         style={{
-          fontSize: byLayout("14px", "18px")
+          fontSize: byLayout("14px", "18px"),
+          overflowY: 'scroll',
+          backgroundColor: '#f2f2f2'
         }}>
         {this.renderHeader()}
         {this.renderHero()}
