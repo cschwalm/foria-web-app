@@ -3,7 +3,11 @@ import {connect} from "react-redux";
 import {Link} from "react-router-dom";
 import {AppState} from "./redux/store";
 
-import {initiateLogin as initiateLoginAction, initiateLogout as initiateLogoutAction} from "./redux/reducers/home";
+import {
+  initiateLogin as initiateLoginAction,
+  initiateLogout as initiateLogoutAction,
+  togglePullUpMenu as togglePullUpMenuAction
+} from "./redux/reducers/home";
 import {byLayout} from "./layout";
 import foriaLogo from "./foria_logo.png";
 import heroImage from "./example_hero.jpg";
@@ -11,6 +15,8 @@ import calendarIcon from "./calendar_icon.png";
 import PinpointIcon from "./pinpointIcon";
 import DecrementIcon from "./decrementIcon";
 import IncrementIcon from "./incrementIcon";
+import DownwardChevron from "./downwardChevron";
+import UpwardChevron from "./upwardChevron";
 
 const ticketOverlayWidth = 376;
 const bodyWidth = 960;
@@ -30,9 +36,11 @@ interface AppStateT {
 interface AppPropsT {
   // TODO can return a more specific type (a | b)
   byLayout: (a: any, b: any) => any;
+  profile?: auth0.Auth0UserProfile;
+  pullUpMenuCollapsed: boolean;
   initiateLogin: () => void;
   initiateLogout: () => void;
-  profile?: auth0.Auth0UserProfile;
+  togglePullUpMenu: () => void;
 }
 
 class Home extends React.Component<AppPropsT, AppStateT> {
@@ -44,8 +52,176 @@ class Home extends React.Component<AppPropsT, AppStateT> {
     };
   }
 
-  renderTicketsStep = () => {
+  renderTicketsGrid = () => {
     let {vipShowMore} = this.state;
+    let styles = {
+      ticketsTitle: {
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        borderRadius: "5px 5px 0px 0px",
+        padding: "1rem",
+        backgroundColor: "#f2f2f2",
+        fontFamily: "Roboto",
+        fontSize: "1em",
+        lineHeight: "1.2em",
+        marginBottom: "1em"
+      },
+      ticketsRestriction: {
+        fontFamily: "Rubik",
+        fontWeight: 500,
+        fontSize: "0.75em",
+        lineHeight: "1.2em",
+        color: "#7E7E7E"
+      },
+      ticketNumeral: {
+        fontFamily: "Rubik",
+        fontWeight: "bold" as "bold",
+        fontSize: "1.3em",
+        lineHeight: "1.2em"
+      },
+      ticketPriceFee: {
+        fontFamily: "Rubik",
+        fontSize: "0.6em",
+        lineHeight: "1.2em"
+      },
+      ticketType: {
+        fontFamily: "Rubik",
+        fontWeight: 500,
+        fontSize: "0.8em",
+        lineHeight: "1.2em",
+        color: "#7E7E7E"
+      },
+      ticketSoldOut: {
+        fontFamily: "Rubik",
+        fontWeight: 500,
+        fontSize: "1em",
+        lineHeight: "1.2em",
+        flex: 1,
+        opacity: 0.3
+      },
+      ticketShowMore: {
+        gridArea: "7 / 2 / 8 / 4",
+        fontFamily: "Rubik",
+        fontWeight: 500,
+        fontSize: "14px",
+        lineHeight: "1.2em",
+        color: "#7E7E7E"
+      },
+      checkoutButton: {
+        margin: "0em 1em 1em 1em",
+        padding: "1em",
+        background: "#FF0266",
+        borderRadius: "5px",
+        color: "white",
+        fontFamily: "Rubik",
+        fontWeight: 500,
+        fontSize: "18px",
+        lineHeight: "21px",
+        justifyContent: "center",
+        alignItems: "center"
+      }
+    };
+
+    return (
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "auto auto auto",
+          gridTemplateRows: `auto 1em auto 1em auto ${
+            vipShowMore ? "" : "0.6em auto"
+          }`,
+          gridColumnGap: "1em",
+          // gridRowGap: "1.5em",
+          justifyItems: "space-between",
+          alignItems: "center"
+        }}>
+        <div className="column" style={{flex: 1, opacity: 0.3}}>
+          <div style={styles.ticketNumeral}>$25</div>
+          <div style={styles.ticketPriceFee}>+$3.00 fee</div>
+        </div>
+        <div className="column" style={{...styles.ticketType, opacity: 0.3}}>
+          Tier 1 - General Admission
+        </div>
+        <div className="column" style={styles.ticketSoldOut}>
+          Sold Out
+        </div>
+        <div className="column" />
+        <div className="column" />
+        <div className="column" />
+        <div className="column" style={{flex: 1}}>
+          <div style={styles.ticketNumeral}>$45</div>
+          <div style={styles.ticketPriceFee}>+$4.50 fee</div>
+        </div>
+        <div className="column" style={styles.ticketType}>
+          Tier 2 - General Admission
+        </div>
+        <div className="column" style={{flex: 1}}>
+          <div
+            className="row"
+            style={{
+              justifyContent: "space-between",
+              alignItems: "center"
+            }}>
+            <DecrementIcon />
+            <div style={styles.ticketNumeral}>2</div>
+            <IncrementIcon />
+          </div>
+        </div>
+        <div className="column" />
+        <div className="column" />
+        <div className="column" />
+        <div className="column" style={{flex: 1}}>
+          <div style={styles.ticketNumeral}>$90</div>
+          <div style={styles.ticketPriceFee}>+$4.50 fee</div>
+        </div>
+        <div className="column" style={styles.ticketType}>
+          <div style={{marginBottom: "0.2em"}}>VIP</div>
+          <VIPInfoToggle
+            showMore={vipShowMore}
+            onShow={() => this.setState({vipShowMore: true})}
+            onHide={() => this.setState({vipShowMore: false})}
+          />
+        </div>
+        <div className="column" style={{flex: 1}}>
+          <div
+            className="row"
+            style={{
+              justifyContent: "space-between",
+              alignItems: "center"
+            }}>
+            <DecrementIcon />
+            <div style={styles.ticketNumeral}>0</div>
+            <IncrementIcon disabled />
+          </div>
+        </div>
+        {vipShowMore
+          ? null
+          : [
+              <div className="column" />,
+              <div className="column" />,
+              <div className="column" />,
+              <div className="column" />,
+              <div className="column" style={styles.ticketShowMore}>
+                <div style={{marginBottom: "0.4em"}}>VIP perks:</div>
+                <ul
+                  style={{
+                    margin: "0em 0em 0em 1em",
+                    padding: 0,
+                    listStyle: "none"
+                  }}>
+                  <li>> Separate VIP entrance</li>
+                  <li>> Private bars</li>
+                  <li>> Exclusive VIP viewing area</li>
+                </ul>
+              </div>,
+              <div className="column" />
+            ]}
+      </div>
+    );
+  };
+
+  renderDesktopTicketsStep = () => {
     let styles = {
       ticketsTitle: {
         display: "flex",
@@ -124,98 +300,9 @@ class Home extends React.Component<AppPropsT, AppStateT> {
         </div>
         <div
           style={{
-            margin: "0em 1em 1.5em 1em",
-            display: "grid",
-            gridTemplateColumns: "auto auto auto",
-            gridTemplateRows: `auto 1em auto 1em auto ${
-              vipShowMore ? "" : "0.6em auto"
-            }`,
-            gridColumnGap: "1em",
-            // gridRowGap: "1.5em",
-            justifyItems: "space-between",
-            alignItems: "center"
+            margin: "0em 1em 1.5em 1em"
           }}>
-          <div className="column" style={{flex: 1, opacity: 0.3}}>
-            <div style={styles.ticketNumeral}>$25</div>
-            <div style={styles.ticketPriceFee}>+$3.00 fee</div>
-          </div>
-          <div className="column" style={{...styles.ticketType, opacity: 0.3}}>
-            Tier 1 - General Admission
-          </div>
-          <div className="column" style={styles.ticketSoldOut}>
-            Sold Out
-          </div>
-          <div className="column" />
-          <div className="column" />
-          <div className="column" />
-          <div className="column" style={{flex: 1}}>
-            <div style={styles.ticketNumeral}>$45</div>
-            <div style={styles.ticketPriceFee}>+$4.50 fee</div>
-          </div>
-          <div className="column" style={styles.ticketType}>
-            Tier 2 - General Admission
-          </div>
-          <div className="column" style={{flex: 1}}>
-            <div
-              className="row"
-              style={{
-                justifyContent: "space-between",
-                alignItems: "center"
-              }}>
-              <DecrementIcon />
-              <div style={styles.ticketNumeral}>2</div>
-              <IncrementIcon />
-            </div>
-          </div>
-          <div className="column" />
-          <div className="column" />
-          <div className="column" />
-          <div className="column" style={{flex: 1}}>
-            <div style={styles.ticketNumeral}>$90</div>
-            <div style={styles.ticketPriceFee}>+$4.50 fee</div>
-          </div>
-          <div className="column" style={styles.ticketType}>
-            <div style={{marginBottom: "0.2em"}}>VIP</div>
-            <VIPInfoToggle
-              showMore={vipShowMore}
-              onShow={() => this.setState({vipShowMore: true})}
-              onHide={() => this.setState({vipShowMore: false})}
-            />
-          </div>
-          <div className="column" style={{flex: 1}}>
-            <div
-              className="row"
-              style={{
-                justifyContent: "space-between",
-                alignItems: "center"
-              }}>
-              <DecrementIcon />
-              <div style={styles.ticketNumeral}>0</div>
-              <IncrementIcon disabled />
-            </div>
-          </div>
-          {vipShowMore
-            ? null
-            : [
-                <div className="column" />,
-                <div className="column" />,
-                <div className="column" />,
-                <div className="column" />,
-                <div className="column" style={styles.ticketShowMore}>
-                  <div style={{marginBottom: "0.4em"}}>VIP perks:</div>
-                  <ul
-                    style={{
-                      margin: "0em 0em 0em 1em",
-                      padding: 0,
-                      listStyle: "none"
-                    }}>
-                    <li>> Separate VIP entrance</li>
-                    <li>> Private bars</li>
-                    <li>> Exclusive VIP viewing area</li>
-                  </ul>
-                </div>,
-                <div className="column" />
-              ]}
+          {this.renderTicketsGrid()}
         </div>
         <div className="row" style={styles.checkoutButton}>
           Checkout
@@ -227,11 +314,14 @@ class Home extends React.Component<AppPropsT, AppStateT> {
   renderCheckoutStep = () => {
     return <div />;
   };
+
   renderCompleteStep = () => {
     return <div />;
   };
 
-  renderTicketsPullUp = () => {
+  renderTicketsPullUpCollapsed = () => {
+    let {togglePullUpMenu} = this.props;
+
     return (
       <div
         style={{
@@ -249,7 +339,8 @@ class Home extends React.Component<AppPropsT, AppStateT> {
           <div
             style={{
               height: "4em",
-              backgroundImage: "linear-gradient(to top, white, rgba(255,255,255,0))"
+              backgroundImage:
+                "linear-gradient(to top, white, rgba(255,255,255,0))"
             }}
           />
           <div
@@ -266,14 +357,14 @@ class Home extends React.Component<AppPropsT, AppStateT> {
               style={{
                 padding: "0.8em",
                 fontFamily: "Rubik",
-                fontStyle: "normal",
                 fontWeight: 500,
-                fontSize: "18px",
-                lineHeight: "21px"
+                fontSize: "1.29em",
+                lineHeight: "1.2em"
               }}>
               $30 - $90
             </div>
             <div
+              onClick={() => togglePullUpMenu()}
               style={{
                 marginLeft: "1em",
                 width: "40%",
@@ -285,25 +376,107 @@ class Home extends React.Component<AppPropsT, AppStateT> {
                 borderRadius: "24px",
                 color: "white",
                 fontFamily: "Rubik",
-                fontStyle: "normal",
                 fontWeight: 500,
-                fontSize: "18px",
-                lineHeight: "21px"
+                fontSize: "1.29em",
+                lineHeight: "1.2em",
+                cursor: "pointer"
               }}>
-              Tickets
+              Tickets<div style={{ fontSize: "14px", marginLeft: '0.6em', display: "flex"}}><UpwardChevron/></div>
             </div>
           </div>
         </div>
       </div>
     );
   };
+
+  renderTicketsPullUp = () => {
+    let {pullUpMenuCollapsed, togglePullUpMenu} = this.props;
+    if (pullUpMenuCollapsed) {
+      return this.renderTicketsPullUpCollapsed();
+    }
+    let styles = {
+      // TODO: dedup
+      ticketsRestriction: {
+        fontFamily: "Rubik",
+        fontWeight: 500,
+        fontSize: "0.75em",
+        lineHeight: "1.2em",
+        color: "#7E7E7E"
+      },
+      // TODO: dedup
+      checkoutButton: {
+        padding: "1em",
+        background: "#FF0266",
+        borderRadius: "5px",
+        color: "white",
+        fontFamily: "Rubik",
+        fontWeight: 500,
+        fontSize: "18px",
+        lineHeight: "21px",
+        justifyContent: "center",
+        alignItems: "center"
+      }
+    };
+
+    return (
+      <div
+        style={{
+          // Create a 100px white rectangle, so that content does not run
+          // under the fixed position pullup menu
+          height: "100px",
+          backgroundColor: "white"
+        }}>
+        <div
+          style={{
+            position: "fixed",
+            bottom: "0",
+            width: "100%"
+          }}>
+          <div
+            style={{
+              height: "4em",
+              backgroundImage:
+                "linear-gradient(to top, white, rgba(255,255,255,0))"
+            }}
+          />
+          <div
+            style={{
+              boxSizing: "border-box",
+              boxShadow: "rgba(0, 0, 0, 0.21) 0 -2px 8px 4px",
+              display: "flex",
+              justifyContent: "center",
+              backgroundColor: "white",
+              padding: "1.5em",
+              position: "relative"
+            }}
+            className="column">
+	    <div style={{position: "absolute", top: "1em", right: "1.5em" }}>
+	      <DownwardChevron onClick={() => togglePullUpMenu()}/>
+	    </div>
+            <div style={{margin: "0em 0em 1.5em 0em"}}>
+              <div style={styles.ticketsRestriction}>
+                A maximum of 10 tickets can be purchased
+              </div>
+            </div>
+            <div style={{margin: "0em 0em 3em 0em"}}>
+	      {this.renderTicketsGrid()}
+            </div>
+	    <div className="row" style={styles.checkoutButton}>
+	      Checkout
+	    </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   renderTicketModal = () => {
     let {view} = this.state;
 
     let modalView;
     switch (view) {
       case View.Tickets:
-        modalView = this.renderTicketsStep();
+        modalView = this.renderDesktopTicketsStep();
         break;
       case View.Checkout:
         modalView = this.renderCheckoutStep();
@@ -414,9 +587,7 @@ class Home extends React.Component<AppPropsT, AppStateT> {
               Help
             </Link>
             <button
-              onClick={
-                () => (profile ? initiateLogout() : initiateLogin())
-              }
+              onClick={() => (profile ? initiateLogout() : initiateLogin())}
               style={styles.loginAnchor}>
               {signInMessage}
             </button>
@@ -556,8 +727,8 @@ class Home extends React.Component<AppPropsT, AppStateT> {
         className="App"
         style={{
           fontSize: byLayout("14px", "18px"),
-          overflowY: 'scroll',
-          backgroundColor: '#f2f2f2'
+          overflowY: "scroll",
+          backgroundColor: "#f2f2f2"
         }}>
         {this.renderHeader()}
         {this.renderHero()}
@@ -589,12 +760,14 @@ const VIPInfoToggle: React.FC<VIPInfoToggleProps> = ({
 };
 
 export default connect(
-  ({root}: AppState) => ({
+  ({root, home}: AppState) => ({
     byLayout: byLayout(root.layout),
-    profile: root.profile
+    profile: root.profile,
+    pullUpMenuCollapsed: home.pullUpMenuCollapsed
   }),
   dispatch => ({
     initiateLogin: initiateLoginAction(dispatch),
-    initiateLogout: initiateLogoutAction(dispatch)
+    initiateLogout: initiateLogoutAction(dispatch),
+    togglePullUpMenu: togglePullUpMenuAction(dispatch)
   })
 )(Home);
