@@ -79,7 +79,7 @@ function* handleLogin() {
 
 function handleLogout() {
   let lock = createLock();
-  lock.logout({ redirectTo: Auth0Config.redirectTo });
+  lock.logout({ returnTo: Auth0Config.returnTo });
 }
 
 function* checkAlreadyLoggedIn() {
