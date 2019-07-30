@@ -1,9 +1,0 @@
-{
-  "auth0": {
-    "clientId": "6btWupF5RfQPPMyRL08DWOF7wZ8ZDjzr",
-    "domain": "auth.foriatickets.com",
-    "configurationBaseUrl": "https://cdn.auth0.com",
-    "authAudience": "api.foriatickets.com",
-    "returnTo": "https://events.foriatickets.com"
-  }
-}

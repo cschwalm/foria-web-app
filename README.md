@@ -2,6 +2,10 @@
 
 Server-less web app that allows ticketing customer to purchase their tickets from a dynamically generated URL.
 
+## Configuration
+
+This application uses dot-env configuration detailed [here](https://facebook.github.io/create-react-app/docs/adding-custom-environment-variables). For development, you can override the environment with your own `.env.local` file. See `.env.production` as an example.
+
 ## Available Scripts
 
 In the project directory, you can run:
