@@ -7,6 +7,7 @@ pipelines:
           - node
         name: Test & Build
         script:
+          - cp src/Config.json{.dist,}
           - npm install
           - npm test
   tags:
@@ -15,6 +16,7 @@ pipelines:
           name: Test, Build, and Deploy
           deployment: production
           script:
+            - cp Prod-Config.json src/Config.json
             - npm install
             - npm run build
             - apt-get update
