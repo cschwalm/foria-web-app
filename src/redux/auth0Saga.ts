@@ -1,5 +1,5 @@
 import Auth0Lock from "auth0-lock";
-import {call, put, takeEvery} from "redux-saga/effects";
+import {call, fork, put, takeEvery} from "redux-saga/effects";
 
 import {ActionType as RootActionType} from "./reducers/root";
 import {ActionType as HomeActionType} from "./reducers/home";
@@ -118,10 +118,10 @@ function* checkAlreadyLoggedIn() {
   });
 }
 
-function* auth0Saga() {
-  yield call(checkAlreadyLoggedIn);
+function* saga() {
+  yield fork(checkAlreadyLoggedIn);
   yield takeEvery(HomeActionType.InitiateLogin, handleLogin);
   yield takeEvery(HomeActionType.InitiateLogout, handleLogout);
 }
 
-export default auth0Saga;
+export default saga;
