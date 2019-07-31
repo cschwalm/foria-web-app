@@ -6,7 +6,9 @@ import {AppState} from "./redux/store";
 import {
   initiateLogin as initiateLoginAction,
   initiateLogout as initiateLogoutAction,
-  togglePullUpMenu as togglePullUpMenuAction
+  togglePullUpMenu as togglePullUpMenuAction,
+  selectView as selectViewAction,
+  View
 } from "./redux/reducers/home";
 import {byLayout} from "./layout";
 import foriaLogo from "./foria_logo.png";
@@ -22,15 +24,8 @@ const ticketOverlayWidth = 376;
 const bodyWidth = 960;
 const pink = "#FF0266";
 
-enum View {
-  Tickets,
-  Checkout,
-  Complete
-}
-
 interface AppStateT {
   vipShowMore: boolean;
-  view: View;
 }
 
 interface AppPropsT {
@@ -41,6 +36,8 @@ interface AppPropsT {
   initiateLogin: () => void;
   initiateLogout: () => void;
   togglePullUpMenu: () => void;
+  selectView: (view: View) => void;
+  view: View;
 }
 
 class Home extends React.Component<AppPropsT, AppStateT> {
@@ -48,7 +45,6 @@ class Home extends React.Component<AppPropsT, AppStateT> {
     super(props);
     this.state = {
       vipShowMore: false,
-      view: View.Tickets
     };
   }
 
@@ -222,6 +218,7 @@ class Home extends React.Component<AppPropsT, AppStateT> {
   };
 
   renderDesktopTicketsStep = () => {
+    let { selectView } = this.props;
     let styles = {
       ticketsTitle: {
         display: "flex",
@@ -304,18 +301,26 @@ class Home extends React.Component<AppPropsT, AppStateT> {
           }}>
           {this.renderTicketsGrid()}
         </div>
-        <div className="row" style={styles.checkoutButton}>
+        <div className="row" onClick={() => selectView(View.Checkout)} style={styles.checkoutButton}>
           Checkout
         </div>
       </>
     );
   };
 
-  renderCheckoutStep = () => {
+  renderDesktopCheckoutStep = () => {
     return <div />;
   };
 
-  renderCompleteStep = () => {
+  renderMobileCheckoutStep = () => {
+    return <div />;
+  };
+
+  renderDesktopCompleteStep = () => {
+    return <div />;
+  };
+
+  renderMobileCompleteStep = () => {
     return <div />;
   };
 
@@ -339,8 +344,9 @@ class Home extends React.Component<AppPropsT, AppStateT> {
           <div
             style={{
               height: "4em",
-              backgroundImage:
-                "linear-gradient(to top, white, rgba(255,255,255,0))"
+              // TODO needs to be a mask
+              // backgroundImage:
+              //   "linear-gradient(to top, white, rgba(255,255,255,0))"
             }}
           />
           <div
@@ -389,11 +395,8 @@ class Home extends React.Component<AppPropsT, AppStateT> {
     );
   };
 
-  renderTicketsPullUp = () => {
-    let {pullUpMenuCollapsed, togglePullUpMenu} = this.props;
-    if (pullUpMenuCollapsed) {
-      return this.renderTicketsPullUpCollapsed();
-    }
+  renderMobileTicketsStep = () => {
+    let { selectView } = this.props;
     let styles = {
       // TODO: dedup
       ticketsRestriction: {
@@ -417,6 +420,43 @@ class Home extends React.Component<AppPropsT, AppStateT> {
         alignItems: "center"
       }
     };
+    return (
+      <>
+      <div style={{margin: "0em 0em 1.5em 0em"}}>
+        <div style={styles.ticketsRestriction}>
+          A maximum of 10 tickets can be purchased
+        </div>
+      </div>
+      <div style={{margin: "0em 0em 3em 0em"}}>
+        {this.renderTicketsGrid()}
+      </div>
+      <div className="row" style={styles.checkoutButton} onClick={() => selectView(View.Checkout)}>
+        Checkout
+      </div>
+      </>
+    )
+  }
+
+  renderTicketsPullUp = () => {
+    let {pullUpMenuCollapsed, togglePullUpMenu, view} = this.props;
+    if (pullUpMenuCollapsed) {
+      return this.renderTicketsPullUpCollapsed();
+    }
+
+    let modalView;
+    switch (view) {
+      case View.Tickets:
+        modalView = this.renderMobileTicketsStep();
+        break;
+      case View.Checkout:
+        modalView = this.renderMobileCheckoutStep();
+        break;
+      case View.Complete:
+        modalView = this.renderMobileCompleteStep();
+        break;
+      default:
+        throw new Error(`Unhandled view: ${view}`);
+    }
 
     return (
       <div
@@ -435,8 +475,9 @@ class Home extends React.Component<AppPropsT, AppStateT> {
           <div
             style={{
               height: "4em",
-              backgroundImage:
-                "linear-gradient(to top, white, rgba(255,255,255,0))"
+              // TODO needs to be a mask
+              // backgroundImage:
+              //   "linear-gradient(to top, white, rgba(255,255,255,0))"
             }}
           />
           <div
@@ -453,17 +494,7 @@ class Home extends React.Component<AppPropsT, AppStateT> {
 	    <div style={{position: "absolute", top: "1em", right: "1.5em" }}>
 	      <DownwardChevron onClick={() => togglePullUpMenu()}/>
 	    </div>
-            <div style={{margin: "0em 0em 1.5em 0em"}}>
-              <div style={styles.ticketsRestriction}>
-                A maximum of 10 tickets can be purchased
-              </div>
-            </div>
-            <div style={{margin: "0em 0em 3em 0em"}}>
-	      {this.renderTicketsGrid()}
-            </div>
-	    <div className="row" style={styles.checkoutButton}>
-	      Checkout
-	    </div>
+            { modalView }
           </div>
         </div>
       </div>
@@ -471,7 +502,7 @@ class Home extends React.Component<AppPropsT, AppStateT> {
   };
 
   renderTicketModal = () => {
-    let {view} = this.state;
+    let {view} = this.props;
 
     let modalView;
     switch (view) {
@@ -479,13 +510,13 @@ class Home extends React.Component<AppPropsT, AppStateT> {
         modalView = this.renderDesktopTicketsStep();
         break;
       case View.Checkout:
-        modalView = this.renderCheckoutStep();
+        modalView = this.renderDesktopCheckoutStep();
         break;
       case View.Complete:
-        modalView = this.renderCompleteStep();
+        modalView = this.renderDesktopCompleteStep();
         break;
       default:
-        throw new Error(`Unknown view: ${view}`);
+        throw new Error(`Unhandled view: ${view}`);
     }
     return (
       <div
@@ -763,11 +794,13 @@ export default connect(
   ({root, home}: AppState) => ({
     byLayout: byLayout(root.layout),
     profile: root.profile,
-    pullUpMenuCollapsed: home.pullUpMenuCollapsed
+    pullUpMenuCollapsed: home.pullUpMenuCollapsed,
+    view: home.view
   }),
   dispatch => ({
     initiateLogin: initiateLoginAction(dispatch),
     initiateLogout: initiateLogoutAction(dispatch),
-    togglePullUpMenu: togglePullUpMenuAction(dispatch)
+    togglePullUpMenu: togglePullUpMenuAction(dispatch),
+    selectView: selectViewAction(dispatch)
   })
 )(Home);
