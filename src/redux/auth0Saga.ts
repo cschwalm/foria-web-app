@@ -73,9 +73,10 @@ function* handleLogin() {
   let lock = createLock();
   let authenticatePromise = authenticate(lock);
   lock.show();
-  let authResult;
   try {
-    authResult = yield authenticatePromise;
+    // On authentication we will be redirected, so we don't need the return
+    // value here
+    yield authenticatePromise;
   } catch (err) {
     yield put({
       type: RootActionType.AuthenticationError,
@@ -83,27 +84,6 @@ function* handleLogin() {
     });
     return;
   }
-
-  yield put({
-    type: RootActionType.AuthenticationSuccess,
-    data: authResult.accessToken
-  });
-
-  let profile;
-  try {
-    profile = yield call(getUserInfo, lock, authResult.accessToken);
-  } catch (err) {
-    yield put({
-      type: RootActionType.LoginError,
-      data: err
-    });
-    return;
-  }
-
-  yield put({
-    type: RootActionType.LoginSuccess,
-    data: profile
-  });
 }
 
 function handleLogout() {
