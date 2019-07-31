@@ -3,6 +3,7 @@ import {call, put, take, fork} from "redux-saga/effects";
 import {throttle} from "lodash";
 import {ActionType as RootActionType} from "./reducers/root";
 import auth0Saga from "./auth0Saga";
+import apiSaga from "./apiSaga";
 
 function createWindowWidthChannel() {
   return eventChannel(emitter => {
@@ -24,6 +25,7 @@ function* handleResizeSaga() {
 }
 
 function* saga() {
+  yield fork(apiSaga);
   yield fork(handleResizeSaga);
   yield fork(auth0Saga);
 }

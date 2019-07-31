@@ -98,8 +98,20 @@ function* checkAlreadyLoggedIn() {
     authResult = yield call(checkSession, lock);
   } catch (err) {
     // User needs to authenticate first
+    if (err.code === "login_required") {
+      yield put({
+        type: RootActionType.NoExistingSession
+      });
+    } else {
+      // TODO handle non login_required errors here
+    }
     return;
   }
+
+  yield put({
+    type: RootActionType.AuthenticationSuccess,
+    data: authResult.accessToken
+  });
 
   let profile;
   try {
