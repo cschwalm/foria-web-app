@@ -5,6 +5,9 @@ import {ActionType as RootActionType} from "./reducers/root";
 import {ActionType as HomeActionType} from "./reducers/home";
 
 function createLock() {
+
+  let primaryColor = '#fec700' as string;
+
   return new Auth0Lock(
     process.env.REACT_APP_AUTH0_CLIENTID as string,
     process.env.REACT_APP_AUTH0_DOMAIN as string,
@@ -14,7 +17,30 @@ function createLock() {
       auth: {
         responseType: "token",
         audience: process.env.REACT_APP_AUTH0_AUDIENCE as string
-      }
+      },
+      additionalSignUpFields: [
+        {
+          name: "given_name",
+          placeholder: "First Name",
+          icon: "https://foriatickets.com/img/user-tag-solid.png"
+        },
+        {
+          name: "family_name",
+          placeholder: "Last Name",
+          icon: "https://foriatickets.com/img/user-tag-solid.png"
+        }
+      ],
+      languageDictionary: {
+        emailInputPlaceholder: "john@foriatickets.com",
+        passwordInputPlaceholder: "password",
+        title: 'For the Fans',
+        signUpTerms: "By signing up, you agree to our <a href=\"https://foriatickets.com/terms-of-use.html\" target=\"_blank\">terms of service</a> and <a href=\"https://foriatickets.com/privacy-policy.html\" target=\"_blank\">privacy policy</a>."
+      },
+      loginAfterSignUp: true,
+      theme: {
+        logo:            'https://foriatickets.com/img/foria-logo-color.png',
+        primaryColor:    primaryColor
+      },
     }
   );
 }
