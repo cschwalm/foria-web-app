@@ -11,8 +11,7 @@
 # production
 /build
 
-# Stores configuration for app, see its template src/Config.json.dist
-src/Config.json
+.env.local
 
 # misc
 .DS_Store
