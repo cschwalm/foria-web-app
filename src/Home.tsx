@@ -61,7 +61,7 @@ const sharedStyles = {
   }
 };
 
-class Home extends React.Component<AppPropsT, AppStateT> {
+export class Home extends React.Component<AppPropsT, AppStateT> {
   constructor(props: AppPropsT) {
     super(props);
     this.state = {
@@ -599,7 +599,7 @@ class Home extends React.Component<AppPropsT, AppStateT> {
       byLayout,
       initiateLogin,
       initiateLogout,
-      authenticationStatus,
+      authenticationStatus
     } = this.props;
     let styles = {
       loginAnchor: {
@@ -832,7 +832,9 @@ class Home extends React.Component<AppPropsT, AppStateT> {
                       Radio City Music Hall
                     </div>
                     <div style={styles.eventDetailSubtitle}>
-                      { event.address.street_address }, {event.address.city}, {event.address.state} {event.address.zip}
+                      {`${event.address.street_address}, ${
+                        event.address.city
+                      }, ${event.address.state} ${event.address.zip}`}
                     </div>
                   </div>
                 </>
