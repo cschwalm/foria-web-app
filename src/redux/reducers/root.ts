@@ -71,7 +71,6 @@ export const reducer = (state = initialState, action: Action) => {
         layout: getLayout()
       };
     case ActionType.AuthenticationSuccess:
-      console.log("accessToken", action.data);
       return {
         ...state,
         accessToken: action.data,
