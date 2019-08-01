@@ -1,4 +1,3 @@
-
 type Selector<T> = (elem: T) => any;
 const defaultSelector = <T>(elem: T): T => elem;
 
