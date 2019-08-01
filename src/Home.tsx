@@ -21,6 +21,8 @@ import DecrementIcon from "./decrementIcon";
 import IncrementIcon from "./incrementIcon";
 import DownwardChevron from "./downwardChevron";
 import UpwardChevron from "./upwardChevron";
+import { pricePreviewFormatter } from "./formatCurrency";
+import minMax from "./minMax";
 
 const ticketOverlayWidth = 376;
 const bodyWidth = 960;
@@ -364,6 +366,33 @@ export class Home extends React.Component<AppPropsT, AppStateT> {
     return <div />;
   };
 
+  renderTicketsPriceRange = () => {
+    let {event} = this.props;
+    if (!event) {
+      return <Skeleton width="5em" />;
+    }
+    if (!event.ticket_type_config.length) {
+      // TODO add an error boundary to display this to the user in a friendly
+      // way
+      throw new Error("An error occurred, this event has no available tickets");
+    }
+    let [minTicketType, maxTicketType] = minMax(event.ticket_type_config, item =>
+      Number(item.price)
+    );
+    let minAmountStr = pricePreviewFormatter(
+      Number(minTicketType.price),
+      minTicketType.currency
+    );
+    let maxAmountStr = pricePreviewFormatter(
+      Number(maxTicketType.price),
+      maxTicketType.currency
+    );
+    if (minTicketType === maxTicketType) {
+      return minAmountStr;
+    }
+    return `${minAmountStr} - ${maxAmountStr}`;
+  };
+
   renderTicketsPullUpCollapsed = () => {
     let {togglePullUpMenu} = this.props;
 
@@ -404,7 +433,7 @@ export class Home extends React.Component<AppPropsT, AppStateT> {
                 fontSize: "1.29em",
                 lineHeight: "1.2em"
               }}>
-              $30 - $90
+              {this.renderTicketsPriceRange()}
             </div>
             <div
               onClick={() => togglePullUpMenu()}

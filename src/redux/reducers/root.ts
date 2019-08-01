@@ -14,9 +14,31 @@ export interface Address {
   country: string;
 }
 
+export interface TicketTypeConfig {
+    "id": string,
+    "name": string,
+    "description": string,
+    "authorized_amount": number,
+    "amount_remaining": number,
+    "price": string,
+    "currency": string,
+}
+
+export interface TicketFeeConfig {
+    "id": string,
+    "name": string,
+    "description": string,
+    "method": string,
+    "type": string,
+    "amount": string,
+    "currency": string,
+}
+
 export interface Event {
   name: string;
   address: Address;
+  ticket_type_config: [TicketTypeConfig],
+  ticket_fee_config: [TicketFeeConfig],
   image_url: string;
   start_time: string;
   end_time: string;
@@ -36,7 +58,7 @@ export interface State {
 export const initialState: State = {
   layout: getLayout(),
   // TODO: parse from URL
-  eventId: "a42205c9-f7fc-4371-80e4-99b73385f462",
+  eventId: "52991c6d-7703-488d-93ae-1aacdd7c4291",
   authenticationStatus: AuthenticationStatus.Pending
 };
 

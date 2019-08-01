@@ -22,6 +22,12 @@ it("renders an event", () => {
       id: "a42205c9-f7fc-4371-80e4-99b73385f462",
       name: "Test Event",
       tag_line: "For The Fans",
+      ticket_type_config: [
+        {
+          price: "1.00",
+          currency: "USD"
+        }
+      ],
       description: "first paragraph\nsecond paragraph",
       image_url:
         "https://musicoomph.com/wp-content/uploads/2018/03/benefits-of-going-to-live-music-concerts.jpg",
