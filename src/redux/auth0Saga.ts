@@ -5,8 +5,7 @@ import {ActionType as RootActionType} from "./reducers/root";
 import {ActionType as HomeActionType} from "./reducers/home";
 
 function createLock() {
-
-  let primaryColor = '#FF0266' as string;
+  let primaryColor = "#FF0266" as string;
 
   return new Auth0Lock(
     process.env.REACT_APP_AUTH0_CLIENTID as string,
@@ -33,15 +32,16 @@ function createLock() {
       languageDictionary: {
         emailInputPlaceholder: "john@foriatickets.com",
         passwordInputPlaceholder: "password",
-        title: '',
+        title: "",
         signUpTitle: "",
-        signUpTerms: "By signing up, you agree to our <a href=\"https://foriatickets.com/terms-of-use.html\" target=\"_blank\">terms of service</a> and <a href=\"https://foriatickets.com/privacy-policy.html\" target=\"_blank\">privacy policy</a>."
+        signUpTerms:
+          'By signing up, you agree to our <a href="https://foriatickets.com/terms-of-use.html" target="_blank">terms of service</a> and <a href="https://foriatickets.com/privacy-policy.html" target="_blank">privacy policy</a>.'
       },
       loginAfterSignUp: true,
       theme: {
-        logo:            'https://foriatickets.com/img/foria-logo-color.png',
-        primaryColor:    primaryColor
-      },
+        logo: "https://foriatickets.com/img/foria-logo-color.png",
+        primaryColor: primaryColor
+      }
     }
   );
 }
