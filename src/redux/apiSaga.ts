@@ -20,6 +20,8 @@ function* saga() {
   let eventId = yield select(getEventId);
   let event;
   try {
+    // TODO remove this comment after development
+    // let delay = require('../delay').default; yield delay(5000);
     event = yield call(fetchEvent, eventId);
   } catch (err) {
     yield put({
@@ -28,6 +30,18 @@ function* saga() {
     });
     return;
   }
+  // TODO remove this comment after development
+  // event.ticket_type_config.push(
+  //   {
+  //     "id": "63c47345-a15a-4a6e-b248-e700418b6e2b",
+  //     "name": "GA",
+  //     "description": "General Audience",
+  //     "authorized_amount": 0,
+  //     "amount_remaining": 0,
+  //     "price": "50.00",
+  //     "currency": "USD"
+  //   }
+  // )
 
   yield put({
     type: RootActionType.EventFetchSuccess,

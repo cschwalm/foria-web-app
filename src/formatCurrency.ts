@@ -1,12 +1,12 @@
 
-const lessThanOneFormatter = (currency: string) => new Intl.NumberFormat(undefined, {
+const twoDecimalFormatter = (currency: string) => new Intl.NumberFormat(undefined, {
   style: "currency",
   currency,
   maximumFractionDigits: 2,
   minimumFractionDigits: 2
 })
 
-const greaterThanOneFormatter = (currency: string) => new Intl.NumberFormat(undefined, {
+const zeroDecimalFormatter = (currency: string) => new Intl.NumberFormat(undefined, {
     style: "currency",
     currency,
     minimumFractionDigits: 0,
@@ -17,6 +17,13 @@ const greaterThanOneFormatter = (currency: string) => new Intl.NumberFormat(unde
 export const pricePreviewFormatter = (amount: number, currency: string) => {
   amount = Math.max(amount, 0.01)
   return amount < 1
-    ? lessThanOneFormatter(currency).format(amount)
-    : greaterThanOneFormatter(currency).format(amount)
+    ? twoDecimalFormatter(currency).format(amount)
+    : zeroDecimalFormatter(currency).format(amount)
+}
+
+export const priceExactFormatter = (amount: number, currency: string) => {
+  amount = Math.max(amount, 0.01)
+  return Number.isInteger(amount)
+    ? zeroDecimalFormatter(currency).format(amount)
+    : twoDecimalFormatter(currency).format(amount)
 }

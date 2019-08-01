@@ -28,6 +28,7 @@ it("renders an event", () => {
           currency: "USD"
         }
       ],
+      ticket_type_config: [],
       description: "first paragraph\nsecond paragraph",
       image_url:
         "https://musicoomph.com/wp-content/uploads/2018/03/benefits-of-going-to-live-music-concerts.jpg",

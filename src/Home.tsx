@@ -5,13 +5,20 @@ import {Link} from "react-router-dom";
 import Skeleton from "react-loading-skeleton";
 
 import {AppState} from "./redux/store";
-import {AuthenticationStatus, Event} from "./redux/reducers/root";
+import {
+  AuthenticationStatus,
+  Event,
+  TicketTypeConfig
+} from "./redux/reducers/root";
 import {
   initiateLogin as initiateLoginAction,
   initiateLogout as initiateLogoutAction,
+  addTicket as addTicketAction,
+  removeTicket as removeTicketAction,
   togglePullUpMenu as togglePullUpMenuAction,
   selectView as selectViewAction,
-  View
+  View,
+  TicketCounts
 } from "./redux/reducers/home";
 import {byLayout} from "./layout";
 import foriaLogo from "./foria_logo.png";
@@ -21,16 +28,12 @@ import DecrementIcon from "./decrementIcon";
 import IncrementIcon from "./incrementIcon";
 import DownwardChevron from "./downwardChevron";
 import UpwardChevron from "./upwardChevron";
-import { pricePreviewFormatter } from "./formatCurrency";
+import {pricePreviewFormatter, priceExactFormatter} from "./formatCurrency";
 import minMax from "./minMax";
 
-const ticketOverlayWidth = 376;
+const ticketOverlayWidth = 385;
 const bodyWidth = 960;
 const pink = "#FF0266";
-
-interface AppStateT {
-  vipShowMore: boolean;
-}
 
 interface AppPropsT {
   // TODO can return a more specific type (a | b)
@@ -39,16 +42,44 @@ interface AppPropsT {
   authenticationStatus: AuthenticationStatus;
   initiateLogin: () => void;
   initiateLogout: () => void;
+  addTicket: (ticket: TicketTypeConfig) => void;
+  removeTicket: (ticket: TicketTypeConfig) => void;
   togglePullUpMenu: () => void;
   selectView: (view: View) => void;
   view: View;
+  ticketsForPurchase: TicketCounts;
   profile?: auth0.Auth0UserProfile;
   event?: Event;
 }
 
 const sharedStyles = {
+  ticketSoldOut: {
+    fontFamily: "Rubik",
+    fontWeight: 500,
+    fontSize: "1em",
+    lineHeight: "1.2em",
+    flex: 1,
+    opacity: 0.3
+  },
+  ticketType: {
+    fontFamily: "Rubik",
+    fontWeight: 500,
+    fontSize: "0.8em",
+    lineHeight: "1.2em",
+    color: "#7E7E7E"
+  },
+  ticketPriceFee: {
+    fontFamily: "Rubik",
+    fontSize: "0.6em",
+    lineHeight: "1.2em"
+  },
+  ticketNumeral: {
+    fontFamily: "Rubik",
+    fontWeight: "bold" as "bold",
+    fontSize: "1.3em",
+    lineHeight: "1.2em"
+  },
   pullUpMenuTicketsButton: {
-    marginLeft: "1em",
     width: "40%",
     display: "flex",
     alignItems: "center",
@@ -79,177 +110,123 @@ const sharedStyles = {
   }
 };
 
-export class Home extends React.Component<AppPropsT, AppStateT> {
-  constructor(props: AppPropsT) {
-    super(props);
-    this.state = {
-      vipShowMore: false
-    };
-  }
+export class Home extends React.Component<AppPropsT> {
+  renderAggregateFee = (ticketType: TicketTypeConfig) => {
+    let event = this.props.event as Event;
+    let aggregateFee = event.ticket_fee_config.reduce(
+      (aggregate, ticketFee) => {
+        let feeAmount;
+        switch (ticketFee.method) {
+          case "PERCENT":
+            feeAmount = Number(ticketType.price) * Number(ticketFee.amount);
+            break;
+          case "FLAT":
+            feeAmount = Number(ticketFee.amount);
+            break;
+          default:
+            throw new Error(`Unhandled ticket fee method: ${ticketFee.method}`);
+        }
+        return aggregate + feeAmount;
+      },
+      0
+    );
+    return priceExactFormatter(aggregateFee, ticketType.currency);
+  };
+
+  renderTicketDescriptionColumn = (ticketType: TicketTypeConfig) => {
+    let soldOut = ticketType.amount_remaining === 0;
+    return (
+      <div
+        className="column"
+        style={{...sharedStyles.ticketType, opacity: soldOut ? 0.3 : 1}}>
+        {ticketType.name} - {ticketType.description}
+      </div>
+    );
+  };
+
+  renderTicketPriceColumn = (ticketType: TicketTypeConfig) => {
+    let soldOut = ticketType.amount_remaining === 0;
+    return (
+      <div className="column" style={{flex: 1, opacity: soldOut ? 0.3 : 1}}>
+        <div style={sharedStyles.ticketNumeral}>
+          {priceExactFormatter(Number(ticketType.price), ticketType.currency)}
+        </div>
+        <div style={sharedStyles.ticketPriceFee}>
+          +{this.renderAggregateFee(ticketType)} fee
+        </div>
+      </div>
+    );
+  };
+
+  renderTicketQuantityColumn = (ticketType: TicketTypeConfig) => {
+    let {ticketsForPurchase, addTicket, removeTicket} = this.props;
+
+    let soldOut = ticketType.amount_remaining === 0;
+    if (soldOut) {
+      return (
+        <div className="column" style={sharedStyles.ticketSoldOut}>
+          Sold Out
+        </div>
+      );
+    }
+
+    let ticketCount = ticketsForPurchase[ticketType.id];
+    let amountSelected = ticketCount ? ticketCount.quantity : 0;
+    let canIncrement =
+      amountSelected + 1 <= 10 &&
+      amountSelected + 1 <= ticketType.amount_remaining;
+    let canDecrement = amountSelected - 1 >= 0;
+
+    return (
+      <div className="column" style={{flex: 1}}>
+        <div
+          className="row"
+          style={{
+            justifyContent: "space-between",
+            alignItems: "center"
+          }}>
+          <DecrementIcon
+            disabled={!canDecrement}
+            onClick={() => removeTicket(ticketType)}
+          />
+          <div style={sharedStyles.ticketNumeral}>{amountSelected}</div>
+          <IncrementIcon
+            disabled={!canIncrement}
+            onClick={() => addTicket(ticketType)}
+          />
+        </div>
+      </div>
+    );
+  };
+
+  renderTicketGridRow = (ticketType: TicketTypeConfig) => {
+    return (
+      <>
+        {this.renderTicketPriceColumn(ticketType)}
+        {this.renderTicketDescriptionColumn(ticketType)}
+        {this.renderTicketQuantityColumn(ticketType)}
+      </>
+    );
+  };
 
   renderTicketsGrid = () => {
-    let {vipShowMore} = this.state;
-    let styles = {
-      ticketsTitle: {
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        borderRadius: "5px 5px 0px 0px",
-        padding: "1rem",
-        backgroundColor: "#f2f2f2",
-        fontFamily: "Roboto",
-        fontSize: "1em",
-        lineHeight: "1.2em",
-        marginBottom: "1em"
-      },
-      ticketsRestriction: {
-        fontFamily: "Rubik",
-        fontWeight: 500,
-        fontSize: "0.75em",
-        lineHeight: "1.2em",
-        color: "#7E7E7E"
-      },
-      ticketNumeral: {
-        fontFamily: "Rubik",
-        fontWeight: "bold" as "bold",
-        fontSize: "1.3em",
-        lineHeight: "1.2em"
-      },
-      ticketPriceFee: {
-        fontFamily: "Rubik",
-        fontSize: "0.6em",
-        lineHeight: "1.2em"
-      },
-      ticketType: {
-        fontFamily: "Rubik",
-        fontWeight: 500,
-        fontSize: "0.8em",
-        lineHeight: "1.2em",
-        color: "#7E7E7E"
-      },
-      ticketSoldOut: {
-        fontFamily: "Rubik",
-        fontWeight: 500,
-        fontSize: "1em",
-        lineHeight: "1.2em",
-        flex: 1,
-        opacity: 0.3
-      },
-      ticketShowMore: {
-        gridArea: "7 / 2 / 8 / 4",
-        fontFamily: "Rubik",
-        fontWeight: 500,
-        fontSize: "0.8em",
-        lineHeight: "1.2em",
-        color: "#7E7E7E"
-      },
-      checkoutButton: {
-        margin: "0em 1em 1em 1em",
-        padding: "1em",
-        background: "#FF0266",
-        borderRadius: "5px",
-        color: "white",
-        fontFamily: "Rubik",
-        fontWeight: 500,
-        fontSize: "18px",
-        lineHeight: "21px",
-        justifyContent: "center",
-        alignItems: "center"
-      }
-    };
+    let {event} = this.props;
 
     return (
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "auto auto auto",
-          gridTemplateRows: `auto 1em auto 1em auto ${
-            vipShowMore ? "" : "0.6em auto"
-          }`,
           gridColumnGap: "1em",
-          // gridRowGap: "1.5em",
+          gridRowGap: "1em",
           justifyItems: "space-between",
           alignItems: "center"
         }}>
-        <div className="column" style={{flex: 1, opacity: 0.3}}>
-          <div style={styles.ticketNumeral}>$25</div>
-          <div style={styles.ticketPriceFee}>+$3.00 fee</div>
-        </div>
-        <div className="column" style={{...styles.ticketType, opacity: 0.3}}>
-          Tier 1 - General Admission
-        </div>
-        <div className="column" style={styles.ticketSoldOut}>
-          Sold Out
-        </div>
-        <div className="column" />
-        <div className="column" />
-        <div className="column" />
-        <div className="column" style={{flex: 1}}>
-          <div style={styles.ticketNumeral}>$45</div>
-          <div style={styles.ticketPriceFee}>+$4.50 fee</div>
-        </div>
-        <div className="column" style={styles.ticketType}>
-          Tier 2 - General Admission
-        </div>
-        <div className="column" style={{flex: 1}}>
-          <div
-            className="row"
-            style={{
-              justifyContent: "space-between",
-              alignItems: "center"
-            }}>
-            <DecrementIcon />
-            <div style={styles.ticketNumeral}>2</div>
-            <IncrementIcon />
-          </div>
-        </div>
-        <div className="column" />
-        <div className="column" />
-        <div className="column" />
-        <div className="column" style={{flex: 1}}>
-          <div style={styles.ticketNumeral}>$90</div>
-          <div style={styles.ticketPriceFee}>+$4.50 fee</div>
-        </div>
-        <div className="column" style={styles.ticketType}>
-          <div style={{marginBottom: "0.2em"}}>VIP</div>
-          <VIPInfoToggle
-            showMore={vipShowMore}
-            onShow={() => this.setState({vipShowMore: true})}
-            onHide={() => this.setState({vipShowMore: false})}
-          />
-        </div>
-        <div className="column" style={{flex: 1}}>
-          <div
-            className="row"
-            style={{
-              justifyContent: "space-between",
-              alignItems: "center"
-            }}>
-            <DecrementIcon />
-            <div style={styles.ticketNumeral}>0</div>
-            <IncrementIcon disabled />
-          </div>
-        </div>
-        {vipShowMore ? null : (
+        {event ? (
+          event.ticket_type_config.map(item => this.renderTicketGridRow(item))
+        ) : (
           <>
-            <div className="column" />
-            <div className="column" />
-            <div className="column" />
-            <div className="column" />
-            <div className="column" style={styles.ticketShowMore}>
-              <div style={{marginBottom: "0.4em"}}>VIP perks:</div>
-              <ul
-                style={{
-                  margin: "0em 0em 0em 1em",
-                  padding: 0,
-                  listStyle: "none"
-                }}>
-                <li>> Separate VIP entrance</li>
-                <li>> Private bars</li>
-                <li>> Exclusive VIP viewing area</li>
-              </ul>
-            </div>
-            <div className="column" />
+            <Skeleton />
           </>
         )}
       </div>
@@ -257,7 +234,7 @@ export class Home extends React.Component<AppPropsT, AppStateT> {
   };
 
   renderDesktopTicketsStep = () => {
-    let {selectView} = this.props;
+    let {event, selectView} = this.props;
     let styles = {
       ticketsTitle: {
         display: "flex",
@@ -275,24 +252,6 @@ export class Home extends React.Component<AppPropsT, AppStateT> {
         fontFamily: "Rubik",
         fontWeight: 500,
         fontSize: "0.75em",
-        lineHeight: "1.2em",
-        color: "#7E7E7E"
-      },
-      ticketNumeral: {
-        fontFamily: "Rubik",
-        fontWeight: "bold" as "bold",
-        fontSize: "1.3em",
-        lineHeight: "1.2em"
-      },
-      ticketPriceFee: {
-        fontFamily: "Rubik",
-        fontSize: "0.6em",
-        lineHeight: "1.2em"
-      },
-      ticketType: {
-        fontFamily: "Rubik",
-        fontWeight: 500,
-        fontSize: "0.8em",
         lineHeight: "1.2em",
         color: "#7E7E7E"
       },
@@ -328,10 +287,12 @@ export class Home extends React.Component<AppPropsT, AppStateT> {
     };
     return (
       <>
-        <div style={styles.ticketsTitle}>Tickets</div>
+        <div style={styles.ticketsTitle}>
+          <span style={event ? {} : {opacity: 0}}>Tickets</span>
+        </div>
         <div style={{margin: "0em 1em 1.5em 1em"}}>
           <div style={styles.ticketsRestriction}>
-            A maximum of 10 tickets can be purchased
+            {event ? "A maximum of 10 tickets can be purchased" : <Skeleton />}
           </div>
         </div>
         <div
@@ -367,17 +328,15 @@ export class Home extends React.Component<AppPropsT, AppStateT> {
   };
 
   renderTicketsPriceRange = () => {
-    let {event} = this.props;
-    if (!event) {
-      return <Skeleton width="5em" />;
-    }
+    let event = this.props.event!;
     if (!event.ticket_type_config.length) {
       // TODO add an error boundary to display this to the user in a friendly
       // way
       throw new Error("An error occurred, this event has no available tickets");
     }
-    let [minTicketType, maxTicketType] = minMax(event.ticket_type_config, item =>
-      Number(item.price)
+    let [minTicketType, maxTicketType] = minMax(
+      event.ticket_type_config,
+      item => Number(item.price)
     );
     let minAmountStr = pricePreviewFormatter(
       Number(minTicketType.price),
@@ -394,7 +353,25 @@ export class Home extends React.Component<AppPropsT, AppStateT> {
   };
 
   renderTicketsPullUpCollapsed = () => {
-    let {togglePullUpMenu} = this.props;
+    let {togglePullUpMenu, event} = this.props;
+
+    let numTickets = event ? event.ticket_type_config.length : 0;
+    let showPriceRange = !event || numTickets > 1;
+    let ticketsButton = (
+      <div
+        onClick={() => togglePullUpMenu()}
+        style={sharedStyles.pullUpMenuTicketsButton}>
+        Tickets
+        <div
+          style={{
+            fontSize: "14px",
+            marginLeft: "0.6em",
+            display: "flex"
+          }}>
+          <UpwardChevron />
+        </div>
+      </div>
+    );
 
     return (
       <div
@@ -415,47 +392,46 @@ export class Home extends React.Component<AppPropsT, AppStateT> {
               height: "4em"
             }}
           />
-          <div
-            style={{
-              boxSizing: "border-box",
-              boxShadow: "rgba(0, 0, 0, 0.21) 0 -2px 8px 4px",
-              display: "flex",
-              justifyContent: "center",
-              backgroundColor: "white",
-              padding: "1.5em"
-            }}
-            className="row">
+          {!event ? (
+            <Skeleton />
+          ) : (
             <div
               style={{
-                padding: "0.8em",
-                fontFamily: "Rubik",
-                fontWeight: 500,
-                fontSize: "1.29em",
-                lineHeight: "1.2em"
-              }}>
-              {this.renderTicketsPriceRange()}
+                boxSizing: "border-box",
+                boxShadow: "rgba(0, 0, 0, 0.21) 0 -2px 8px 4px",
+                display: "flex",
+                justifyContent: "center",
+                backgroundColor: "white",
+                padding: "1.5em"
+              }}
+              className="row">
+              {showPriceRange ? (
+                <>
+                  <div
+                    style={{
+                      padding: "0.8em",
+                      fontFamily: "Rubik",
+                      fontWeight: 500,
+                      fontSize: "1.29em",
+                      lineHeight: "1.2em",
+                      marginRight: "1em"
+                    }}>
+                    {this.renderTicketsPriceRange()}
+                  </div>
+                  {ticketsButton}
+                </>
+              ) : (
+                ticketsButton
+              )}
             </div>
-            <div
-              onClick={() => togglePullUpMenu()}
-              style={sharedStyles.pullUpMenuTicketsButton}>
-              Tickets
-              <div
-                style={{
-                  fontSize: "14px",
-                  marginLeft: "0.6em",
-                  display: "flex"
-                }}>
-                <UpwardChevron />
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     );
   };
 
   renderMobileTicketsStep = () => {
-    let {selectView} = this.props;
+    let {selectView, togglePullUpMenu} = this.props;
     let styles = {
       // TODO: dedup
       ticketsRestriction: {
@@ -481,7 +457,9 @@ export class Home extends React.Component<AppPropsT, AppStateT> {
     };
     return (
       <>
-        <div style={{margin: "0em 0em 1.5em 0em"}}>
+        <div
+          style={{margin: "0em 0em 1.5em 0em"}}
+          onClick={() => togglePullUpMenu()}>
           <div style={styles.ticketsRestriction}>
             A maximum of 10 tickets can be purchased
           </div>
@@ -915,26 +893,6 @@ export class Home extends React.Component<AppPropsT, AppStateT> {
   }
 }
 
-interface VIPInfoToggleProps {
-  showMore: boolean;
-  onShow: () => any;
-  onHide: () => any;
-}
-
-const VIPInfoToggle: React.FC<VIPInfoToggleProps> = ({
-  showMore = true,
-  onShow,
-  onHide
-}) => {
-  return (
-    <div
-      onClick={showMore ? onHide : onShow}
-      style={{color: pink, cursor: "pointer"}}>
-      {showMore ? "More" : "Less"} Info
-    </div>
-  );
-};
-
 export default connect(
   ({root, home}: AppState) => ({
     byLayout: byLayout(root.layout),
@@ -942,11 +900,14 @@ export default connect(
     event: root.event,
     authenticationStatus: root.authenticationStatus,
     pullUpMenuCollapsed: home.pullUpMenuCollapsed,
+    ticketsForPurchase: home.ticketsForPurchase,
     view: home.view
   }),
   dispatch => ({
     initiateLogin: initiateLoginAction(dispatch),
     initiateLogout: initiateLogoutAction(dispatch),
+    addTicket: addTicketAction(dispatch),
+    removeTicket: removeTicketAction(dispatch),
     togglePullUpMenu: togglePullUpMenuAction(dispatch),
     selectView: selectViewAction(dispatch)
   })
