@@ -368,9 +368,6 @@ export class Home extends React.Component<AppPropsT, AppStateT> {
           <div
             style={{
               height: "4em"
-              // TODO needs to be a mask
-              // backgroundImage:
-              //   "linear-gradient(to top, white, rgba(255,255,255,0))"
             }}
           />
           <div
@@ -510,9 +507,6 @@ export class Home extends React.Component<AppPropsT, AppStateT> {
           <div
             style={{
               height: "4em"
-              // TODO needs to be a mask
-              // backgroundImage:
-              //   "linear-gradient(to top, white, rgba(255,255,255,0))"
             }}
           />
           <div
