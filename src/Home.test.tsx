@@ -37,7 +37,7 @@ it("renders an event", () => {
     }
   };
   const wrapper = shallow(<Home {...props} />);
-  expect(wrapper.contains("Jun 19th, 11:07PM to Sep 30th, 8:00PM")).toEqual(
+  expect(wrapper.contains("Jun 20th, 3:07AM to Oct 1st, 12:00AM")).toEqual(
     true
   );
   expect(wrapper.contains("12345 Fake Ln, Fake City, MO 55555")).toEqual(true);
