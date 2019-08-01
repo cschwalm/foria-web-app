@@ -212,28 +212,28 @@ class Home extends React.Component<AppPropsT, AppStateT> {
             <IncrementIcon disabled />
           </div>
         </div>
-        {vipShowMore
-          ? null
-          : [
-              <div className="column" />,
-              <div className="column" />,
-              <div className="column" />,
-              <div className="column" />,
-              <div className="column" style={styles.ticketShowMore}>
-                <div style={{marginBottom: "0.4em"}}>VIP perks:</div>
-                <ul
-                  style={{
-                    margin: "0em 0em 0em 1em",
-                    padding: 0,
-                    listStyle: "none"
-                  }}>
-                  <li>> Separate VIP entrance</li>
-                  <li>> Private bars</li>
-                  <li>> Exclusive VIP viewing area</li>
-                </ul>
-              </div>,
-              <div className="column" />
-            ]}
+        {vipShowMore ? null : (
+          <>
+            <div className="column" />
+            <div className="column" />
+            <div className="column" />
+            <div className="column" />
+            <div className="column" style={styles.ticketShowMore}>
+              <div style={{marginBottom: "0.4em"}}>VIP perks:</div>
+              <ul
+                style={{
+                  margin: "0em 0em 0em 1em",
+                  padding: 0,
+                  listStyle: "none"
+                }}>
+                <li>> Separate VIP entrance</li>
+                <li>> Private bars</li>
+                <li>> Exclusive VIP viewing area</li>
+              </ul>
+            </div>
+            <div className="column" />
+          </>
+        )}
       </div>
     );
   };
