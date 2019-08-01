@@ -45,6 +45,22 @@ interface AppPropsT {
 }
 
 const sharedStyles = {
+  pullUpMenuTicketsButton: {
+    marginLeft: "1em",
+    width: "40%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "0.8em",
+    background: "#FF0266",
+    borderRadius: "24px",
+    color: "white",
+    fontFamily: "Rubik",
+    fontWeight: 500,
+    fontSize: "1.29em",
+    lineHeight: "1.2em",
+    cursor: "pointer"
+  },
   eventDetailSubtitle: {
     fontFamily: "Rubik",
     fontSize: "1em",
@@ -392,22 +408,7 @@ export class Home extends React.Component<AppPropsT, AppStateT> {
             </div>
             <div
               onClick={() => togglePullUpMenu()}
-              style={{
-                marginLeft: "1em",
-                width: "40%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "0.8em",
-                background: "#FF0266",
-                borderRadius: "24px",
-                color: "white",
-                fontFamily: "Rubik",
-                fontWeight: 500,
-                fontSize: "1.29em",
-                lineHeight: "1.2em",
-                cursor: "pointer"
-              }}>
+              style={sharedStyles.pullUpMenuTicketsButton}>
               Tickets
               <div
                 style={{
