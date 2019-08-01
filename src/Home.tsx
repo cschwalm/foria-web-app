@@ -1,16 +1,20 @@
 import React from "react";
+import moment from "moment";
 import {connect} from "react-redux";
 import {Link} from "react-router-dom";
-import {AppState} from "./redux/store";
+import Skeleton from "react-loading-skeleton";
 
+import {AppState} from "./redux/store";
+import {AuthenticationStatus, Event} from "./redux/reducers/root";
 import {
   initiateLogin as initiateLoginAction,
   initiateLogout as initiateLogoutAction,
-  togglePullUpMenu as togglePullUpMenuAction
+  togglePullUpMenu as togglePullUpMenuAction,
+  selectView as selectViewAction,
+  View
 } from "./redux/reducers/home";
 import {byLayout} from "./layout";
 import foriaLogo from "./foria_logo.png";
-import heroImage from "./example_hero.jpg";
 import calendarIcon from "./calendar_icon.png";
 import PinpointIcon from "./pinpointIcon";
 import DecrementIcon from "./decrementIcon";
@@ -22,33 +26,46 @@ const ticketOverlayWidth = 376;
 const bodyWidth = 960;
 const pink = "#FF0266";
 
-enum View {
-  Tickets,
-  Checkout,
-  Complete
-}
-
 interface AppStateT {
   vipShowMore: boolean;
-  view: View;
 }
 
 interface AppPropsT {
   // TODO can return a more specific type (a | b)
   byLayout: (a: any, b: any) => any;
-  profile?: auth0.Auth0UserProfile;
   pullUpMenuCollapsed: boolean;
+  authenticationStatus: AuthenticationStatus;
   initiateLogin: () => void;
   initiateLogout: () => void;
   togglePullUpMenu: () => void;
+  selectView: (view: View) => void;
+  view: View;
+  profile?: auth0.Auth0UserProfile;
+  event?: Event;
 }
 
-class Home extends React.Component<AppPropsT, AppStateT> {
+const sharedStyles = {
+  eventDetailSubtitle: {
+    fontFamily: "Rubik",
+    fontSize: "1em",
+    lineHeight: "1.2em"
+  },
+  semibold: {
+    fontWeight: 500
+  },
+  eventDetailTitle: {
+    marginBottom: "0.2em",
+    fontFamily: "Rubik",
+    fontSize: "1.3em",
+    lineHeight: "1.2em"
+  }
+};
+
+export class Home extends React.Component<AppPropsT, AppStateT> {
   constructor(props: AppPropsT) {
     super(props);
     this.state = {
-      vipShowMore: false,
-      view: View.Tickets
+      vipShowMore: false
     };
   }
 
@@ -104,7 +121,7 @@ class Home extends React.Component<AppPropsT, AppStateT> {
         gridArea: "7 / 2 / 8 / 4",
         fontFamily: "Rubik",
         fontWeight: 500,
-        fontSize: "14px",
+        fontSize: "0.8em",
         lineHeight: "1.2em",
         color: "#7E7E7E"
       },
@@ -195,33 +212,34 @@ class Home extends React.Component<AppPropsT, AppStateT> {
             <IncrementIcon disabled />
           </div>
         </div>
-        {vipShowMore
-          ? null
-          : [
-              <div className="column" />,
-              <div className="column" />,
-              <div className="column" />,
-              <div className="column" />,
-              <div className="column" style={styles.ticketShowMore}>
-                <div style={{marginBottom: "0.4em"}}>VIP perks:</div>
-                <ul
-                  style={{
-                    margin: "0em 0em 0em 1em",
-                    padding: 0,
-                    listStyle: "none"
-                  }}>
-                  <li>> Separate VIP entrance</li>
-                  <li>> Private bars</li>
-                  <li>> Exclusive VIP viewing area</li>
-                </ul>
-              </div>,
-              <div className="column" />
-            ]}
+        {vipShowMore ? null : (
+          <>
+            <div className="column" />
+            <div className="column" />
+            <div className="column" />
+            <div className="column" />
+            <div className="column" style={styles.ticketShowMore}>
+              <div style={{marginBottom: "0.4em"}}>VIP perks:</div>
+              <ul
+                style={{
+                  margin: "0em 0em 0em 1em",
+                  padding: 0,
+                  listStyle: "none"
+                }}>
+                <li>> Separate VIP entrance</li>
+                <li>> Private bars</li>
+                <li>> Exclusive VIP viewing area</li>
+              </ul>
+            </div>
+            <div className="column" />
+          </>
+        )}
       </div>
     );
   };
 
   renderDesktopTicketsStep = () => {
+    let {selectView} = this.props;
     let styles = {
       ticketsTitle: {
         display: "flex",
@@ -304,18 +322,29 @@ class Home extends React.Component<AppPropsT, AppStateT> {
           }}>
           {this.renderTicketsGrid()}
         </div>
-        <div className="row" style={styles.checkoutButton}>
+        <div
+          className="row"
+          onClick={() => selectView(View.Checkout)}
+          style={styles.checkoutButton}>
           Checkout
         </div>
       </>
     );
   };
 
-  renderCheckoutStep = () => {
+  renderDesktopCheckoutStep = () => {
     return <div />;
   };
 
-  renderCompleteStep = () => {
+  renderMobileCheckoutStep = () => {
+    return <div />;
+  };
+
+  renderDesktopCompleteStep = () => {
+    return <div />;
+  };
+
+  renderMobileCompleteStep = () => {
     return <div />;
   };
 
@@ -338,9 +367,10 @@ class Home extends React.Component<AppPropsT, AppStateT> {
           }}>
           <div
             style={{
-              height: "4em",
-              backgroundImage:
-                "linear-gradient(to top, white, rgba(255,255,255,0))"
+              height: "4em"
+              // TODO needs to be a mask
+              // backgroundImage:
+              //   "linear-gradient(to top, white, rgba(255,255,255,0))"
             }}
           />
           <div
@@ -381,7 +411,15 @@ class Home extends React.Component<AppPropsT, AppStateT> {
                 lineHeight: "1.2em",
                 cursor: "pointer"
               }}>
-              Tickets<div style={{ fontSize: "14px", marginLeft: '0.6em', display: "flex"}}><UpwardChevron/></div>
+              Tickets
+              <div
+                style={{
+                  fontSize: "14px",
+                  marginLeft: "0.6em",
+                  display: "flex"
+                }}>
+                <UpwardChevron />
+              </div>
             </div>
           </div>
         </div>
@@ -389,11 +427,8 @@ class Home extends React.Component<AppPropsT, AppStateT> {
     );
   };
 
-  renderTicketsPullUp = () => {
-    let {pullUpMenuCollapsed, togglePullUpMenu} = this.props;
-    if (pullUpMenuCollapsed) {
-      return this.renderTicketsPullUpCollapsed();
-    }
+  renderMobileTicketsStep = () => {
+    let {selectView} = this.props;
     let styles = {
       // TODO: dedup
       ticketsRestriction: {
@@ -417,6 +452,46 @@ class Home extends React.Component<AppPropsT, AppStateT> {
         alignItems: "center"
       }
     };
+    return (
+      <>
+        <div style={{margin: "0em 0em 1.5em 0em"}}>
+          <div style={styles.ticketsRestriction}>
+            A maximum of 10 tickets can be purchased
+          </div>
+        </div>
+        <div style={{margin: "0em 0em 3em 0em"}}>
+          {this.renderTicketsGrid()}
+        </div>
+        <div
+          className="row"
+          style={styles.checkoutButton}
+          onClick={() => selectView(View.Checkout)}>
+          Checkout
+        </div>
+      </>
+    );
+  };
+
+  renderTicketsPullUp = () => {
+    let {pullUpMenuCollapsed, togglePullUpMenu, view} = this.props;
+    if (pullUpMenuCollapsed) {
+      return this.renderTicketsPullUpCollapsed();
+    }
+
+    let modalView;
+    switch (view) {
+      case View.Tickets:
+        modalView = this.renderMobileTicketsStep();
+        break;
+      case View.Checkout:
+        modalView = this.renderMobileCheckoutStep();
+        break;
+      case View.Complete:
+        modalView = this.renderMobileCompleteStep();
+        break;
+      default:
+        throw new Error(`Unhandled view: ${view}`);
+    }
 
     return (
       <div
@@ -434,9 +509,10 @@ class Home extends React.Component<AppPropsT, AppStateT> {
           }}>
           <div
             style={{
-              height: "4em",
-              backgroundImage:
-                "linear-gradient(to top, white, rgba(255,255,255,0))"
+              height: "4em"
+              // TODO needs to be a mask
+              // backgroundImage:
+              //   "linear-gradient(to top, white, rgba(255,255,255,0))"
             }}
           />
           <div
@@ -450,20 +526,10 @@ class Home extends React.Component<AppPropsT, AppStateT> {
               position: "relative"
             }}
             className="column">
-	    <div style={{position: "absolute", top: "1em", right: "1.5em" }}>
-	      <DownwardChevron onClick={() => togglePullUpMenu()}/>
-	    </div>
-            <div style={{margin: "0em 0em 1.5em 0em"}}>
-              <div style={styles.ticketsRestriction}>
-                A maximum of 10 tickets can be purchased
-              </div>
+            <div style={{position: "absolute", top: "1em", right: "1.5em"}}>
+              <DownwardChevron onClick={() => togglePullUpMenu()} />
             </div>
-            <div style={{margin: "0em 0em 3em 0em"}}>
-	      {this.renderTicketsGrid()}
-            </div>
-	    <div className="row" style={styles.checkoutButton}>
-	      Checkout
-	    </div>
+            {modalView}
           </div>
         </div>
       </div>
@@ -471,7 +537,7 @@ class Home extends React.Component<AppPropsT, AppStateT> {
   };
 
   renderTicketModal = () => {
-    let {view} = this.state;
+    let {view} = this.props;
 
     let modalView;
     switch (view) {
@@ -479,13 +545,13 @@ class Home extends React.Component<AppPropsT, AppStateT> {
         modalView = this.renderDesktopTicketsStep();
         break;
       case View.Checkout:
-        modalView = this.renderCheckoutStep();
+        modalView = this.renderDesktopCheckoutStep();
         break;
       case View.Complete:
-        modalView = this.renderCompleteStep();
+        modalView = this.renderDesktopCompleteStep();
         break;
       default:
-        throw new Error(`Unknown view: ${view}`);
+        throw new Error(`Unhandled view: ${view}`);
     }
     return (
       <div
@@ -511,21 +577,76 @@ class Home extends React.Component<AppPropsT, AppStateT> {
   };
 
   renderHero = () => {
-    let {byLayout} = this.props;
-    return (
-      <div
-        style={{
-          minHeight: byLayout("200px", "300px"),
-          background: `url(${heroImage})`,
-          backgroundPosition: "center",
-          backgroundSize: "cover"
-        }}
-      />
-    );
+    let {byLayout, event} = this.props;
+    let imgHeight = byLayout("200px", "300px");
+    if (event && event.image_url) {
+      return (
+        <div
+          style={{
+            height: imgHeight,
+            background: `url(${event.image_url})`,
+            backgroundPosition: "center",
+            backgroundSize: "cover"
+          }}
+        />
+      );
+    }
+    return <Skeleton height={imgHeight} />;
+  };
+
+  renderLoginToggle = () => {
+    let {
+      byLayout,
+      initiateLogin,
+      initiateLogout,
+      authenticationStatus
+    } = this.props;
+    let styles = {
+      loginAnchor: {
+        background: "none",
+        border: "none",
+        padding: 0,
+        marginLeft: byLayout("1.5em", "3em"),
+        fontFamily: "Roboto",
+        fontSize: "1em",
+        lineHeight: "1.2em",
+        cursor: "pointer",
+        color: "#FF0266"
+      }
+    };
+
+    switch (authenticationStatus) {
+      case AuthenticationStatus.Pending:
+        return (
+          <div
+            className="ellipsis-anim"
+            style={{...styles.loginAnchor, fontWeight: "bold" as "bold"}}>
+            <span>.</span>
+            <span>.</span>
+            <span>.</span>
+          </div>
+        );
+      case AuthenticationStatus.NoAuth:
+        return (
+          <button onClick={() => initiateLogin()} style={styles.loginAnchor}>
+            {byLayout("Sign In", "Sign Up/Sign In")}
+          </button>
+        );
+      case AuthenticationStatus.Auth:
+        return (
+          <button onClick={() => initiateLogout()} style={styles.loginAnchor}>
+            Log Out
+          </button>
+        );
+      default:
+        throw new Error(
+          "Unhandled AuthenticationStatus when generating login link"
+        );
+    }
   };
 
   renderHeader = () => {
-    let {byLayout, initiateLogin, initiateLogout, profile = null} = this.props;
+    let {byLayout} = this.props;
     let styles = {
       header: {
         backgroundColor: "#fff",
@@ -556,9 +677,6 @@ class Home extends React.Component<AppPropsT, AppStateT> {
       }
     };
 
-    let signInMessage = profile
-      ? "Log Out"
-      : byLayout("Sign In", "Sign Up/Sign In");
     return (
       <div style={styles.header}>
         <div
@@ -586,19 +704,35 @@ class Home extends React.Component<AppPropsT, AppStateT> {
             <Link to="/help/" style={styles.helpAnchor}>
               Help
             </Link>
-            <button
-              onClick={() => (profile ? initiateLogout() : initiateLogin())}
-              style={styles.loginAnchor}>
-              {signInMessage}
-            </button>
+            {this.renderLoginToggle()}
           </div>
         </div>
       </div>
     );
   };
 
+  formatEventDate(start: string, end: string) {
+    let startMoment = moment(start);
+    let endMoment = moment(end);
+    if (
+      startMoment.month() === endMoment.month() &&
+      startMoment.day() === endMoment.day()
+    ) {
+      return (
+        startMoment.format("MMMM Do, h:mmA") +
+        " to " +
+        endMoment.format("h:mmA")
+      );
+    }
+    return (
+      startMoment.format("MMM Do, h:mmA") +
+      " to " +
+      endMoment.format("MMM Do, h:mmA")
+    );
+  }
+
   renderBody = () => {
-    let {byLayout} = this.props;
+    let {event, byLayout} = this.props;
 
     let styles = {
       eventTitle: {
@@ -615,23 +749,12 @@ class Home extends React.Component<AppPropsT, AppStateT> {
         color: "#7E7E7E"
       },
       eventDetailTitle: {
-        marginBottom: "0.2em",
-        fontFamily: "Rubik",
-        fontSize: "1.3em",
-        lineHeight: "1.2em",
-        ...byLayout({fontWeight: 500}, {})
+        ...sharedStyles.eventDetailTitle,
+        ...byLayout(sharedStyles.semibold, {})
       },
       eventDetailSubtitle: {
-        fontFamily: "Rubik",
-        fontSize: "1em",
-        lineHeight: "1.2em",
-        ...byLayout({fontWeight: 500}, {})
-      },
-      eventBody: {
-        fontFamily: "Rubik",
-        fontSize: byLayout("1em", "0.8em"),
-        lineHeight: "1.2em",
-        color: "#7E7E7E"
+        ...sharedStyles.eventDetailSubtitle,
+        ...byLayout({...sharedStyles.semibold, color: pink}, {})
       },
       calendarIcon: {
         width: "1.38em",
@@ -643,13 +766,6 @@ class Home extends React.Component<AppPropsT, AppStateT> {
       }
     };
 
-    let eventDate = byLayout(
-      <div style={styles.eventDetailTitle}>June 18th, 7:00pm to 11:00pm</div>,
-      <>
-        <div style={styles.eventDetailTitle}>June 18th</div>
-        <div style={styles.eventDetailSubtitle}>7:00pm to 11:00pm</div>
-      </>
-    );
     return (
       <div
         style={{
@@ -669,52 +785,88 @@ class Home extends React.Component<AppPropsT, AppStateT> {
             padding: byLayout("2em 1.5em", "2em 0em 2em 1.5em"),
             alignItems: "flex-start"
           }}>
-          <div className="column">
+          <div className="column" style={{flex: 1}}>
             <div style={{margin: "0em 0em 2em 0em"}}>
-              <div style={styles.eventTitle}>Billie Eilish</div>
-              <div style={styles.eventSubTitle}>When We Fall Asleep Tour</div>
+              <div style={styles.eventTitle}>
+                {(event && event.name) || <Skeleton />}
+              </div>
+              <div style={styles.eventSubTitle}>
+                {(event && event.tag_line) || <Skeleton />}
+              </div>
             </div>
             <div className="row" style={{marginBottom: "1em"}}>
-              <img
-                src={calendarIcon}
-                style={styles.calendarIcon}
-                alt="calendar-icon"
-              />
-              <div className="column" style={{marginLeft: "0.8em"}}>
-                {eventDate}
-              </div>
+              {!event ? (
+                <div style={{flex: 1}}>
+                  <Skeleton height={"2em"} />
+                </div>
+              ) : (
+                <>
+                  <img
+                    src={calendarIcon}
+                    style={styles.calendarIcon}
+                    alt="calendar-icon"
+                  />
+                  <div
+                    className="column"
+                    style={{marginLeft: "0.8em", flex: 1}}>
+                    <div style={styles.eventDetailTitle}>
+                      {this.formatEventDate(event.start_time, event.end_time)}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
             <div className="row" style={{marginBottom: "2em"}}>
-              <PinpointIcon
-                width={styles.pinpointIcon.width}
-                height={styles.pinpointIcon.height}
-              />
-              <div className="column" style={{marginLeft: "0.8em"}}>
-                <div style={styles.eventDetailTitle}>Radio City Music Hall</div>
-                <div style={{...styles.eventDetailSubtitle, color: pink}}>
-                  1260 6th Ave, New York, NY 10020
+              {!event ? (
+                <div style={{flex: 1}}>
+                  <Skeleton height={"2em"} />
                 </div>
-              </div>
+              ) : (
+                <>
+                  <PinpointIcon
+                    width={styles.pinpointIcon.width}
+                    height={styles.pinpointIcon.height}
+                  />
+                  <div className="column" style={{marginLeft: "0.8em"}}>
+                    <div style={styles.eventDetailTitle}>
+                      Radio City Music Hall
+                    </div>
+                    <div style={styles.eventDetailSubtitle}>
+                      {`${event.address.street_address}, ${
+                        event.address.city
+                      }, ${event.address.state} ${event.address.zip}`}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
-            <div style={styles.eventBody}>
-              <p>
-                Billie Eilish Pirate Baird O'Connell is an American singer and
-                songwriter. In 2016, she released her debut single, "Ocean
-                Eyes", which subsequently went viral. Her debut EP Don't Smile
-                at Me was released in August of the next year.
-              </p>
-              <p>This event is 18 and over</p>
-              <p>
-                ARRIVE EARLY: Please arrive one-hour prior to showtime. All
-                packages, including briefcases and pocketbooks, will be
-                inspected prior to entry.Inquiries or requests for accessible
-                seating for this event should be made through Radio City Music
-                Hall's Disabled Services at 212-465-6115.
-              </p>
-            </div>
+            {this.renderEventBodyText()}
           </div>
           {byLayout(null, this.renderTicketModal())}
         </div>
+      </div>
+    );
+  };
+
+  renderEventBodyText = () => {
+    let {event, byLayout} = this.props;
+    let styles = {
+      eventBody: {
+        fontFamily: "Rubik",
+        fontSize: byLayout("1em", "0.8em"),
+        lineHeight: "1.2em",
+        color: "#7E7E7E"
+      }
+    };
+    return (
+      <div style={styles.eventBody}>
+        {!event ? (
+          <Skeleton height={100} />
+        ) : (
+          event.description
+            .split("\n")
+            .map((paragraph, index) => <p key={index}>{paragraph}</p>)
+        )}
       </div>
     );
   };
@@ -763,11 +915,15 @@ export default connect(
   ({root, home}: AppState) => ({
     byLayout: byLayout(root.layout),
     profile: root.profile,
-    pullUpMenuCollapsed: home.pullUpMenuCollapsed
+    event: root.event,
+    authenticationStatus: root.authenticationStatus,
+    pullUpMenuCollapsed: home.pullUpMenuCollapsed,
+    view: home.view
   }),
   dispatch => ({
     initiateLogin: initiateLoginAction(dispatch),
     initiateLogout: initiateLogoutAction(dispatch),
-    togglePullUpMenu: togglePullUpMenuAction(dispatch)
+    togglePullUpMenu: togglePullUpMenuAction(dispatch),
+    selectView: selectViewAction(dispatch)
   })
 )(Home);

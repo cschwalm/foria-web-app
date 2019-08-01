@@ -20,7 +20,7 @@ export interface AppState {
 export function initializeStore() {
   const sagaMiddleWare = createSagaMiddleware();
   const store = createStore(
-  combineReducers({root, home}),
+    combineReducers({root, home}),
     {root: rootInitialState, home: homeInitialState},
     // TODO is apply necessary?
     applyMiddleware(sagaMiddleWare)

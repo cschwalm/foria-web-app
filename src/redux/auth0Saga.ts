@@ -1,5 +1,5 @@
 import Auth0Lock from "auth0-lock";
-import {call, put, takeEvery} from "redux-saga/effects";
+import {call, fork, put, takeEvery} from "redux-saga/effects";
 
 import {ActionType as RootActionType} from "./reducers/root";
 import {ActionType as HomeActionType} from "./reducers/home";
@@ -74,14 +74,38 @@ function* handleLogin() {
   let lock = createLock();
   let authenticatePromise = authenticate(lock);
   lock.show();
-  let authResult;
   try {
-    authResult = yield authenticatePromise;
+    // On authentication we will be redirected, so we don't need the return
+    // value here
+    yield authenticatePromise;
   } catch (err) {
     yield put({
       type: RootActionType.AuthenticationError,
       data: err
     });
+    return;
+  }
+}
+
+function handleLogout() {
+  let lock = createLock();
+  lock.logout({returnTo: process.env.REACT_APP_AUTH0_RETURN_TO as string});
+}
+
+function* checkAlreadyLoggedIn() {
+  const lock = createLock();
+  let authResult;
+  try {
+    authResult = yield call(checkSession, lock);
+  } catch (err) {
+    // User needs to authenticate first
+    if (err.code === "login_required") {
+      yield put({
+        type: RootActionType.NoExistingSession
+      });
+    } else {
+      // TODO handle non login_required errors here
+    }
     return;
   }
 
@@ -107,42 +131,10 @@ function* handleLogin() {
   });
 }
 
-function handleLogout() {
-  let lock = createLock();
-  lock.logout({returnTo: process.env.REACT_APP_AUTH0_RETURN_TO as string});
-}
-
-function* checkAlreadyLoggedIn() {
-  const lock = createLock();
-  let authResult;
-  try {
-    authResult = yield call(checkSession, lock);
-  } catch (err) {
-    // User needs to authenticate first
-    return;
-  }
-
-  let profile;
-  try {
-    profile = yield call(getUserInfo, lock, authResult.accessToken);
-  } catch (err) {
-    yield put({
-      type: RootActionType.LoginError,
-      data: err
-    });
-    return;
-  }
-
-  yield put({
-    type: RootActionType.LoginSuccess,
-    data: profile
-  });
-}
-
-function* auth0Saga() {
-  yield call(checkAlreadyLoggedIn);
+function* saga() {
+  yield fork(checkAlreadyLoggedIn);
   yield takeEvery(HomeActionType.InitiateLogin, handleLogin);
   yield takeEvery(HomeActionType.InitiateLogout, handleLogout);
 }
 
-export default auth0Saga;
+export default saga;
