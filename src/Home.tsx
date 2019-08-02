@@ -225,9 +225,7 @@ export class Home extends React.Component<AppPropsT> {
         {event ? (
           event.ticket_type_config.map(item => this.renderTicketGridRow(item))
         ) : (
-          <>
-            <Skeleton />
-          </>
+          <Skeleton />
         )}
       </div>
     );
