@@ -51,7 +51,7 @@ function updateTicketsQuantityHelper(
   return {
     ...tickets,
     // TODO remove ticketType if unused
-    [ticket.id]: { quantity: currentCount + delta, ticketType: ticket }
+    [ticket.id]: {quantity: currentCount + delta, ticketType: ticket}
   };
 }
 
@@ -71,14 +71,18 @@ export const reducer = (state = initialState, action: Action) => {
       return {
         ...state,
         ticketsForPurchase: updateTicketsQuantityHelper(
-          state.ticketsForPurchase, action.data, 1
+          state.ticketsForPurchase,
+          action.data,
+          1
         )
       };
     case ActionType.RemoveTicket:
       return {
         ...state,
         ticketsForPurchase: updateTicketsQuantityHelper(
-          state.ticketsForPurchase, action.data, -1
+          state.ticketsForPurchase,
+          action.data,
+          -1
         )
       };
     default:
