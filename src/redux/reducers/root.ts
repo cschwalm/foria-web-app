@@ -1,4 +1,8 @@
 import {getLayout, Layout} from "../../layout";
+import {ActionType as StripeActionType} from "../stripeSaga";
+import {ActionType as Auth0ActionType} from "../auth0Saga";
+import {ActionType as ApiActionType} from "../apiSaga";
+import Action from "../Action";
 
 export enum AuthenticationStatus {
   Pending,
@@ -7,6 +11,7 @@ export enum AuthenticationStatus {
 }
 
 export interface Address {
+  venue_name: string;
   street_address: string;
   city: string;
   state: string;
@@ -50,39 +55,26 @@ export interface State {
   layout: Layout;
   eventId: string;
   authenticationStatus: AuthenticationStatus;
+  stripe: stripe.Stripe | null;
   profile?: auth0.Auth0UserProfile;
   event?: Event;
   accessToken?: string;
+  stripeToken?: stripe.Token;
 }
 
 export const initialState: State = {
   layout: getLayout(),
   // TODO: parse from URL
   eventId: "52991c6d-7703-488d-93ae-1aacdd7c4291",
-  authenticationStatus: AuthenticationStatus.Pending
+  authenticationStatus: AuthenticationStatus.Pending,
+  stripe: null,
+  // TODO: delete me
+  accessToken:
+    "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6Ik56Y3pPVEZHTUVNelJUTkJPVEl4TURGRU1UTkRNRFpDTmtGR01FSTRPREJETnpBMFJFSkRRZyJ9.eyJpc3MiOiJodHRwczovL2F1dGguZm9yaWF0aWNrZXRzLmNvbS8iLCJzdWIiOiJnb29nbGUtb2F1dGgyfDEwOTI5OTA0NzA2NDI2MjYzOTMzNSIsImF1ZCI6WyJhcGkuZm9yaWF0aWNrZXRzLmNvbSIsImh0dHBzOi8vZm9yaWF0aWNrZXRzLmF1dGgwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE1NjUwNDI4MjUsImV4cCI6MTU2NTA1MDAyNSwiYXpwIjoiNmJ0V3VwRjVSZlFQUE15UkwwOERXT0Y3d1o4WkRqenIiLCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIn0.KFJpmyKlmmhTbuXP6-d2XpusCzdDxFkdMscSQpVy9dpW9yVT-fCFxiOK4u17ywYJrjytXgzUJJ2O41HmBfx-BX8YP0ZED1TiVX8sakxEOuUq4z_30gm-XEvg41tuMfaL62p3xDmenQzy-bjyywQfsFbXIUhfLQAdUix8oKljwIC8L-unx99SUT9t1fjqFuPpx1i2dz3Cj0gi_D-jNk6_xbEYRkvPxJihAJrf-bCkg7-kOdz8bkiEi7cQqA_MH-2m4aIEIxsuLHm2gO_sQ5fXZABZ10K4fCA0O0WKY0vYiyakkxhayO4-LNbBe8jzIDHhasQVOLcL_euHfsaKFqTL6w"
 };
 
 export enum ActionType {
-  Resize = "Resize",
-
-  // checkSession yielded no existing session
-  NoExistingSession = "NoExistingSession",
-
-  // Authentication success indicates presence of accessToken
-  AuthenticationSuccess = "AuthenticationSuccess",
-  AuthenticationError = "AuthenticationError",
-
-  // Login success refers to our ability to get back a profile
-  LoginSuccess = "LoginSuccess",
-  LoginError = "LoginError",
-  Logout = "Logout",
-
-  EventFetchError = "EventFetchError",
-  EventFetchSuccess = "EventFetchSuccess"
-}
-export interface Action {
-  type: ActionType;
-  data?: any;
+  Resize = "Resize"
 }
 
 export const reducer = (state = initialState, action: Action) => {
@@ -92,31 +84,41 @@ export const reducer = (state = initialState, action: Action) => {
         ...state,
         layout: getLayout()
       };
-    case ActionType.AuthenticationSuccess:
+    case Auth0ActionType.AuthenticationSuccess:
       return {
         ...state,
         accessToken: action.data,
         authenticationStatus: AuthenticationStatus.Auth
       };
-    case ActionType.AuthenticationError:
+    case Auth0ActionType.AuthenticationError:
       return {
         ...state,
         authenticationStatus: AuthenticationStatus.NoAuth
       };
-    case ActionType.LoginSuccess:
+    case Auth0ActionType.LoginSuccess:
       return {
         ...state,
         profile: action.data
       };
-    case ActionType.EventFetchSuccess:
+    case ApiActionType.EventFetchSuccess:
       return {
         ...state,
         event: action.data
       };
-    case ActionType.NoExistingSession:
+    case Auth0ActionType.NoExistingSession:
       return {
         ...state,
         authenticationStatus: AuthenticationStatus.NoAuth
+      };
+    case StripeActionType.StripeInstantiated:
+      return {
+        ...state,
+        stripe: action.data
+      };
+    case StripeActionType.StripeCreateTokenSuccess:
+      return {
+        ...state,
+        stripeToken: action.data
       };
     default:
       return state;

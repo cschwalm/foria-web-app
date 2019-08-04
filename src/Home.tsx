@@ -3,6 +3,14 @@ import moment from "moment";
 import {connect} from "react-redux";
 import {Link} from "react-router-dom";
 import Skeleton from "react-loading-skeleton";
+import {
+  StripeProvider,
+  CardElement,
+  PaymentRequestButtonElement,
+  Elements,
+  injectStripe,
+  ReactStripeElements
+} from "react-stripe-elements";
 
 import {AppState} from "./redux/store";
 import {
@@ -11,22 +19,34 @@ import {
   TicketTypeConfig
 } from "./redux/reducers/root";
 import {
-  initiateLogin as initiateLoginAction,
-  initiateLogout as initiateLogoutAction,
+  onTokenCreate as onTokenCreateAction,
+  onTokenCreateError as onTokenCreateErrorAction
+} from "./redux/stripeSaga";
+import {
   addTicket as addTicketAction,
   removeTicket as removeTicketAction,
-  togglePullUpMenu as togglePullUpMenuAction,
+  resetPullUpMenu as resetPullUpMenuAction,
+  showPullUpMenu as showPullUpMenuAction,
   selectView as selectViewAction,
+  toPreviousView as toPreviousViewAction,
+  toNextView as toNextViewAction,
+  someTicketsSelected,
   View,
   TicketCounts
 } from "./redux/reducers/home";
-import {byLayout} from "./layout";
+import {
+  initiateLogin as initiateLoginAction,
+  initiateLogout as initiateLogoutAction
+} from "./redux/auth0Saga";
+import {byLayout as byLayoutWrapper} from "./layout";
 import foriaLogo from "./foria_logo.png";
 import calendarIcon from "./calendar_icon.png";
 import PinpointIcon from "./pinpointIcon";
 import DecrementIcon from "./decrementIcon";
 import IncrementIcon from "./incrementIcon";
-import DownwardChevron from "./downwardChevron";
+// import DownwardChevron from "./downwardChevron";
+import CloseIcon from "./closeIcon";
+import LeftChevron from "./leftChevron";
 import UpwardChevron from "./upwardChevron";
 import {pricePreviewFormatter, priceExactFormatter} from "./formatCurrency";
 import minMax from "./minMax";
@@ -44,15 +64,123 @@ interface AppPropsT {
   initiateLogout: () => void;
   addTicket: (ticket: TicketTypeConfig) => void;
   removeTicket: (ticket: TicketTypeConfig) => void;
-  togglePullUpMenu: () => void;
+  resetPullUpMenu: () => void;
+  showPullUpMenu: () => void;
+  onTokenCreate: (result: stripe.TokenResponse) => void;
+  onTokenCreateError: (err: string) => void;
   selectView: (view: View) => void;
+  toPreviousView: () => void;
+  toNextView: () => void;
   view: View;
+  stripe: stripe.Stripe | null;
+  paymentRequest: stripe.Stripe["paymentRequest"] | null;
+  canMakePayment: boolean;
   ticketsForPurchase: TicketCounts;
   profile?: auth0.Auth0UserProfile;
   event?: Event;
 }
 
+const checkoutButtonHeight = "2.5em";
+
 const sharedStyles = {
+  ticketsTitle: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: "5px 5px 0px 0px",
+    padding: "1em",
+    backgroundColor: "#f2f2f2",
+    fontFamily: "Roboto",
+    fontSize: "1em",
+    lineHeight: "1.2em",
+    marginBottom: "1em"
+  },
+  eventSubTitle: {
+    fontFamily: "Rubik",
+    fontWeight: 500,
+    fontSize: "1em",
+    lineHeight: "1.2em",
+    color: "#7E7E7E"
+  },
+  eventTitle: {
+    fontFamily: "Rubik",
+    fontWeight: "bold" as "bold",
+    fontSize: "2.0em",
+    lineHeight: "1.2em"
+  },
+  ticketsRestriction: {
+    fontFamily: "Rubik",
+    fontWeight: 500,
+    fontSize: "0.75em",
+    lineHeight: "1.2em",
+    color: "#7E7E7E"
+  },
+  ticketQuantityColumn: {
+    justifySelf: "center",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flex: 0
+    // overflow: "hidden",
+    // whiteSpace: "nowrap" as "nowrap",
+    // textOverflow: "ellipsis" as "ellipsis",
+  },
+  ticketPriceColumn: {},
+  ticketDescriptionColumn: {},
+  mobileTicketHeader: {
+    color: "#c2c2c2",
+    textTransform: "uppercase" as "uppercase",
+    fontFamily: "Rubik",
+    fontWeight: 600,
+    margin: "0em 0em 1.5em"
+  },
+  paymentOrSeparator: {
+    display: "flex",
+    justifyContent: "center",
+    color: "#c2c2c2",
+    textTransform: "uppercase" as "uppercase",
+    fontFamily: "Rubik",
+    fontSize: "1em",
+    lineHeight: "1.2em",
+    fontWeight: 600
+  },
+  checkoutTicketDetails: {
+    fontFamily: "Rubik",
+    fontSize: "0.75em",
+    lineHeight: "1.2em",
+    color: "#7E7E7E"
+  },
+  payWithCardButton: {
+    // flex: 1,
+    cursor: "pointer",
+    display: "inline-block",
+    border: "none",
+    height: checkoutButtonHeight,
+    backgroundColor: "#FF0266",
+    borderRadius: "5px",
+    color: "white",
+    fontFamily: "Rubik",
+    fontWeight: 500,
+    fontSize: "1em",
+    lineHeight: "1.2em",
+    justifyContent: "center",
+    alignItems: "center"
+  },
+  disabledCheckoutButton: {
+    cursor: "not-allowed"
+  },
+  checkoutButton: {
+    cursor: "pointer",
+    height: checkoutButtonHeight,
+    backgroundColor: "#FF0266",
+    borderRadius: "5px",
+    color: "white",
+    fontFamily: "Rubik",
+    fontWeight: 500,
+    fontSize: "1em",
+    lineHeight: "1.2em",
+    justifyContent: "center",
+    alignItems: "center"
+  },
   ticketSoldOut: {
     fontFamily: "Rubik",
     fontWeight: 500,
@@ -61,10 +189,12 @@ const sharedStyles = {
     flex: 1,
     opacity: 0.3
   },
-  ticketType: {
+  ticketTitle: {
     fontFamily: "Rubik",
+    overflow: "hidden",
+    whiteSpace: "nowrap" as "nowrap",
+    textOverflow: "ellipsis" as "ellipsis",
     fontWeight: 500,
-    fontSize: "0.8em",
     lineHeight: "1.2em",
     color: "#7E7E7E"
   },
@@ -73,11 +203,21 @@ const sharedStyles = {
     fontSize: "0.6em",
     lineHeight: "1.2em"
   },
+  ticketPrice: {
+    fontFamily: "Rubik",
+    fontWeight: "bold" as "bold",
+    fontSize: "1.3em",
+    lineHeight: "1.2em",
+    display: "flex"
+  },
   ticketNumeral: {
     fontFamily: "Rubik",
     fontWeight: "bold" as "bold",
     fontSize: "1.3em",
-    lineHeight: "1.2em"
+    lineHeight: "1.2em",
+    display: "flex",
+    justifyContent: "center",
+    width: "2em"
   },
   pullUpMenuTicketsButton: {
     width: "40%",
@@ -110,6 +250,186 @@ const sharedStyles = {
   }
 };
 
+function PaymentRequest(props: any) {
+  let {canMakePayment, paymentRequest, byLayout}: any = props;
+
+  return !(canMakePayment && paymentRequest) ? null : (
+    <PaymentRequestButtonElement
+      className="PaymentRequestButton"
+      paymentRequest={paymentRequest}
+      style={{
+        paymentRequestButton: {
+          // theme: "light-outline",
+          theme: "dark",
+          // TODO make these computed
+          height: byLayout("35px" /* 2.5em * 14px */, "45px" /* 2.5em * 18px */)
+        }
+      }}
+    />
+  );
+}
+
+const WrappedPaymentRequest = injectStripe(PaymentRequest);
+
+interface OptionalStripe {
+  stripe?: ReactStripeElements.StripeProps;
+}
+type CardFormProps = Pick<
+  AppPropsT,
+  "byLayout" | "onTokenCreate" | "onTokenCreateError"
+> &
+  OptionalStripe;
+interface CardFormState {
+  cardholderName: string;
+  hasSubmittedOnce: boolean;
+  cardElemEmpty: boolean;
+}
+
+class CardForm extends React.Component<CardFormProps, CardFormState> {
+  constructor(props: CardFormProps) {
+    super(props);
+    this.state = {
+      cardholderName: "",
+      hasSubmittedOnce: false,
+      cardElemEmpty: true
+    };
+  }
+  onSubmit = (evt: React.FormEvent<HTMLFormElement>) => {
+    evt.preventDefault();
+    let {cardholderName} = this.state;
+    let {stripe, onTokenCreate, onTokenCreateError} = this.props;
+    if (!cardholderName) {
+      this.setState({
+        hasSubmittedOnce: true
+      });
+      return;
+    }
+    (stripe as ReactStripeElements.StripeProps)
+      .createToken({name: cardholderName})
+      .then(onTokenCreate)
+      .catch(onTokenCreateError);
+  };
+  onChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
+    let cardholderName = evt.target.value;
+    this.setState({
+      cardholderName
+    });
+  };
+  onCardElementChange = (event: stripe.elements.ElementChangeResponse) => {
+    this.setState({cardElemEmpty: event.empty});
+  };
+  render() {
+    let {cardholderName, hasSubmittedOnce, cardElemEmpty} = this.state;
+    let {byLayout} = this.props;
+
+    return (
+      <form className="column" onSubmit={this.onSubmit}>
+        <div style={{marginBottom: "0.6em"}}>
+          <span
+            style={{
+              fontWeight: 500,
+              fontFamily: "Rubik",
+              fontSize: "1em",
+              lineHeight: "1.2em",
+              marginBottom: "0.6em"
+            }}>
+            Cardholder name
+          </span>
+          <span
+            style={{
+              marginLeft: "0.2em",
+              fontWeight: 500,
+              fontFamily: "Rubik",
+              fontSize: "1em",
+              lineHeight: "1.2em",
+              color: "red"
+            }}>
+            *{" "}
+            {hasSubmittedOnce && !cardholderName
+              ? "This field is required"
+              : ""}
+          </span>
+        </div>
+        <input
+          type="text"
+          value={cardholderName}
+          onChange={this.onChange}
+          placeholder="Name as it appears on card"
+          className={byLayout("mobile", "desktop")}
+          style={{
+            border: "solid 1.75px #ddd",
+            marginBottom: "1em",
+            borderRadius: "5px",
+            fontSize: "14px",
+            padding: byLayout("7px", "9px"),
+            boxSizing: "border-box"
+          }}
+        />
+        <div
+          style={{
+            marginBottom: "0.6em"
+          }}>
+          <span
+            style={{
+              fontWeight: 500,
+              fontFamily: "Rubik",
+              fontSize: "1em",
+              lineHeight: "1.2em",
+              marginBottom: "0.6em"
+            }}>
+            Card details
+          </span>
+          <span
+            style={{
+              marginLeft: "0.2em",
+              fontWeight: 500,
+              fontFamily: "Rubik",
+              fontSize: "1em",
+              lineHeight: "1.2em",
+              color: "red"
+            }}>
+            *{" "}
+            {hasSubmittedOnce && cardElemEmpty ? "This field is required" : ""}
+          </span>
+        </div>
+        <div
+          style={{
+            border: "solid 1.75px #ddd",
+            borderRadius: "5px",
+            padding: byLayout("7px", "9px"),
+            boxSizing: "border-box",
+            marginBottom: "1.5em"
+          }}>
+          <CardElement
+            onChange={this.onCardElementChange}
+            style={{
+              base: {
+                fontSize: byLayout("14px", "14px"),
+                color: "#424770",
+                fontFamily: "Rubik, monospace",
+                "::placeholder": {
+                  color: "#aab7c4"
+                }
+              },
+              invalid: {
+                color: "#9e2146"
+              }
+            }}
+          />
+        </div>
+        <button
+          type="submit"
+          className="row"
+          style={sharedStyles.payWithCardButton}>
+          Purchase
+        </button>
+      </form>
+    );
+  }
+}
+
+const WrappedCardForm = injectStripe(CardForm);
+
 export class Home extends React.Component<AppPropsT> {
   renderAggregateFee = (ticketType: TicketTypeConfig) => {
     let event = this.props.event as Event;
@@ -134,12 +454,22 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderTicketDescriptionColumn = (ticketType: TicketTypeConfig) => {
+    let {byLayout} = this.props;
     let soldOut = ticketType.amount_remaining === 0;
     return (
-      <div
-        className="column"
-        style={{...sharedStyles.ticketType, opacity: soldOut ? 0.3 : 1}}>
-        {ticketType.name} - {ticketType.description}
+      <div className="column" style={sharedStyles.ticketDescriptionColumn}>
+        <div
+          style={{
+            ...sharedStyles.ticketTitle,
+            fontSize: byLayout("1em", "0.8em"),
+            opacity: soldOut ? 0.3 : 1
+          }}>
+          {ticketType.name}
+        </div>
+        <div
+          style={{...sharedStyles.ticketPriceFee, opacity: soldOut ? 0.3 : 1}}>
+          {ticketType.description}
+        </div>
       </div>
     );
   };
@@ -147,8 +477,10 @@ export class Home extends React.Component<AppPropsT> {
   renderTicketPriceColumn = (ticketType: TicketTypeConfig) => {
     let soldOut = ticketType.amount_remaining === 0;
     return (
-      <div className="column" style={{flex: 1, opacity: soldOut ? 0.3 : 1}}>
-        <div style={sharedStyles.ticketNumeral}>
+      <div
+        className="column"
+        style={{...sharedStyles.ticketPriceColumn, opacity: soldOut ? 0.3 : 1}}>
+        <div style={sharedStyles.ticketPrice}>
           {priceExactFormatter(Number(ticketType.price), ticketType.currency)}
         </div>
         <div style={sharedStyles.ticketPriceFee}>
@@ -160,36 +492,44 @@ export class Home extends React.Component<AppPropsT> {
 
   renderTicketQuantityColumn = (ticketType: TicketTypeConfig) => {
     let {ticketsForPurchase, addTicket, removeTicket} = this.props;
+    // TODO, gray out the quantity if it's zero
 
     let soldOut = ticketType.amount_remaining === 0;
     if (soldOut) {
       return (
-        <div className="column" style={sharedStyles.ticketSoldOut}>
-          Sold Out
+        <div className="column" style={sharedStyles.ticketQuantityColumn}>
+          <div style={sharedStyles.ticketSoldOut}>Sold Out</div>
         </div>
       );
     }
 
     let ticketCount = ticketsForPurchase[ticketType.id];
-    let amountSelected = ticketCount ? ticketCount.quantity : 0;
+    let amountSelected = ticketCount || 0;
     let canIncrement =
       amountSelected + 1 <= 10 &&
       amountSelected + 1 <= ticketType.amount_remaining;
     let canDecrement = amountSelected - 1 >= 0;
 
     return (
-      <div className="column" style={{flex: 1}}>
+      <div className="row" style={sharedStyles.ticketQuantityColumn}>
         <div
-          className="row"
           style={{
-            justifyContent: "space-between",
-            alignItems: "center"
+            cursor: canDecrement ? "pointer" : "not-allowed",
+            display: "flex",
+            flex: 0
           }}>
           <DecrementIcon
             disabled={!canDecrement}
             onClick={() => removeTicket(ticketType)}
           />
-          <div style={sharedStyles.ticketNumeral}>{amountSelected}</div>
+        </div>
+        <div style={sharedStyles.ticketNumeral}>{amountSelected}</div>
+        <div
+          style={{
+            cursor: canIncrement ? "pointer" : "not-allowed",
+            display: "flex",
+            flex: 0
+          }}>
           <IncrementIcon
             disabled={!canIncrement}
             onClick={() => addTicket(ticketType)}
@@ -201,11 +541,11 @@ export class Home extends React.Component<AppPropsT> {
 
   renderTicketGridRow = (ticketType: TicketTypeConfig) => {
     return (
-      <>
+      <React.Fragment key={ticketType.id}>
         {this.renderTicketPriceColumn(ticketType)}
         {this.renderTicketDescriptionColumn(ticketType)}
         {this.renderTicketQuantityColumn(ticketType)}
-      </>
+      </React.Fragment>
     );
   };
 
@@ -216,10 +556,9 @@ export class Home extends React.Component<AppPropsT> {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "auto auto auto",
+          gridTemplateColumns: "auto minmax(0,1fr) auto",
           gridColumnGap: "1em",
           gridRowGap: "1em",
-          justifyItems: "space-between",
           alignItems: "center"
         }}>
         {event ? (
@@ -232,97 +571,295 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderDesktopTicketsStep = () => {
-    let {event, selectView} = this.props;
-    let styles = {
-      ticketsTitle: {
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        borderRadius: "5px 5px 0px 0px",
-        padding: "1rem",
-        backgroundColor: "#f2f2f2",
-        fontFamily: "Roboto",
-        fontSize: "1em",
-        lineHeight: "1.2em",
-        marginBottom: "1em"
-      },
-      ticketsRestriction: {
-        fontFamily: "Rubik",
-        fontWeight: 500,
-        fontSize: "0.75em",
-        lineHeight: "1.2em",
-        color: "#7E7E7E"
-      },
-      ticketSoldOut: {
-        fontFamily: "Rubik",
-        fontWeight: 500,
-        fontSize: "1em",
-        lineHeight: "1.2em",
-        flex: 1,
-        opacity: 0.3
-      },
-      ticketShowMore: {
-        gridArea: "7 / 2 / 8 / 4",
-        fontFamily: "Rubik",
-        fontWeight: 500,
-        fontSize: "14px",
-        lineHeight: "1.2em",
-        color: "#7E7E7E"
-      },
-      checkoutButton: {
-        margin: "0em 1em 1em 1em",
-        padding: "1em",
-        background: "#FF0266",
-        borderRadius: "5px",
-        color: "white",
-        fontFamily: "Rubik",
-        fontWeight: 500,
-        fontSize: "18px",
-        lineHeight: "21px",
-        justifyContent: "center",
-        alignItems: "center"
-      }
-    };
+    let {event, toNextView, ticketsForPurchase} = this.props;
+    let someSelected = someTicketsSelected(ticketsForPurchase);
     return (
       <>
-        <div style={styles.ticketsTitle}>
+        <div style={sharedStyles.ticketsTitle}>
           <span style={event ? {} : {opacity: 0}}>Tickets</span>
-        </div>
-        <div style={{margin: "0em 1em 1.5em 1em"}}>
-          <div style={styles.ticketsRestriction}>
-            {event ? "A maximum of 10 tickets can be purchased" : <Skeleton />}
-          </div>
         </div>
         <div
           style={{
-            margin: "0em 1em 1.5em 1em"
+            margin: "1em"
           }}>
-          {this.renderTicketsGrid()}
-        </div>
-        <div
-          className="row"
-          onClick={() => selectView(View.Checkout)}
-          style={styles.checkoutButton}>
-          Checkout
+          <div style={{margin: "0em 0em 1.5em 0em"}}>
+            <div style={sharedStyles.ticketsRestriction}>
+              {event ? (
+                "A maximum of 10 tickets can be purchased"
+              ) : (
+                <Skeleton />
+              )}
+            </div>
+          </div>
+          <div style={{margin: "0em 0em 1.5em 0em"}}>
+            {this.renderTicketsGrid()}
+          </div>
+          <div
+            className="row"
+            style={{
+              ...sharedStyles.checkoutButton,
+              ...(!someSelected ? sharedStyles.disabledCheckoutButton : {})
+            }}
+            onClick={toNextView}>
+            Checkout
+          </div>
         </div>
       </>
     );
   };
 
-  renderDesktopCheckoutStep = () => {
-    return <div />;
+  renderPaymentDelegateView = () => {
+    // If we support more than one payment method, render a view to choose a payment method first
+    let {
+      selectView,
+      stripe,
+      canMakePayment,
+      paymentRequest,
+      byLayout
+    } = this.props;
+    return (
+      <>
+        {stripe && canMakePayment ? (
+          <>
+            <div style={{margin: "0em 0em 1em 0em"}}>
+              <StripeProvider stripe={stripe}>
+                <Elements
+                  fonts={[
+                    {
+                      cssSrc:
+                        "https://fonts.googleapis.com/css?family=Roboto|Rubik:400,500,700&display=swap"
+                    }
+                  ]}>
+                  <WrappedPaymentRequest
+                    canMakePayment={canMakePayment}
+                    paymentRequest={paymentRequest}
+                    byLayout={byLayout}
+                  />
+                </Elements>
+              </StripeProvider>
+            </div>
+            <div
+              style={{...sharedStyles.paymentOrSeparator, marginBottom: "1em"}}>
+              Or
+            </div>
+          </>
+        ) : null}
+        <div
+          className="row"
+          style={sharedStyles.checkoutButton}
+          onClick={() => selectView(View.CreditCardCheckout)}>
+          Pay with card
+        </div>
+      </>
+    );
   };
 
-  renderMobileCheckoutStep = () => {
-    return <div />;
+  renderDesktopChooseCheckoutStep = () => {
+    let {event, toPreviousView} = this.props;
+    return (
+      <>
+        <div style={{...sharedStyles.ticketsTitle, position: "relative"}}>
+          <div
+            style={{
+              position: "absolute",
+              display: "flex",
+              alignItems: "center",
+              top: "1em",
+              bottom: "1em",
+              left: "1em"
+            }}>
+            <LeftChevron />
+          </div>
+          <div
+            style={{
+              position: "absolute",
+              top: "0em",
+              bottom: "0em",
+              left: "0em",
+              width: "3em",
+              cursor: "pointer"
+            }}
+            onClick={toPreviousView}
+          />
+          <span style={event ? {} : {opacity: 0}}>Checkout</span>
+        </div>
+        <div style={{margin: "1em"}}>
+          {this.renderCheckoutSummary()}
+          <div style={{margin: "0 0em 1.5em 0em"}}>
+            <div style={{borderBottom: "dashed 4px", color: "#F2F2F2"}} />
+          </div>
+          {this.renderPaymentDelegateView()}
+        </div>
+      </>
+    );
+  };
+
+  renderCheckoutSummary = () => {
+    return (
+      <div style={{marginBottom: "1.5em"}} className="column">
+        <div
+          className="row"
+          style={{marginBottom: "0.6em", justifyContent: "space-between"}}>
+          <div style={sharedStyles.checkoutTicketDetails} className="column">
+            Ticket price (x1)
+          </div>
+          <div style={sharedStyles.checkoutTicketDetails} className="column">
+            $100.00
+          </div>
+        </div>
+        <div
+          className="row"
+          style={{marginBottom: "0.6em", justifyContent: "space-between"}}>
+          <div style={sharedStyles.checkoutTicketDetails} className="column">
+            Service fee
+          </div>
+          <div style={sharedStyles.checkoutTicketDetails} className="column">
+            $100.00
+          </div>
+        </div>
+        <div className="row" style={{justifyContent: "space-between"}}>
+          <div
+            style={{...sharedStyles.checkoutTicketDetails, color: "black"}}
+            className="column">
+            Total price
+          </div>
+          <div
+            style={{...sharedStyles.checkoutTicketDetails, color: "black"}}
+            className="column">
+            $100.00
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  renderDesktopCreditCardCheckoutStep = () => {
+    let {
+      stripe,
+      byLayout,
+      onTokenCreate,
+      onTokenCreateError,
+      event,
+      toPreviousView
+    } = this.props;
+    return (
+      <>
+        <div style={{...sharedStyles.ticketsTitle, position: "relative"}}>
+          <div
+            style={{
+              position: "absolute",
+              display: "flex",
+              alignItems: "center",
+              top: "1em",
+              bottom: "1em",
+              left: "1em"
+            }}>
+            <LeftChevron />
+          </div>
+          <div
+            style={{
+              position: "absolute",
+              top: "0em",
+              bottom: "0em",
+              left: "0em",
+              width: "3em",
+              cursor: "pointer"
+            }}
+            onClick={toPreviousView}
+          />
+          <span style={event ? {} : {opacity: 0}}>Checkout</span>
+        </div>
+        <div style={{margin: "1em"}}>
+          {this.renderCheckoutSummary()}
+          <div style={{margin: "0 0em 1.5em 0em"}}>
+            <div style={{borderBottom: "dashed 4px", color: "#F2F2F2"}} />
+          </div>
+          {stripe ? (
+            <StripeProvider stripe={stripe}>
+              <Elements
+                fonts={[
+                  {
+                    cssSrc:
+                      "https://fonts.googleapis.com/css?family=Roboto|Rubik:400,500,700&display=swap"
+                  }
+                ]}>
+                <WrappedCardForm
+                  byLayout={byLayout}
+                  onTokenCreate={onTokenCreate}
+                  onTokenCreateError={onTokenCreateError}
+                />
+              </Elements>
+            </StripeProvider>
+          ) : (
+            /* TODO test this Skeleton */
+            <Skeleton />
+          )}
+        </div>
+      </>
+    );
+  };
+
+  renderMobileChooseCheckoutStep = () => {
+    return (
+      <>
+        <div style={sharedStyles.mobileTicketHeader}>Checkout</div>
+        {this.renderCheckoutSummary()}
+        <div style={{marginBottom: "1.5em"}}>
+          <div style={{borderBottom: "dashed 4px", color: "#F2F2F2"}} />
+        </div>
+        {this.renderPaymentDelegateView()}
+      </>
+    );
+  };
+
+  renderMobileCreditCardCheckoutStep = () => {
+    let {stripe, byLayout, onTokenCreate, onTokenCreateError} = this.props;
+    return (
+      <>
+        <div style={sharedStyles.mobileTicketHeader}>Checkout</div>
+        {this.renderCheckoutSummary()}
+        <div style={{marginBottom: "1.5em"}}>
+          <div style={{borderBottom: "dashed 4px", color: "#F2F2F2"}} />
+        </div>
+        {stripe ? (
+          <StripeProvider stripe={stripe}>
+            <Elements
+              fonts={[
+                {
+                  cssSrc:
+                    "https://fonts.googleapis.com/css?family=Roboto|Rubik:400,500,700&display=swap"
+                }
+              ]}>
+              <WrappedCardForm
+                byLayout={byLayout}
+                onTokenCreate={onTokenCreate}
+                onTokenCreateError={onTokenCreateError}
+              />
+            </Elements>
+          </StripeProvider>
+        ) : (
+          /* TODO test this Skeleton */
+          <Skeleton />
+        )}
+      </>
+    );
   };
 
   renderDesktopCompleteStep = () => {
-    return <div />;
+    let event = this.props.event!;
+    return (
+      <div style={sharedStyles.ticketsTitle}>
+        <span style={event ? {} : {opacity: 0}}>Purchase Success</span>
+      </div>
+    );
   };
 
   renderMobileCompleteStep = () => {
-    return <div />;
+    return (
+      <>
+        <div style={sharedStyles.mobileTicketHeader}>Purchase Success</div>
+      </>
+    );
   };
 
   renderTicketsPriceRange = () => {
@@ -351,13 +888,13 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderTicketsPullUpCollapsed = () => {
-    let {togglePullUpMenu, event} = this.props;
+    let {showPullUpMenu, event} = this.props;
 
     let numTickets = event ? event.ticket_type_config.length : 0;
     let showPriceRange = !event || numTickets > 1;
     let ticketsButton = (
       <div
-        onClick={() => togglePullUpMenu()}
+        onClick={showPullUpMenu}
         style={sharedStyles.pullUpMenuTicketsButton}>
         Tickets
         <div
@@ -381,6 +918,7 @@ export class Home extends React.Component<AppPropsT> {
         }}>
         <div
           style={{
+            overscrollBehavior: "none",
             position: "fixed",
             bottom: "0",
             width: "100%"
@@ -429,46 +967,26 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderMobileTicketsStep = () => {
-    let {selectView, togglePullUpMenu} = this.props;
-    let styles = {
-      // TODO: dedup
-      ticketsRestriction: {
-        fontFamily: "Rubik",
-        fontWeight: 500,
-        fontSize: "0.75em",
-        lineHeight: "1.2em",
-        color: "#7E7E7E"
-      },
-      // TODO: dedup
-      checkoutButton: {
-        padding: "1em",
-        background: "#FF0266",
-        borderRadius: "5px",
-        color: "white",
-        fontFamily: "Rubik",
-        fontWeight: 500,
-        fontSize: "18px",
-        lineHeight: "21px",
-        justifyContent: "center",
-        alignItems: "center"
-      }
-    };
+    let {toNextView, ticketsForPurchase} = this.props;
+    let someSelected = someTicketsSelected(ticketsForPurchase);
     return (
       <>
-        <div
-          style={{margin: "0em 0em 1.5em 0em"}}
-          onClick={() => togglePullUpMenu()}>
-          <div style={styles.ticketsRestriction}>
+        <div style={sharedStyles.mobileTicketHeader}>Tickets</div>
+        <div style={{margin: "0em 0em 1.5em 0em"}}>
+          <div style={sharedStyles.ticketsRestriction}>
             A maximum of 10 tickets can be purchased
           </div>
         </div>
-        <div style={{margin: "0em 0em 3em 0em"}}>
+        <div style={{margin: "0em 0em 2em 0em"}}>
           {this.renderTicketsGrid()}
         </div>
         <div
           className="row"
-          style={styles.checkoutButton}
-          onClick={() => selectView(View.Checkout)}>
+          style={{
+            ...sharedStyles.checkoutButton,
+            ...(!someSelected ? sharedStyles.disabledCheckoutButton : {})
+          }}
+          onClick={toNextView}>
           Checkout
         </div>
       </>
@@ -476,7 +994,7 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderTicketsPullUp = () => {
-    let {pullUpMenuCollapsed, togglePullUpMenu, view} = this.props;
+    let {pullUpMenuCollapsed, resetPullUpMenu, view} = this.props;
     if (pullUpMenuCollapsed) {
       return this.renderTicketsPullUpCollapsed();
     }
@@ -486,8 +1004,11 @@ export class Home extends React.Component<AppPropsT> {
       case View.Tickets:
         modalView = this.renderMobileTicketsStep();
         break;
-      case View.Checkout:
-        modalView = this.renderMobileCheckoutStep();
+      case View.ChooseCheckout:
+        modalView = this.renderMobileChooseCheckoutStep();
+        break;
+      case View.CreditCardCheckout:
+        modalView = this.renderMobileCreditCardCheckoutStep();
         break;
       case View.Complete:
         modalView = this.renderMobileCompleteStep();
@@ -526,8 +1047,14 @@ export class Home extends React.Component<AppPropsT> {
               position: "relative"
             }}
             className="column">
-            <div style={{position: "absolute", top: "1em", right: "1.5em"}}>
-              <DownwardChevron onClick={() => togglePullUpMenu()} />
+            <div
+              style={{
+                cursor: "pointer",
+                position: "absolute",
+                top: "1.5em",
+                right: "1.5em"
+              }}>
+              <CloseIcon onClick={resetPullUpMenu} />
             </div>
             {modalView}
           </div>
@@ -544,8 +1071,11 @@ export class Home extends React.Component<AppPropsT> {
       case View.Tickets:
         modalView = this.renderDesktopTicketsStep();
         break;
-      case View.Checkout:
-        modalView = this.renderDesktopCheckoutStep();
+      case View.ChooseCheckout:
+        modalView = this.renderDesktopChooseCheckoutStep();
+        break;
+      case View.CreditCardCheckout:
+        modalView = this.renderDesktopCreditCardCheckoutStep();
         break;
       case View.Complete:
         modalView = this.renderDesktopCompleteStep();
@@ -584,6 +1114,8 @@ export class Home extends React.Component<AppPropsT> {
         <div
           style={{
             height: imgHeight,
+            maxWidth: `${bodyWidth}px`,
+            margin: "0 auto",
             background: `url(${event.image_url})`,
             backgroundPosition: "center",
             backgroundSize: "cover"
@@ -711,6 +1243,21 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
+  formatCheckoutEventDate(start: string, end: string) {
+    let startMoment = moment(start);
+    let endMoment = moment(end);
+    if (
+      startMoment.month() === endMoment.month() &&
+      startMoment.day() === endMoment.day()
+    ) {
+      return (
+        startMoment.format("MMMM Do, h:mmA") +
+        " to " +
+        endMoment.format("h:mmA")
+      );
+    }
+    return startMoment.format("MMM Do") + " - " + endMoment.format("MMM Do");
+  }
   formatEventDate(start: string, end: string) {
     let startMoment = moment(start);
     let endMoment = moment(end);
@@ -735,19 +1282,6 @@ export class Home extends React.Component<AppPropsT> {
     let {event, byLayout} = this.props;
 
     let styles = {
-      eventTitle: {
-        fontFamily: "Rubik",
-        fontWeight: "bold" as "bold",
-        fontSize: "2.2em",
-        lineHeight: "1.2em"
-      },
-      eventSubTitle: {
-        fontFamily: "Rubik",
-        fontWeight: 500,
-        fontSize: "1em",
-        lineHeight: "1.2em",
-        color: "#7E7E7E"
-      },
       eventDetailTitle: {
         ...sharedStyles.eventDetailTitle,
         ...byLayout(sharedStyles.semibold, {})
@@ -781,16 +1315,15 @@ export class Home extends React.Component<AppPropsT> {
           style={{
             borderRadius: "5px",
             backgroundColor: "white",
-            margin: byLayout("0", "0 0.6em"),
             padding: byLayout("2em 1.5em", "2em 0em 2em 1.5em"),
             alignItems: "flex-start"
           }}>
           <div className="column" style={{flex: 1}}>
             <div style={{margin: "0em 0em 2em 0em"}}>
-              <div style={styles.eventTitle}>
+              <div style={sharedStyles.eventTitle}>
                 {(event && event.name) || <Skeleton />}
               </div>
-              <div style={styles.eventSubTitle}>
+              <div style={sharedStyles.eventSubTitle}>
                 {(event && event.tag_line) || <Skeleton />}
               </div>
             </div>
@@ -893,8 +1426,11 @@ export class Home extends React.Component<AppPropsT> {
 
 export default connect(
   ({root, home}: AppState) => ({
-    byLayout: byLayout(root.layout),
+    byLayout: byLayoutWrapper(root.layout),
     profile: root.profile,
+    stripe: root.stripe,
+    paymentRequest: home.paymentRequest,
+    canMakePayment: home.canMakePayment,
     event: root.event,
     authenticationStatus: root.authenticationStatus,
     pullUpMenuCollapsed: home.pullUpMenuCollapsed,
@@ -906,7 +1442,12 @@ export default connect(
     initiateLogout: initiateLogoutAction(dispatch),
     addTicket: addTicketAction(dispatch),
     removeTicket: removeTicketAction(dispatch),
-    togglePullUpMenu: togglePullUpMenuAction(dispatch),
-    selectView: selectViewAction(dispatch)
+    resetPullUpMenu: resetPullUpMenuAction(dispatch),
+    showPullUpMenu: showPullUpMenuAction(dispatch),
+    selectView: selectViewAction(dispatch),
+    toPreviousView: toPreviousViewAction(dispatch),
+    toNextView: toNextViewAction(dispatch),
+    onTokenCreate: onTokenCreateAction(dispatch),
+    onTokenCreateError: onTokenCreateErrorAction(dispatch)
   })
 )(Home);
