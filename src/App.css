@@ -1,11 +1,27 @@
 @import url('https://fonts.googleapis.com/css?family=Roboto|Rubik:400,500,700&display=swap');
 
+input.mobile::placeholder {
+  color: #aab7c4;
+  font-family: Rubik;
+  font-size: 14px;
+}
+
+input.desktop::placeholder {
+  color: #aab7c4;
+  font-family: Rubik;
+  font-size: 14px;
+}
+
 body, html, #root, .App {
     height: 100%;
 }
 
 p {
-    margin: 0rem 0rem 1rem 0rem;
+    margin: 0em 0em 1em 0em;
+}
+
+p:last-child {
+    margin: 0;
 }
 
 .column {

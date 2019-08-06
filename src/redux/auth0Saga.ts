@@ -1,21 +1,50 @@
 import Auth0Lock from "auth0-lock";
-import {call, fork, put, takeEvery} from "redux-saga/effects";
+import {call, fork, put, race, takeEvery} from "redux-saga/effects";
+import {Dispatch} from "redux";
 
-import {ActionType as RootActionType} from "./reducers/root";
-import {ActionType as HomeActionType} from "./reducers/home";
+import Action from "./Action";
+
+export enum ActionType {
+  CheckLogin = "CheckLogin",
+  InitiateLogin = "InitiateLogin",
+  InitiateLogout = "InitiateLogout",
+
+  // checkSession yielded no existing session
+  NoExistingSession = "NoExistingSession",
+
+  // Authentication success indicates presence of accessToken
+  AuthenticationSuccess = "AuthenticationSuccess",
+  AuthenticationError = "AuthenticationError",
+  AuthenticationCancelled = "AuthenticationCancelled",
+
+  // Login success refers to our ability to get back a profile
+  LoginSuccess = "LoginSuccess",
+  LoginError = "LoginError",
+  Logout = "Logout"
+}
+
+export const initiateLogin = (dispatch: Dispatch<Action>) => () =>
+  dispatch({type: ActionType.InitiateLogin});
+
+export const initiateLogout = (dispatch: Dispatch<Action>) => () =>
+  dispatch({type: ActionType.InitiateLogout});
 
 function createLock() {
-  let primaryColor = "#FF0266" as string;
-
   return new Auth0Lock(
     process.env.REACT_APP_AUTH0_CLIENTID as string,
     process.env.REACT_APP_AUTH0_DOMAIN as string,
     {
+      // It is necessary that we do NOT use autoClose. Auto closing prevents
+      // us from distinguishing between a user close, and a close following
+      // authentication.
+      // https://github.com/auth0/lock/issues/1713
+      autoclose: false,
       configurationBaseUrl: process.env
         .REACT_APP_AUTH0_CONFIGURATION_BASE_URL as string,
       auth: {
         responseType: "token",
-        audience: process.env.REACT_APP_AUTH0_AUDIENCE as string
+        audience: process.env.REACT_APP_AUTH0_AUDIENCE as string,
+        redirect: false
       },
       additionalSignUpFields: [
         {
@@ -40,19 +69,23 @@ function createLock() {
       loginAfterSignUp: true,
       theme: {
         logo: "https://foriatickets.com/img/foria-logo-color.png",
-        primaryColor: primaryColor
+        primaryColor: "#FF0266"
       }
     }
   );
 }
 
-function authenticate(lock: Auth0LockStatic) {
-  return new Promise((resolve, reject) => {
-    lock.on("authenticated", resolve);
-    lock.on("authorization_error", reject);
-    lock.on("unrecoverable_error", reject);
-  });
-}
+const didAuthenticate = (lock: Auth0LockStatic) =>
+  new Promise(resolve => lock.on("authenticated", resolve));
+
+const didAuthError = (lock: Auth0LockStatic) =>
+  new Promise(resolve => lock.on("authorization_error", resolve));
+
+const didUnrecoverableError = (lock: Auth0LockStatic) =>
+  new Promise(resolve => lock.on("unrecoverable_error", resolve));
+
+const didHide = (lock: Auth0LockStatic) =>
+  new Promise(resolve => lock.on("hide", resolve));
 
 function getUserInfo(lock: Auth0LockStatic, accessToken: string) {
   return new Promise((resolve, reject) =>
@@ -70,24 +103,61 @@ function checkSession(lock: Auth0LockStatic) {
   );
 }
 
-function* handleLogin() {
+function* login() {
   let lock = createLock();
-  let authenticatePromise = authenticate(lock);
+  let didAuthenticatePromise = didAuthenticate(lock);
+  let didAuthErrorPromise = didAuthError(lock);
+  let didUnrecoverableErrorPromise = didUnrecoverableError(lock);
+  let didHidePromise = didHide(lock);
   lock.show();
+
+  let [authResult, error, unrecoverable /*hidden*/] = yield race([
+    didAuthenticatePromise,
+    didAuthErrorPromise,
+    didUnrecoverableErrorPromise,
+    didHidePromise
+  ]);
+
+  if (error || unrecoverable) {
+    yield put({
+      type: ActionType.AuthenticationError,
+      data: error || unrecoverable
+    });
+    return;
+  }
+
+  if (!authResult) {
+    yield put({
+      type: ActionType.AuthenticationCancelled
+    });
+    return;
+  }
+
+  lock.hide();
+
+  yield put({
+    type: ActionType.AuthenticationSuccess,
+    data: authResult.accessToken
+  });
+
+  let profile;
   try {
-    // On authentication we will be redirected, so we don't need the return
-    // value here
-    yield authenticatePromise;
+    profile = yield call(getUserInfo, lock, authResult.accessToken);
   } catch (err) {
     yield put({
-      type: RootActionType.AuthenticationError,
+      type: ActionType.LoginError,
       data: err
     });
     return;
   }
+
+  yield put({
+    type: ActionType.LoginSuccess,
+    data: profile
+  });
 }
 
-function handleLogout() {
+function logout() {
   let lock = createLock();
   lock.logout({returnTo: process.env.REACT_APP_AUTH0_RETURN_TO as string});
 }
@@ -101,16 +171,19 @@ function* checkAlreadyLoggedIn() {
     // User needs to authenticate first
     if (err.code === "login_required") {
       yield put({
-        type: RootActionType.NoExistingSession
+        type: ActionType.NoExistingSession
       });
     } else {
-      // TODO handle non login_required errors here
+      yield put({
+        type: ActionType.AuthenticationError,
+        data: err
+      });
     }
     return;
   }
 
   yield put({
-    type: RootActionType.AuthenticationSuccess,
+    type: ActionType.AuthenticationSuccess,
     data: authResult.accessToken
   });
 
@@ -119,22 +192,23 @@ function* checkAlreadyLoggedIn() {
     profile = yield call(getUserInfo, lock, authResult.accessToken);
   } catch (err) {
     yield put({
-      type: RootActionType.LoginError,
+      type: ActionType.LoginError,
       data: err
     });
     return;
   }
 
   yield put({
-    type: RootActionType.LoginSuccess,
+    type: ActionType.LoginSuccess,
     data: profile
   });
 }
 
 function* saga() {
   yield fork(checkAlreadyLoggedIn);
-  yield takeEvery(HomeActionType.InitiateLogin, handleLogin);
-  yield takeEvery(HomeActionType.InitiateLogout, handleLogout);
+  yield takeEvery(ActionType.CheckLogin, checkAlreadyLoggedIn);
+  yield takeEvery(ActionType.InitiateLogin, login);
+  yield takeEvery(ActionType.InitiateLogout, logout);
 }
 
 export default saga;

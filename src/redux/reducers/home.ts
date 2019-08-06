@@ -1,44 +1,48 @@
 import {Dispatch} from "redux";
+import {values} from "lodash";
 
+import Action from "../Action";
 import {TicketTypeConfig} from "./root";
+import {ActionType as StripeActionType} from "../stripeSaga";
 
 export enum View {
   Tickets,
-  Checkout,
+  ChooseCheckout,
+  CreditCardCheckout,
   Complete
 }
 
 export enum ActionType {
-  InitiateLogin = "InitiateLogin",
-  InitiateLogout = "InitiateLogout",
-  TogglePullUpMenu = "TogglePullUpMenu",
   SelectView = "SelectView",
+  ToPreviousView = "ToPreviousView",
+  ToNextView = "ToNextView",
+
+  ResetPullUpMenu = "ResetPullUpMenu",
+  ShowPullUpMenu = "ShowPullUpMenu",
+
+  RequestView = "RequestView",
   AddTicket = "AddTicket",
   RemoveTicket = "RemoveTicket"
 }
-export interface Action {
-  type: ActionType;
-  data?: any;
-}
 
-export interface TicketLookupAndCount {
-  ticketType: TicketTypeConfig;
-  quantity: number;
-}
-
-export type TicketCounts = {[ticketId: string]: TicketLookupAndCount};
+export type TicketCounts = {[ticketId: string]: number};
 
 export interface State {
   pullUpMenuCollapsed: boolean;
   view: View;
   promoCode?: string;
   ticketsForPurchase: TicketCounts;
+  paymentRequest: stripe.Stripe["paymentRequest"] | null;
+  canMakePayment: boolean;
 }
 export const initialState = {
-  // pullUpMenuCollapsed: false,
   pullUpMenuCollapsed: true,
-  ticketsForPurchase: {},
-  view: View.Tickets
+  // pullUpMenuCollapsed: true,
+  view: View.Tickets,
+  // view: View.ChooseCheckout,
+  paymentRequest: null,
+  canMakePayment: false,
+  ticketsForPurchase: {}
 };
 
 function updateTicketsQuantityHelper(
@@ -47,20 +51,30 @@ function updateTicketsQuantityHelper(
   delta: number
 ) {
   let ticketCount = tickets[ticket.id];
-  let currentCount = ticketCount ? ticketCount.quantity : 0;
+  let currentCount = ticketCount || 0;
   return {
     ...tickets,
-    // TODO remove ticketType if unused
-    [ticket.id]: { quantity: currentCount + delta, ticketType: ticket }
+    [ticket.id]: currentCount + delta
   };
 }
+export const someTicketsSelected = (ticketsForPurchase: TicketCounts) =>
+  values(ticketsForPurchase).some(quantity => quantity > 0);
 
 export const reducer = (state = initialState, action: Action) => {
   switch (action.type) {
-    case ActionType.TogglePullUpMenu:
+    // Due to mobile space constraints, there is no back button to undo
+    // selected tickets, as a substitute, the user can close the menu, and
+    // start again if they open it
+    case ActionType.ResetPullUpMenu:
       return {
         ...state,
-        pullUpMenuCollapsed: !state.pullUpMenuCollapsed
+        ...initialState,
+        pullUpMenuCollapsed: true
+      };
+    case ActionType.ShowPullUpMenu:
+      return {
+        ...state,
+        pullUpMenuCollapsed: false
       };
     case ActionType.SelectView:
       return {
@@ -71,32 +85,55 @@ export const reducer = (state = initialState, action: Action) => {
       return {
         ...state,
         ticketsForPurchase: updateTicketsQuantityHelper(
-          state.ticketsForPurchase, action.data, 1
+          state.ticketsForPurchase,
+          action.data,
+          1
         )
       };
     case ActionType.RemoveTicket:
       return {
         ...state,
         ticketsForPurchase: updateTicketsQuantityHelper(
-          state.ticketsForPurchase, action.data, -1
+          state.ticketsForPurchase,
+          action.data,
+          -1
         )
+      };
+    case StripeActionType.CanMakePaymentSuccess:
+      return {
+        ...state,
+        canMakePayment: action.data
+      };
+    case StripeActionType.PaymentRequestCreated:
+      return {
+        ...state,
+        paymentRequest: action.data,
+        // canMakePayment is state dervied from paymentRequest (pr), when a pr
+        // is created, we reset canMakePayment
+        canMakePayment: false
       };
     default:
       return state;
   }
 };
 
-export const initiateLogin = (dispatch: Dispatch<Action>) => () =>
-  dispatch({type: ActionType.InitiateLogin});
+export const resetPullUpMenu = (dispatch: Dispatch<Action>) => () =>
+  dispatch({type: ActionType.ResetPullUpMenu});
 
-export const initiateLogout = (dispatch: Dispatch<Action>) => () =>
-  dispatch({type: ActionType.InitiateLogout});
-
-export const togglePullUpMenu = (dispatch: Dispatch<Action>) => () =>
-  dispatch({type: ActionType.TogglePullUpMenu});
+export const showPullUpMenu = (dispatch: Dispatch<Action>) => () =>
+  dispatch({type: ActionType.ShowPullUpMenu});
 
 export const selectView = (dispatch: Dispatch<Action>) => (view: View) =>
   dispatch({type: ActionType.SelectView, data: view});
+
+export const toNextView = (dispatch: Dispatch<Action>) => () =>
+  dispatch({type: ActionType.ToNextView});
+
+export const toPreviousView = (dispatch: Dispatch<Action>) => () =>
+  dispatch({type: ActionType.ToPreviousView});
+
+export const requestView = (dispatch: Dispatch<Action>) => (view: View) =>
+  dispatch({type: ActionType.RequestView, data: view});
 
 export const addTicket = (dispatch: Dispatch<Action>) => (
   ticket: TicketTypeConfig

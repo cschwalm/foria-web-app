@@ -4,6 +4,8 @@ import {throttle} from "lodash";
 import {ActionType as RootActionType} from "./reducers/root";
 import auth0Saga from "./auth0Saga";
 import apiSaga from "./apiSaga";
+import stripeSaga from "./stripeSaga";
+import homeSaga from "./homeSaga";
 
 function createWindowWidthChannel() {
   return eventChannel(emitter => {
@@ -26,8 +28,10 @@ function* handleResizeSaga() {
 
 function* saga() {
   yield fork(apiSaga);
+  yield fork(stripeSaga);
   yield fork(handleResizeSaga);
   yield fork(auth0Saga);
+  yield fork(homeSaga);
 }
 
 export default saga;
