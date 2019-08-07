@@ -452,11 +452,10 @@ export class Home extends React.Component<AppPropsT> {
   }
   componentDidMount() {
     if (this.pullUpMenuRef.current) {
-      // Disable scroll behind the pull up menu, by preventing touch events
-      // from propagating outside of pull up menu
+      // Disable scroll behind the pull up menu
       this.pullUpMenuRef.current.addEventListener(
         "touchmove",
-        this.stopEventPropagation,
+        this.disableEvent,
         {passive: false}
       );
     }
@@ -466,13 +465,15 @@ export class Home extends React.Component<AppPropsT> {
     if (this.pullUpMenuRef.current) {
       this.pullUpMenuRef.current.removeEventListener(
         "touchmove",
-        this.stopEventPropagation
+        this.disableEvent
       );
     }
   }
 
-  stopEventPropagation = (e: TouchEvent) => {
+  disableEvent = (e: TouchEvent) => {
+    e.preventDefault();
     e.stopPropagation();
+    e.stopImmediatePropagation();
   };
 
   renderAggregateFee = (ticketType: TicketTypeConfig) => {
