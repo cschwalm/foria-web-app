@@ -205,7 +205,6 @@ function* checkAlreadyLoggedIn() {
 }
 
 function* saga() {
-  yield fork(checkAlreadyLoggedIn);
   yield takeEvery(ActionType.CheckLogin, checkAlreadyLoggedIn);
   yield takeEvery(ActionType.InitiateLogin, login);
   yield takeEvery(ActionType.InitiateLogout, logout);
