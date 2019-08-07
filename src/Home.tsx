@@ -82,6 +82,9 @@ interface AppPropsT {
 
 const checkoutButtonHeight = "2.5em";
 
+const mobileBaseFont = 16;
+const desktopBaseFont = 18;
+
 const sharedStyles = {
   ticketsTitle: {
     display: "flex",
@@ -230,8 +233,6 @@ const sharedStyles = {
     color: "white",
     fontFamily: "Rubik",
     fontWeight: 500,
-    fontSize: "1.29em",
-    lineHeight: "1.2em",
     cursor: "pointer"
   },
   eventDetailSubtitle: {
@@ -262,7 +263,10 @@ function PaymentRequest(props: any) {
           // theme: "light-outline",
           theme: "dark",
           // TODO make these computed
-          height: byLayout("35px" /* 2.5em * 14px */, "45px" /* 2.5em * 18px */)
+          height: byLayout(
+            `${mobileBaseFont * 2.5}px`,
+            `${desktopBaseFont * 2.5}px`
+          )
         }
       }}
     />
@@ -364,7 +368,8 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
             border: "solid 1.75px #ddd",
             marginBottom: "1em",
             borderRadius: "5px",
-            fontSize: "14px",
+            // Use mobile font size also for desktop, note that the placeholder style fontSize, should agree with this fontSize
+            fontSize: `${mobileBaseFont}px`,
             padding: byLayout("7px", "9px"),
             boxSizing: "border-box"
           }}
@@ -388,7 +393,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
               marginLeft: "0.2em",
               fontWeight: 500,
               fontFamily: "Rubik",
-              fontSize: "1em",
+              fontSize: `${mobileBaseFont}px`,
               lineHeight: "1.2em",
               color: "red"
             }}>
@@ -408,7 +413,8 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
             onChange={this.onCardElementChange}
             style={{
               base: {
-                fontSize: byLayout("14px", "14px"),
+                // Use mobile font size also for desktop
+                fontSize: `${mobileBaseFont}px`,
                 color: "#424770",
                 fontFamily: "Rubik, monospace",
                 "::placeholder": {
@@ -930,10 +936,17 @@ export class Home extends React.Component<AppPropsT> {
       <div
         onClick={showPullUpMenu}
         style={sharedStyles.pullUpMenuTicketsButton}>
-        Tickets
+        <span
+          style={{
+            fontSize: "1em",
+            lineHeight: "1.2em"
+          }}>
+          Tickets
+        </span>
         <div
           style={{
-            fontSize: "14px",
+            fontSize: "0.8em",
+            lineHeight: "1.2em",
             marginLeft: "0.6em",
             display: "flex"
           }}>
@@ -953,7 +966,7 @@ export class Home extends React.Component<AppPropsT> {
                 padding: "0.8em",
                 fontFamily: "Rubik",
                 fontWeight: 500,
-                fontSize: "1.29em",
+                fontSize: "1em",
                 lineHeight: "1.2em",
                 marginRight: "1em"
               }}>
@@ -1417,7 +1430,7 @@ export class Home extends React.Component<AppPropsT> {
       <div
         className="App"
         style={{
-          fontSize: byLayout("14px", "18px"),
+          fontSize: byLayout(`${mobileBaseFont}px`, `${desktopBaseFont}px`),
           overflowY: "scroll",
           backgroundColor: "#f2f2f2"
         }}>
