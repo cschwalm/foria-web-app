@@ -1,4 +1,4 @@
-import React from "react";
+import React, {RefObject} from "react";
 import moment from "moment";
 import {connect} from "react-redux";
 import {Link} from "react-router-dom";
@@ -435,6 +435,36 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
 const WrappedCardForm = injectStripe(CardForm);
 
 export class Home extends React.Component<AppPropsT> {
+  pullUpMenuRef: RefObject<HTMLDivElement>;
+  constructor(props: AppPropsT) {
+    super(props);
+    this.pullUpMenuRef = React.createRef<HTMLDivElement>();
+  }
+  componentDidMount() {
+    if (this.pullUpMenuRef.current) {
+      // Disable scroll behind the pull up menu, by preventing touch events
+      // from propagating outside of pull up menu
+      this.pullUpMenuRef.current.addEventListener(
+        "touchmove",
+        this.stopEventPropagation,
+        {passive: false}
+      );
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.pullUpMenuRef.current) {
+      this.pullUpMenuRef.current.removeEventListener(
+        "touchmove",
+        this.stopEventPropagation
+      );
+    }
+  }
+
+  stopEventPropagation = (e: TouchEvent) => {
+    e.stopPropagation();
+  };
+
   renderAggregateFee = (ticketType: TicketTypeConfig) => {
     let event = this.props.event as Event;
     let aggregateFee = event.ticket_fee_config.reduce(
@@ -912,61 +942,28 @@ export class Home extends React.Component<AppPropsT> {
       </div>
     );
 
-    return (
-      <div
-        style={{
-          // Create a 100px white rectangle, so that content does not run
-          // under the fixed position pullup menu
-          height: "100px",
-          backgroundColor: "white"
-        }}>
-        <div
-          style={{
-            overscrollBehavior: "none",
-            position: "fixed",
-            bottom: "0",
-            width: "100%"
-          }}>
-          <div
-            style={{
-              height: "4em"
-            }}
-          />
-          {!event ? (
-            <Skeleton />
-          ) : (
+    return !event ? (
+      <Skeleton />
+    ) : (
+      <div className="row">
+        {showPriceRange ? (
+          <>
             <div
               style={{
-                boxSizing: "border-box",
-                boxShadow: "rgba(0, 0, 0, 0.21) 0 -2px 8px 4px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "white",
-                padding: "1.5em"
-              }}
-              className="row">
-              {showPriceRange ? (
-                <>
-                  <div
-                    style={{
-                      padding: "0.8em",
-                      fontFamily: "Rubik",
-                      fontWeight: 500,
-                      fontSize: "1.29em",
-                      lineHeight: "1.2em",
-                      marginRight: "1em"
-                    }}>
-                    {this.renderTicketsPriceRange()}
-                  </div>
-                  {ticketsButton}
-                </>
-              ) : (
-                ticketsButton
-              )}
+                padding: "0.8em",
+                fontFamily: "Rubik",
+                fontWeight: 500,
+                fontSize: "1.29em",
+                lineHeight: "1.2em",
+                marginRight: "1em"
+              }}>
+              {this.renderTicketsPriceRange()}
             </div>
-          )}
-        </div>
+            {ticketsButton}
+          </>
+        ) : (
+          ticketsButton
+        )}
       </div>
     );
   };
@@ -1000,9 +997,6 @@ export class Home extends React.Component<AppPropsT> {
 
   renderTicketsPullUp = () => {
     let {pullUpMenuCollapsed, resetPullUpMenu, view} = this.props;
-    if (pullUpMenuCollapsed) {
-      return this.renderTicketsPullUpCollapsed();
-    }
 
     let modalView;
     switch (view) {
@@ -1031,6 +1025,7 @@ export class Home extends React.Component<AppPropsT> {
           backgroundColor: "white"
         }}>
         <div
+          ref={this.pullUpMenuRef}
           style={{
             position: "fixed",
             bottom: "0",
@@ -1052,16 +1047,22 @@ export class Home extends React.Component<AppPropsT> {
               position: "relative"
             }}
             className="column">
-            <div
-              style={{
-                cursor: "pointer",
-                position: "absolute",
-                top: "1.5em",
-                right: "1.5em"
-              }}>
-              <CloseIcon onClick={resetPullUpMenu} />
-            </div>
-            {modalView}
+            {pullUpMenuCollapsed ? (
+              this.renderTicketsPullUpCollapsed()
+            ) : (
+              <>
+                <div
+                  style={{
+                    cursor: "pointer",
+                    position: "absolute",
+                    top: "1.5em",
+                    right: "1.5em"
+                  }}>
+                  <CloseIcon onClick={resetPullUpMenu} />
+                </div>
+                {modalView}
+              </>
+            )}
           </div>
         </div>
       </div>
