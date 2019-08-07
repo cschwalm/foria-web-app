@@ -940,6 +940,7 @@ export class Home extends React.Component<AppPropsT> {
                 boxSizing: "border-box",
                 boxShadow: "rgba(0, 0, 0, 0.21) 0 -2px 8px 4px",
                 display: "flex",
+                alignItems: "center",
                 justifyContent: "center",
                 backgroundColor: "white",
                 padding: "1.5em"
