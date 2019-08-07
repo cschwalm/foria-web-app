@@ -357,6 +357,10 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
           placeholder="Name as it appears on card"
           className={byLayout("mobile", "desktop")}
           style={{
+            /* Remove the default input shadow */
+            WebkitAppearance: "none",
+            MozAppearance: "none",
+            appearance: "none",
             border: "solid 1.75px #ddd",
             marginBottom: "1em",
             borderRadius: "5px",
