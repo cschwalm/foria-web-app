@@ -963,7 +963,7 @@ export class Home extends React.Component<AppPropsT> {
     return !event ? (
       <Skeleton />
     ) : (
-      <div className="row">
+      <div className="row" style={{ justifyContent: "center" }}>
         {showPriceRange ? (
           <>
             <div
