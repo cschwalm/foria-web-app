@@ -67,7 +67,7 @@ export const initialState: State = {
   // TODO: parse from URL
   eventId: "52991c6d-7703-488d-93ae-1aacdd7c4291",
   authenticationStatus: AuthenticationStatus.Pending,
-  stripe: null,
+  stripe: null
 };
 
 export enum ActionType {

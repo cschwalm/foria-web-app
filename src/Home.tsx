@@ -1,4 +1,4 @@
-import React from "react";
+import React, {RefObject} from "react";
 import moment from "moment";
 import {connect} from "react-redux";
 import {Link} from "react-router-dom";
@@ -81,6 +81,9 @@ interface AppPropsT {
 }
 
 const checkoutButtonHeight = "2.5em";
+
+const mobileBaseFont = 16;
+const desktopBaseFont = 18;
 
 const sharedStyles = {
   ticketsTitle: {
@@ -168,6 +171,9 @@ const sharedStyles = {
   disabledCheckoutButton: {
     cursor: "not-allowed"
   },
+  disabledMobileCheckoutButton: {
+    backgroundColor: "#c3c3c3"
+  },
   checkoutButton: {
     cursor: "pointer",
     height: checkoutButtonHeight,
@@ -230,8 +236,6 @@ const sharedStyles = {
     color: "white",
     fontFamily: "Rubik",
     fontWeight: 500,
-    fontSize: "1.29em",
-    lineHeight: "1.2em",
     cursor: "pointer"
   },
   eventDetailSubtitle: {
@@ -262,7 +266,10 @@ function PaymentRequest(props: any) {
           // theme: "light-outline",
           theme: "dark",
           // TODO make these computed
-          height: byLayout("35px" /* 2.5em * 14px */, "45px" /* 2.5em * 18px */)
+          height: byLayout(
+            `${mobileBaseFont * 2.5}px`,
+            `${desktopBaseFont * 2.5}px`
+          )
         }
       }}
     />
@@ -357,10 +364,15 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
           placeholder="Name as it appears on card"
           className={byLayout("mobile", "desktop")}
           style={{
+            /* Remove the default input shadow */
+            WebkitAppearance: "none",
+            MozAppearance: "none",
+            appearance: "none",
             border: "solid 1.75px #ddd",
             marginBottom: "1em",
             borderRadius: "5px",
-            fontSize: "14px",
+            // Use mobile font size also for desktop, note that the placeholder style fontSize, should agree with this fontSize
+            fontSize: `${mobileBaseFont}px`,
             padding: byLayout("7px", "9px"),
             boxSizing: "border-box"
           }}
@@ -384,7 +396,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
               marginLeft: "0.2em",
               fontWeight: 500,
               fontFamily: "Rubik",
-              fontSize: "1em",
+              fontSize: `${mobileBaseFont}px`,
               lineHeight: "1.2em",
               color: "red"
             }}>
@@ -404,7 +416,8 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
             onChange={this.onCardElementChange}
             style={{
               base: {
-                fontSize: byLayout("14px", "14px"),
+                // Use mobile font size also for desktop
+                fontSize: `${mobileBaseFont}px`,
                 color: "#424770",
                 fontFamily: "Rubik, monospace",
                 "::placeholder": {
@@ -431,6 +444,36 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
 const WrappedCardForm = injectStripe(CardForm);
 
 export class Home extends React.Component<AppPropsT> {
+  pullUpMenuRef: RefObject<HTMLDivElement>;
+  constructor(props: AppPropsT) {
+    super(props);
+    this.pullUpMenuRef = React.createRef<HTMLDivElement>();
+  }
+  componentDidMount() {
+    if (this.pullUpMenuRef.current) {
+      // Disable scroll behind the pull up menu, by preventing touch events
+      // from propagating outside of pull up menu
+      this.pullUpMenuRef.current.addEventListener(
+        "touchmove",
+        this.stopEventPropagation,
+        {passive: false}
+      );
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.pullUpMenuRef.current) {
+      this.pullUpMenuRef.current.removeEventListener(
+        "touchmove",
+        this.stopEventPropagation
+      );
+    }
+  }
+
+  stopEventPropagation = (e: TouchEvent) => {
+    e.stopPropagation();
+  };
+
   renderAggregateFee = (ticketType: TicketTypeConfig) => {
     let event = this.props.event as Event;
     let aggregateFee = event.ticket_fee_config.reduce(
@@ -896,10 +939,17 @@ export class Home extends React.Component<AppPropsT> {
       <div
         onClick={showPullUpMenu}
         style={sharedStyles.pullUpMenuTicketsButton}>
-        Tickets
+        <span
+          style={{
+            fontSize: "1em",
+            lineHeight: "1.2em"
+          }}>
+          Tickets
+        </span>
         <div
           style={{
-            fontSize: "14px",
+            fontSize: "0.8em",
+            lineHeight: "1.2em",
             marginLeft: "0.6em",
             display: "flex"
           }}>
@@ -908,60 +958,28 @@ export class Home extends React.Component<AppPropsT> {
       </div>
     );
 
-    return (
-      <div
-        style={{
-          // Create a 100px white rectangle, so that content does not run
-          // under the fixed position pullup menu
-          height: "100px",
-          backgroundColor: "white"
-        }}>
-        <div
-          style={{
-            overscrollBehavior: "none",
-            position: "fixed",
-            bottom: "0",
-            width: "100%"
-          }}>
-          <div
-            style={{
-              height: "4em"
-            }}
-          />
-          {!event ? (
-            <Skeleton />
-          ) : (
+    return !event ? (
+      <Skeleton />
+    ) : (
+      <div className="row">
+        {showPriceRange ? (
+          <>
             <div
               style={{
-                boxSizing: "border-box",
-                boxShadow: "rgba(0, 0, 0, 0.21) 0 -2px 8px 4px",
-                display: "flex",
-                justifyContent: "center",
-                backgroundColor: "white",
-                padding: "1.5em"
-              }}
-              className="row">
-              {showPriceRange ? (
-                <>
-                  <div
-                    style={{
-                      padding: "0.8em",
-                      fontFamily: "Rubik",
-                      fontWeight: 500,
-                      fontSize: "1.29em",
-                      lineHeight: "1.2em",
-                      marginRight: "1em"
-                    }}>
-                    {this.renderTicketsPriceRange()}
-                  </div>
-                  {ticketsButton}
-                </>
-              ) : (
-                ticketsButton
-              )}
+                padding: "0.8em",
+                fontFamily: "Rubik",
+                fontWeight: 500,
+                fontSize: "1em",
+                lineHeight: "1.2em",
+                marginRight: "1em"
+              }}>
+              {this.renderTicketsPriceRange()}
             </div>
-          )}
-        </div>
+            {ticketsButton}
+          </>
+        ) : (
+          ticketsButton
+        )}
       </div>
     );
   };
@@ -984,7 +1002,7 @@ export class Home extends React.Component<AppPropsT> {
           className="row"
           style={{
             ...sharedStyles.checkoutButton,
-            ...(!someSelected ? sharedStyles.disabledCheckoutButton : {})
+            ...(!someSelected ? sharedStyles.disabledMobileCheckoutButton : {})
           }}
           onClick={toNextView}>
           Checkout
@@ -995,9 +1013,6 @@ export class Home extends React.Component<AppPropsT> {
 
   renderTicketsPullUp = () => {
     let {pullUpMenuCollapsed, resetPullUpMenu, view} = this.props;
-    if (pullUpMenuCollapsed) {
-      return this.renderTicketsPullUpCollapsed();
-    }
 
     let modalView;
     switch (view) {
@@ -1026,6 +1041,7 @@ export class Home extends React.Component<AppPropsT> {
           backgroundColor: "white"
         }}>
         <div
+          ref={this.pullUpMenuRef}
           style={{
             position: "fixed",
             bottom: "0",
@@ -1047,16 +1063,22 @@ export class Home extends React.Component<AppPropsT> {
               position: "relative"
             }}
             className="column">
-            <div
-              style={{
-                cursor: "pointer",
-                position: "absolute",
-                top: "1.5em",
-                right: "1.5em"
-              }}>
-              <CloseIcon onClick={resetPullUpMenu} />
-            </div>
-            {modalView}
+            {pullUpMenuCollapsed ? (
+              this.renderTicketsPullUpCollapsed()
+            ) : (
+              <>
+                <div
+                  style={{
+                    cursor: "pointer",
+                    position: "absolute",
+                    top: "1.5em",
+                    right: "1.5em"
+                  }}>
+                  <CloseIcon onClick={resetPullUpMenu} />
+                </div>
+                {modalView}
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -1411,7 +1433,7 @@ export class Home extends React.Component<AppPropsT> {
       <div
         className="App"
         style={{
-          fontSize: byLayout("14px", "18px"),
+          fontSize: byLayout(`${mobileBaseFont}px`, `${desktopBaseFont}px`),
           overflowY: "scroll",
           backgroundColor: "#f2f2f2"
         }}>
