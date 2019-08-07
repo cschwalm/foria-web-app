@@ -171,6 +171,9 @@ const sharedStyles = {
   disabledCheckoutButton: {
     cursor: "not-allowed"
   },
+  disabledMobileCheckoutButton: {
+    backgroundColor: "#c3c3c3"
+  },
   checkoutButton: {
     cursor: "pointer",
     height: checkoutButtonHeight,
@@ -999,7 +1002,7 @@ export class Home extends React.Component<AppPropsT> {
           className="row"
           style={{
             ...sharedStyles.checkoutButton,
-            ...(!someSelected ? sharedStyles.disabledCheckoutButton : {})
+            ...(!someSelected ? sharedStyles.disabledMobileCheckoutButton : {})
           }}
           onClick={toNextView}>
           Checkout
