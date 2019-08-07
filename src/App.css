@@ -12,7 +12,7 @@ input.desktop::placeholder {
   font-size: 16px;
 }
 
-// Prevent zoom on iOS safari, when font-size < 16px
+/* Prevent zoom on iOS safari, when font-size < 16px */
 .auth0-lock input {
   font-size: 16px !important;
 }
