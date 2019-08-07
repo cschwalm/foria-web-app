@@ -359,6 +359,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
         </div>
         <input
           type="text"
+          autoComplete="cc-name"
           value={cardholderName}
           onChange={this.onChange}
           placeholder="Name as it appears on card"
