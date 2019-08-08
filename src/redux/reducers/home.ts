@@ -148,7 +148,14 @@ export const reducer = (state = initialState, action: Action) => {
     case Auth0ActionType.AuthenticationError:
     case Auth0ActionType.LoginError:
       setTimeout(
-        () => window.alert(`Oops! ${action.type}\n${action.data.toString()}`),
+        () =>
+          window.alert(
+            `Oops! ${action.type}\n${
+              typeof action.data === "object"
+                ? JSON.stringify(action.data)
+                : action.data
+            }`
+          ),
         1
       );
       return state;
