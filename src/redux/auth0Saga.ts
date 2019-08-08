@@ -1,5 +1,5 @@
 import Auth0Lock from "auth0-lock";
-import {call, fork, put, race, takeEvery} from "redux-saga/effects";
+import {call, put, race, takeEvery} from "redux-saga/effects";
 import {Dispatch} from "redux";
 
 import Action from "./Action";

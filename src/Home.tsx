@@ -31,6 +31,7 @@ import {
   toPreviousView as toPreviousViewAction,
   toNextView as toNextViewAction,
   someTicketsSelected,
+  totalTicketsSelected,
   View,
   TicketCounts
 } from "./redux/reducers/home";
@@ -78,6 +79,10 @@ interface AppPropsT {
   ticketsForPurchase: TicketCounts;
   profile?: auth0.Auth0UserProfile;
   event?: Event;
+  orderSubTotal?: number;
+  orderFees?: number;
+  orderGrandTotal?: number;
+  orderCurrency?: string;
 }
 
 const checkoutButtonHeight = "2.5em";
@@ -740,16 +745,22 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderCheckoutSummary = () => {
+    let {ticketsForPurchase,
+        orderSubTotal,
+        orderFees,
+        orderGrandTotal,
+        orderCurrency } = this.props;
+    let totalSelected = totalTicketsSelected(ticketsForPurchase);
     return (
       <div style={{marginBottom: "1.5em"}} className="column">
         <div
           className="row"
           style={{marginBottom: "0.6em", justifyContent: "space-between"}}>
           <div style={sharedStyles.checkoutTicketDetails} className="column">
-            Ticket price (x1)
+            Ticket price {totalSelected > 0 ? `(x${totalSelected})` : ""}
           </div>
           <div style={sharedStyles.checkoutTicketDetails} className="column">
-            $100.00
+            {priceExactFormatter(orderSubTotal as number, orderCurrency as string)}
           </div>
         </div>
         <div
@@ -759,7 +770,7 @@ export class Home extends React.Component<AppPropsT> {
             Service fee
           </div>
           <div style={sharedStyles.checkoutTicketDetails} className="column">
-            $100.00
+            {priceExactFormatter(orderFees as number, orderCurrency as string)}
           </div>
         </div>
         <div className="row" style={{justifyContent: "space-between"}}>
@@ -771,7 +782,7 @@ export class Home extends React.Component<AppPropsT> {
           <div
             style={{...sharedStyles.checkoutTicketDetails, color: "black"}}
             className="column">
-            $100.00
+            {priceExactFormatter(orderGrandTotal as number, orderCurrency as string)}
           </div>
         </div>
       </div>
@@ -963,7 +974,7 @@ export class Home extends React.Component<AppPropsT> {
     return !event ? (
       <Skeleton />
     ) : (
-      <div className="row" style={{ justifyContent: "center" }}>
+      <div className="row" style={{justifyContent: "center"}}>
         {showPriceRange ? (
           <>
             <div
@@ -1459,7 +1470,11 @@ export default connect(
     authenticationStatus: root.authenticationStatus,
     pullUpMenuCollapsed: home.pullUpMenuCollapsed,
     ticketsForPurchase: home.ticketsForPurchase,
-    view: home.view
+    view: home.view,
+    orderSubTotal: home.orderSubTotal,
+    orderFees: home.orderFees,
+    orderGrandTotal: home.orderGrandTotal,
+    orderCurrency: home.orderCurrency,
   }),
   dispatch => ({
     initiateLogin: initiateLoginAction(dispatch),
