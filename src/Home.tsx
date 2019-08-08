@@ -486,28 +486,6 @@ export class Home extends React.Component<AppPropsT> {
     e.stopImmediatePropagation();
   };
 
-  renderAggregateFee = (ticketType: TicketTypeConfig) => {
-    let event = this.props.event as Event;
-    let aggregateFee = event.ticket_fee_config.reduce(
-      (aggregate, ticketFee) => {
-        let feeAmount;
-        switch (ticketFee.method) {
-          case "PERCENT":
-            feeAmount = Number(ticketType.price) * Number(ticketFee.amount);
-            break;
-          case "FLAT":
-            feeAmount = Number(ticketFee.amount);
-            break;
-          default:
-            throw new Error(`Unhandled ticket fee method: ${ticketFee.method}`);
-        }
-        return aggregate + feeAmount;
-      },
-      0
-    );
-    return feeFormatter(aggregateFee, ticketType.currency);
-  };
-
   renderTicketDescriptionColumn = (ticketType: TicketTypeConfig) => {
     let {byLayout} = this.props;
     let soldOut = ticketType.amount_remaining === 0;
@@ -539,7 +517,9 @@ export class Home extends React.Component<AppPropsT> {
           {feeFormatter(Number(ticketType.price), ticketType.currency)}
         </div>
         <div style={sharedStyles.ticketPriceFee}>
-          +{this.renderAggregateFee(ticketType)} fee
+          +
+          {feeFormatter(Number(ticketType.calculated_fee), ticketType.currency)}{" "}
+          fee
         </div>
       </div>
     );

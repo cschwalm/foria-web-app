@@ -23,27 +23,16 @@ export interface TicketTypeConfig {
   id: string;
   name: string;
   description: string;
-  authorized_amount: number;
   amount_remaining: number;
   price: string;
   currency: string;
-}
-
-export interface TicketFeeConfig {
-  id: string;
-  name: string;
-  description: string;
-  method: string;
-  type: string;
-  amount: string;
-  currency: string;
+  calculated_fee: string;
 }
 
 export interface Event {
   name: string;
   address: Address;
   ticket_type_config: [TicketTypeConfig];
-  ticket_fee_config: [TicketFeeConfig];
   image_url: string;
   start_time: string;
   end_time: string;
