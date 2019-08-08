@@ -35,6 +35,7 @@ export interface State {
   ticketsForPurchase: TicketCounts;
   paymentRequest: stripe.Stripe["paymentRequest"] | null;
   canMakePayment: boolean;
+  orderNumber?: string;
   orderSubTotal?: number;
   orderFees?: number;
   orderGrandTotal?: number;
@@ -99,6 +100,11 @@ export const reducer = (state = initialState, action: Action) => {
         orderFees: Number(action.data.fees),
         orderGrandTotal: Number(action.data.grand_total),
         orderCurrency: action.data.currency
+      };
+    case ApiActionType.CheckoutSuccess:
+      return {
+        ...state,
+        orderNumber: action.data
       };
     case ActionType.AddTicket:
       return {

@@ -85,6 +85,7 @@ interface AppPropsT {
   ticketsForPurchase: TicketCounts;
   profile?: auth0.Auth0UserProfile;
   event?: Event;
+  orderNumber?: string;
   orderSubTotal?: number;
   orderFees?: number;
   orderGrandTotal?: number;
@@ -929,11 +930,13 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderCompleteStepBody = () => {
-    let {byLayout} = this.props;
+    let {byLayout, orderNumber} = this.props;
     return (
       <>
         <p style={sharedStyles.eventBody}>Thank you for your purchase!</p>
-        <p style={sharedStyles.eventBody}>You order numbers is #123456789</p>
+        <p style={sharedStyles.eventBody}>
+          Your order number is #{orderNumber as string}
+        </p>
         <p style={sharedStyles.getTicketsFromForiaApp}>
           To get your tickets, download the Foria app
         </p>
@@ -1553,6 +1556,7 @@ export default connect(
     pullUpMenuCollapsed: home.pullUpMenuCollapsed,
     ticketsForPurchase: home.ticketsForPurchase,
     view: home.view,
+    orderNumber: home.orderNumber,
     orderSubTotal: home.orderSubTotal,
     orderFees: home.orderFees,
     orderGrandTotal: home.orderGrandTotal,
