@@ -33,7 +33,7 @@ export const onTokenCreate = (dispatch: Dispatch<Action>) => (
     result.token
       ? {type: ActionType.StripeCreateTokenSuccess, data: result.token}
       : {type: ActionType.StripeCreateTokenError, data: result.error}
-  )
+  );
 
 // stripe.createToken() when it can handles its error resolves rather than
 // rejects the promise, in any case we still handle the rejection with
@@ -54,7 +54,6 @@ function* createPaymentRequest(
   stripe: stripe.Stripe,
   {data}: {data: OrderTotal}
 ) {
-
   let paymentRequest: stripe.paymentRequest.StripePaymentRequest;
   try {
     paymentRequest = stripe.paymentRequest({
@@ -63,7 +62,7 @@ function* createPaymentRequest(
       currency: data.currency.toLowerCase(),
       total: {
         label: "Foria Technologies, Inc",
-        amount: Number(data.grand_total_cents),
+        amount: Number(data.grand_total_cents)
       },
       requestPayerName: true,
       requestPayerEmail: true

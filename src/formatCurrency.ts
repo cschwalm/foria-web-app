@@ -3,7 +3,7 @@ export const twoDecimalNoCurrencyFormatter = (amount: number) =>
     style: "decimal",
     maximumFractionDigits: 2,
     minimumFractionDigits: 2
-  }).format(amount)
+  }).format(amount);
 
 export const twoDecimalFormatter = (amount: number, currency: string) =>
   new Intl.NumberFormat(undefined, {
@@ -11,7 +11,7 @@ export const twoDecimalFormatter = (amount: number, currency: string) =>
     currency,
     maximumFractionDigits: 2,
     minimumFractionDigits: 2
-  }).format(amount)
+  }).format(amount);
 
 const zeroDecimalFormatter = (amount: number, currency: string) =>
   new Intl.NumberFormat(undefined, {
@@ -30,7 +30,7 @@ const zeroDecimalFormatter = (amount: number, currency: string) =>
 export const pricePreviewFormatter = (amount: number, currency: string) =>
   amount < 1 && amount >= 0.01
     ? twoDecimalFormatter(amount, currency)
-    : zeroDecimalFormatter(amount, currency)
+    : zeroDecimalFormatter(amount, currency);
 
 // Use two decimal places if the number is not an integer
 // 20.39 => $20.39

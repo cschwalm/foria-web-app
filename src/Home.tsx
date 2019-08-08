@@ -49,7 +49,12 @@ import IncrementIcon from "./incrementIcon";
 import CloseIcon from "./closeIcon";
 import LeftChevron from "./leftChevron";
 import UpwardChevron from "./upwardChevron";
-import {pricePreviewFormatter, feeFormatter, twoDecimalFormatter, twoDecimalNoCurrencyFormatter} from "./formatCurrency";
+import {
+  pricePreviewFormatter,
+  feeFormatter,
+  twoDecimalFormatter,
+  twoDecimalNoCurrencyFormatter
+} from "./formatCurrency";
 import minMax from "./minMax";
 
 const ticketOverlayWidth = 385;
@@ -745,11 +750,13 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderCheckoutSummary = () => {
-    let {ticketsForPurchase,
-        orderSubTotal,
-        orderFees,
-        orderGrandTotal,
-        orderCurrency } = this.props;
+    let {
+      ticketsForPurchase,
+      orderSubTotal,
+      orderFees,
+      orderGrandTotal,
+      orderCurrency
+    } = this.props;
     let totalSelected = totalTicketsSelected(ticketsForPurchase);
     return (
       <div style={{marginBottom: "1.5em"}} className="column">
@@ -782,7 +789,10 @@ export class Home extends React.Component<AppPropsT> {
           <div
             style={{...sharedStyles.checkoutTicketDetails, color: "black"}}
             className="column">
-            {twoDecimalFormatter(orderGrandTotal as number, orderCurrency as string)}
+            {twoDecimalFormatter(
+              orderGrandTotal as number,
+              orderCurrency as string
+            )}
           </div>
         </div>
       </div>
@@ -1474,7 +1484,7 @@ export default connect(
     orderSubTotal: home.orderSubTotal,
     orderFees: home.orderFees,
     orderGrandTotal: home.orderGrandTotal,
-    orderCurrency: home.orderCurrency,
+    orderCurrency: home.orderCurrency
   }),
   dispatch => ({
     initiateLogin: initiateLoginAction(dispatch),

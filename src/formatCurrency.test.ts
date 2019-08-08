@@ -13,7 +13,7 @@ describe("pricePreviewFormatter", () => {
 
   it("provides 0 decimal places when there is less than a cent", () => {
     expect(feeFormatter(0.009, "USD")).toEqual("$0");
-  })
+  });
 
   it("handles non-USD currencies", () => {
     expect(pricePreviewFormatter(20.23, "EUR")).toEqual("€20");
@@ -34,7 +34,7 @@ describe("feeFormatter", () => {
 
   it("provides 0 decimal places when there is less than a cent", () => {
     expect(feeFormatter(0.009, "USD")).toEqual("$0");
-  })
+  });
 
   it("handles non-USD currencies", () => {
     expect(feeFormatter(20.23, "EUR")).toEqual("€20.23");

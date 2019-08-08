@@ -58,7 +58,7 @@ function updateTicketsQuantityHelper(
   let ticketCount = tickets[ticket.id];
   let currentCount = ticketCount || 0;
   if (currentCount + delta === 0) {
-    return omit(tickets, ticket.id)
+    return omit(tickets, ticket.id);
   }
   return {
     ...tickets,
