@@ -141,7 +141,10 @@ export const reducer = (state = initialState, action: Action) => {
     case ApiActionType.CalculateOrderTotalError:
     case Auth0ActionType.AuthenticationError:
     case Auth0ActionType.LoginError:
-      window.alert(`Oops! ${action.type}\n${action.data.toString()}`);
+      setTimeout(
+        () => window.alert(`Oops! ${action.type}\n${action.data.toString()}`),
+        1
+      );
       return state;
     default:
       return state;

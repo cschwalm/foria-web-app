@@ -45,6 +45,7 @@ import calendarIcon from "./calendar_icon.png";
 import PinpointIcon from "./pinpointIcon";
 import DecrementIcon from "./decrementIcon";
 import IncrementIcon from "./incrementIcon";
+// TODO Remove downwardChevron
 // import DownwardChevron from "./downwardChevron";
 import CloseIcon from "./closeIcon";
 import LeftChevron from "./leftChevron";
@@ -96,6 +97,19 @@ const mobileBaseFont = 16;
 const desktopBaseFont = 18;
 
 const sharedStyles = {
+  visuallyHiddenButScreenReaderAccessible: {
+    height: "1px",
+    width: "1px",
+    position: "absolute" as "absolute",
+    overflow: "hidden",
+    top: "-10px"
+  },
+  eventBody: {
+    fontFamily: "Rubik",
+    fontSize: "1em",
+    lineHeight: "1.2em",
+    color: "#7E7E7E"
+  },
   ticketsTitle: {
     display: "flex",
     justifyContent: "center",
@@ -259,6 +273,12 @@ const sharedStyles = {
   eventDetailTitle: {
     marginBottom: "0.2em",
     fontFamily: "Rubik",
+    fontSize: "1.3em",
+    lineHeight: "1.2em"
+  },
+  getTicketsFromForiaApp: {
+    fontFamily: "Rubik",
+    color: pink,
     fontSize: "1.3em",
     lineHeight: "1.2em"
   }
@@ -894,16 +914,96 @@ export class Home extends React.Component<AppPropsT> {
   renderDesktopCompleteStep = () => {
     let event = this.props.event!;
     return (
-      <div style={sharedStyles.ticketsTitle}>
-        <span style={event ? {} : {opacity: 0}}>Purchase Success</span>
-      </div>
+      <>
+        <div style={sharedStyles.ticketsTitle}>
+          <span style={event ? {} : {opacity: 0}}>Checkout</span>
+        </div>
+        <div
+          style={{
+            margin: "1em"
+          }}>
+          {this.renderCompleteStepBody()}
+        </div>
+      </>
+    );
+  };
+
+  renderCompleteStepBody = () => {
+    let {byLayout} = this.props;
+    return (
+      <>
+        <p style={sharedStyles.eventBody}>Thank you for your purchase!</p>
+        <p style={sharedStyles.eventBody}>You order numbers is #123456789</p>
+        <p style={sharedStyles.getTicketsFromForiaApp}>
+          To get your tickets, download the Foria app
+        </p>
+        <p style={{...sharedStyles.eventBody, marginBottom: "1.5em"}}>
+          Tickets are only available through the Foria app to ensure
+          authenticity. Please download and sign-in to the app in advance of the
+          event. If you can’t present the mobile ticket for any reason, then you
+          MUST have a government ID with the same name you used to purchase the
+          ticket.
+        </p>
+        <div
+          style={{
+            // height: '500px',
+            display: "grid",
+            gridTemplateColumns: `repeat(auto-fill, ${3.375 *
+              2.5 *
+              byLayout(mobileBaseFont, desktopBaseFont)}px)`,
+            // gridTemplateRows: `repeat(auto-fill, ${2.5 * byLayout(mobileBaseFont, desktopBaseFont)}px)`,
+            gridAutoRows: `minmax(0, ${2.5 *
+              byLayout(mobileBaseFont, desktopBaseFont)}px)`,
+            gridColumnGap: "0.6em",
+            gridRowGap: "0.6em",
+            alignItems: "center"
+          }}>
+          <a
+            style={{
+              background:
+                "url('https://linkmaker.itunes.apple.com/images/badges/en-us/badge_appstore-lrg.svg') no-repeat",
+              backgroundSize: "contain",
+              display: "inline-block",
+              overflow: "hidden",
+              textDecoration: "none",
+              width: "100%",
+              height: "100%"
+            }}
+            href="https://TODO"
+            target="_blank"
+            rel="noopener noreferrer">
+            <span style={sharedStyles.visuallyHiddenButScreenReaderAccessible}>
+              Download the Foria iOS app
+            </span>
+          </a>
+          <a
+            style={{
+              background:
+                "url('https://upload.wikimedia.org/wikipedia/commons/c/cd/Get_it_on_Google_play.svg') no-repeat",
+              backgroundSize: "contain",
+              display: "inline-block",
+              overflow: "hidden",
+              textDecoration: "none",
+              width: "100%",
+              height: "100%"
+            }}
+            href="https://TODO"
+            target="_blank"
+            rel="noopener noreferrer">
+            <span style={sharedStyles.visuallyHiddenButScreenReaderAccessible}>
+              Download the Foria Android app
+            </span>
+          </a>
+        </div>
+      </>
     );
   };
 
   renderMobileCompleteStep = () => {
     return (
       <>
-        <div style={sharedStyles.mobileTicketHeader}>Purchase Success</div>
+        <div style={sharedStyles.mobileTicketHeader}>Checkout</div>
+        {this.renderCompleteStepBody()}
       </>
     );
   };
@@ -1407,17 +1507,9 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderEventBodyText = () => {
-    let {event, byLayout} = this.props;
-    let styles = {
-      eventBody: {
-        fontFamily: "Rubik",
-        fontSize: byLayout("1em", "0.8em"),
-        lineHeight: "1.2em",
-        color: "#7E7E7E"
-      }
-    };
+    let {event} = this.props;
     return (
-      <div style={styles.eventBody}>
+      <div style={sharedStyles.eventBody}>
         {!event ? (
           <Skeleton height={100} />
         ) : (

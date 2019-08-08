@@ -1,5 +1,9 @@
 @import url('https://fonts.googleapis.com/css?family=Roboto|Rubik:400,500,700&display=swap');
 
+body {
+  -webkit-overflow-scrolling: touch;
+}
+
 input.mobile::placeholder {
   color: #aab7c4;
   font-family: Rubik;
