@@ -33,7 +33,7 @@ export const onTokenCreate = (dispatch: Dispatch<Action>) => (
     result.token
       ? {type: ActionType.StripeCreateTokenSuccess, data: result.token}
       : {type: ActionType.StripeCreateTokenError, data: result.error}
-  );
+  )
 
 // stripe.createToken() when it can handles its error resolves rather than
 // rejects the promise, in any case we still handle the rejection with

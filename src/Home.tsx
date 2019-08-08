@@ -49,7 +49,7 @@ import IncrementIcon from "./incrementIcon";
 import CloseIcon from "./closeIcon";
 import LeftChevron from "./leftChevron";
 import UpwardChevron from "./upwardChevron";
-import {pricePreviewFormatter, priceExactFormatter} from "./formatCurrency";
+import {pricePreviewFormatter, feeFormatter, twoDecimalFormatter, twoDecimalNoCurrencyFormatter} from "./formatCurrency";
 import minMax from "./minMax";
 
 const ticketOverlayWidth = 385;
@@ -500,7 +500,7 @@ export class Home extends React.Component<AppPropsT> {
       },
       0
     );
-    return priceExactFormatter(aggregateFee, ticketType.currency);
+    return feeFormatter(aggregateFee, ticketType.currency);
   };
 
   renderTicketDescriptionColumn = (ticketType: TicketTypeConfig) => {
@@ -531,7 +531,7 @@ export class Home extends React.Component<AppPropsT> {
         className="column"
         style={{...sharedStyles.ticketPriceColumn, opacity: soldOut ? 0.3 : 1}}>
         <div style={sharedStyles.ticketPrice}>
-          {priceExactFormatter(Number(ticketType.price), ticketType.currency)}
+          {feeFormatter(Number(ticketType.price), ticketType.currency)}
         </div>
         <div style={sharedStyles.ticketPriceFee}>
           +{this.renderAggregateFee(ticketType)} fee
@@ -760,7 +760,7 @@ export class Home extends React.Component<AppPropsT> {
             Ticket price {totalSelected > 0 ? `(x${totalSelected})` : ""}
           </div>
           <div style={sharedStyles.checkoutTicketDetails} className="column">
-            {priceExactFormatter(orderSubTotal as number, orderCurrency as string)}
+            {twoDecimalNoCurrencyFormatter(orderSubTotal as number)}
           </div>
         </div>
         <div
@@ -770,7 +770,7 @@ export class Home extends React.Component<AppPropsT> {
             Service fee
           </div>
           <div style={sharedStyles.checkoutTicketDetails} className="column">
-            {priceExactFormatter(orderFees as number, orderCurrency as string)}
+            {twoDecimalNoCurrencyFormatter(orderFees as number)}
           </div>
         </div>
         <div className="row" style={{justifyContent: "space-between"}}>
@@ -782,7 +782,7 @@ export class Home extends React.Component<AppPropsT> {
           <div
             style={{...sharedStyles.checkoutTicketDetails, color: "black"}}
             className="column">
-            {priceExactFormatter(orderGrandTotal as number, orderCurrency as string)}
+            {twoDecimalFormatter(orderGrandTotal as number, orderCurrency as string)}
           </div>
         </div>
       </div>
