@@ -31,6 +31,7 @@ import {
   toPreviousView as toPreviousViewAction,
   toNextView as toNextViewAction,
   someTicketsSelected,
+  totalTicketsSelected,
   View,
   TicketCounts
 } from "./redux/reducers/home";
@@ -48,7 +49,12 @@ import IncrementIcon from "./incrementIcon";
 import CloseIcon from "./closeIcon";
 import LeftChevron from "./leftChevron";
 import UpwardChevron from "./upwardChevron";
-import {pricePreviewFormatter, priceExactFormatter} from "./formatCurrency";
+import {
+  pricePreviewFormatter,
+  feeFormatter,
+  twoDecimalFormatter,
+  twoDecimalNoCurrencyFormatter
+} from "./formatCurrency";
 import minMax from "./minMax";
 
 const ticketOverlayWidth = 385;
@@ -78,6 +84,10 @@ interface AppPropsT {
   ticketsForPurchase: TicketCounts;
   profile?: auth0.Auth0UserProfile;
   event?: Event;
+  orderSubTotal?: number;
+  orderFees?: number;
+  orderGrandTotal?: number;
+  orderCurrency?: string;
 }
 
 const checkoutButtonHeight = "2.5em";
@@ -476,28 +486,6 @@ export class Home extends React.Component<AppPropsT> {
     e.stopImmediatePropagation();
   };
 
-  renderAggregateFee = (ticketType: TicketTypeConfig) => {
-    let event = this.props.event as Event;
-    let aggregateFee = event.ticket_fee_config.reduce(
-      (aggregate, ticketFee) => {
-        let feeAmount;
-        switch (ticketFee.method) {
-          case "PERCENT":
-            feeAmount = Number(ticketType.price) * Number(ticketFee.amount);
-            break;
-          case "FLAT":
-            feeAmount = Number(ticketFee.amount);
-            break;
-          default:
-            throw new Error(`Unhandled ticket fee method: ${ticketFee.method}`);
-        }
-        return aggregate + feeAmount;
-      },
-      0
-    );
-    return priceExactFormatter(aggregateFee, ticketType.currency);
-  };
-
   renderTicketDescriptionColumn = (ticketType: TicketTypeConfig) => {
     let {byLayout} = this.props;
     let soldOut = ticketType.amount_remaining === 0;
@@ -526,10 +514,12 @@ export class Home extends React.Component<AppPropsT> {
         className="column"
         style={{...sharedStyles.ticketPriceColumn, opacity: soldOut ? 0.3 : 1}}>
         <div style={sharedStyles.ticketPrice}>
-          {priceExactFormatter(Number(ticketType.price), ticketType.currency)}
+          {feeFormatter(Number(ticketType.price), ticketType.currency)}
         </div>
         <div style={sharedStyles.ticketPriceFee}>
-          +{this.renderAggregateFee(ticketType)} fee
+          +
+          {feeFormatter(Number(ticketType.calculated_fee), ticketType.currency)}{" "}
+          fee
         </div>
       </div>
     );
@@ -740,16 +730,24 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderCheckoutSummary = () => {
+    let {
+      ticketsForPurchase,
+      orderSubTotal,
+      orderFees,
+      orderGrandTotal,
+      orderCurrency
+    } = this.props;
+    let totalSelected = totalTicketsSelected(ticketsForPurchase);
     return (
       <div style={{marginBottom: "1.5em"}} className="column">
         <div
           className="row"
           style={{marginBottom: "0.6em", justifyContent: "space-between"}}>
           <div style={sharedStyles.checkoutTicketDetails} className="column">
-            Ticket price (x1)
+            Ticket price {totalSelected > 0 ? `(x${totalSelected})` : ""}
           </div>
           <div style={sharedStyles.checkoutTicketDetails} className="column">
-            $100.00
+            {twoDecimalNoCurrencyFormatter(orderSubTotal as number)}
           </div>
         </div>
         <div
@@ -759,7 +757,7 @@ export class Home extends React.Component<AppPropsT> {
             Service fee
           </div>
           <div style={sharedStyles.checkoutTicketDetails} className="column">
-            $100.00
+            {twoDecimalNoCurrencyFormatter(orderFees as number)}
           </div>
         </div>
         <div className="row" style={{justifyContent: "space-between"}}>
@@ -771,7 +769,10 @@ export class Home extends React.Component<AppPropsT> {
           <div
             style={{...sharedStyles.checkoutTicketDetails, color: "black"}}
             className="column">
-            $100.00
+            {twoDecimalFormatter(
+              orderGrandTotal as number,
+              orderCurrency as string
+            )}
           </div>
         </div>
       </div>
@@ -963,7 +964,7 @@ export class Home extends React.Component<AppPropsT> {
     return !event ? (
       <Skeleton />
     ) : (
-      <div className="row">
+      <div className="row" style={{justifyContent: "center"}}>
         {showPriceRange ? (
           <>
             <div
@@ -1459,7 +1460,11 @@ export default connect(
     authenticationStatus: root.authenticationStatus,
     pullUpMenuCollapsed: home.pullUpMenuCollapsed,
     ticketsForPurchase: home.ticketsForPurchase,
-    view: home.view
+    view: home.view,
+    orderSubTotal: home.orderSubTotal,
+    orderFees: home.orderFees,
+    orderGrandTotal: home.orderGrandTotal,
+    orderCurrency: home.orderCurrency
   }),
   dispatch => ({
     initiateLogin: initiateLoginAction(dispatch),

@@ -1,9 +1,11 @@
 import {Dispatch} from "redux";
-import {values} from "lodash";
+import {values, omit} from "lodash";
 
 import Action from "../Action";
 import {TicketTypeConfig} from "./root";
 import {ActionType as StripeActionType} from "../stripeSaga";
+import {ActionType as ApiActionType} from "../apiSaga";
+import {ActionType as Auth0ActionType} from "../auth0Saga";
 
 export enum View {
   Tickets,
@@ -30,10 +32,13 @@ export type TicketCounts = {[ticketId: string]: number};
 export interface State {
   pullUpMenuCollapsed: boolean;
   view: View;
-  promoCode?: string;
   ticketsForPurchase: TicketCounts;
   paymentRequest: stripe.Stripe["paymentRequest"] | null;
   canMakePayment: boolean;
+  orderSubTotal?: number;
+  orderFees?: number;
+  orderGrandTotal?: number;
+  orderCurrency?: string;
 }
 export const initialState = {
   pullUpMenuCollapsed: true,
@@ -52,6 +57,9 @@ function updateTicketsQuantityHelper(
 ) {
   let ticketCount = tickets[ticket.id];
   let currentCount = ticketCount || 0;
+  if (currentCount + delta === 0) {
+    return omit(tickets, ticket.id);
+  }
   return {
     ...tickets,
     [ticket.id]: currentCount + delta
@@ -59,6 +67,9 @@ function updateTicketsQuantityHelper(
 }
 export const someTicketsSelected = (ticketsForPurchase: TicketCounts) =>
   values(ticketsForPurchase).some(quantity => quantity > 0);
+
+export const totalTicketsSelected = (ticketsForPurchase: TicketCounts) =>
+  values(ticketsForPurchase).reduce((a, b) => a + b, 0);
 
 export const reducer = (state = initialState, action: Action) => {
   switch (action.type) {
@@ -80,6 +91,14 @@ export const reducer = (state = initialState, action: Action) => {
       return {
         ...state,
         view: action.data
+      };
+    case ApiActionType.CalculateOrderTotalSuccess:
+      return {
+        ...state,
+        orderSubTotal: Number(action.data.subtotal),
+        orderFees: Number(action.data.fees),
+        orderGrandTotal: Number(action.data.grand_total),
+        orderCurrency: action.data.currency
       };
     case ActionType.AddTicket:
       return {
@@ -112,6 +131,18 @@ export const reducer = (state = initialState, action: Action) => {
         // is created, we reset canMakePayment
         canMakePayment: false
       };
+    case StripeActionType.PaymentRequestCreationError:
+    case StripeActionType.CanMakePaymentError:
+    case StripeActionType.StripeScriptLoadingError:
+    case StripeActionType.StripeCreateTokenNetworkError:
+    case StripeActionType.StripeCreateTokenError:
+    case ApiActionType.EventFetchError:
+    case ApiActionType.CheckoutError:
+    case ApiActionType.CalculateOrderTotalError:
+    case Auth0ActionType.AuthenticationError:
+    case Auth0ActionType.LoginError:
+      window.alert(`Oops! ${action.type}\n${action.data.toString()}`);
+      return state;
     default:
       return state;
   }

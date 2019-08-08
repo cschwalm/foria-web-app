@@ -11,11 +11,12 @@ import {
 } from "redux-saga/effects";
 
 import Action from "./Action";
-import {ActionType as ApiActionType} from "./apiSaga";
+import {ActionType as ApiActionType, OrderTotal} from "./apiSaga";
 
 export enum ActionType {
   CreatePaymentRequest = "CreatePaymentRequest",
   PaymentRequestCreated = "PaymentRequestCreated",
+  PaymentRequestCreationError = "PaymentRequestCreationError",
   CanMakePaymentSuccess = "CanMakePaymentSuccess",
   CanMakePaymentError = "CanMakePaymentError",
   StripeInstantiated = "StripeInstantiated",
@@ -49,17 +50,31 @@ const onPaymentRequestTokenCancel = (
   paymentRequest: stripe.paymentRequest.StripePaymentRequest
 ) => new Promise(resolve => paymentRequest.on("cancel", () => resolve(true)));
 
-function* createPaymentRequest(stripe: stripe.Stripe) {
-  let paymentRequest = stripe.paymentRequest({
-    country: "US",
-    currency: "usd",
-    total: {
-      label: "Demo total",
-      amount: 1000
-    },
-    requestPayerName: true,
-    requestPayerEmail: true
-  });
+function* createPaymentRequest(
+  stripe: stripe.Stripe,
+  {data}: {data: OrderTotal}
+) {
+  let paymentRequest: stripe.paymentRequest.StripePaymentRequest;
+  try {
+    paymentRequest = stripe.paymentRequest({
+      // The two-letter country code of the Stripe account (e.g., 'US').
+      country: "US",
+      currency: data.currency.toLowerCase(),
+      total: {
+        label: "Foria Technologies, Inc",
+        amount: Number(data.grand_total_cents)
+      },
+      requestPayerName: true,
+      requestPayerEmail: true
+    });
+  } catch (err) {
+    // TODO present this error in a user friendly way
+    yield put({
+      type: ActionType.PaymentRequestCreationError,
+      data: err
+    });
+    return;
+  }
 
   yield put({
     type: ActionType.PaymentRequestCreated,

@@ -54,15 +54,34 @@ function* toCheckoutView() {
     return;
   }
 
-  // Check if we have web payments support
-  yield put({type: StripeActionType.CreatePaymentRequest});
-  let [action /*error*/] = yield race([
+  // Fire the events to request an order calculation and to see if we
+  // have web payments support
+  yield put({type: ApiActionType.InitiateCalculateOrder});
+  let [calculateSuccess /*,error*/] = yield race([
+    take(ApiActionType.CalculateOrderTotalSuccess),
+    take(ApiActionType.CalculateOrderTotalError)
+  ]);
+
+  if (!calculateSuccess) {
+    // Unable to calculate a purchase total
+    // TODO display error in a user friendly way
+    return;
+  }
+
+  // Create a payment request with the result of the calculate order total result
+  yield put({
+    type: StripeActionType.CreatePaymentRequest,
+    data: calculateSuccess.data
+  });
+
+  // Use `all` to wait for the failure or success of each in parallel
+  let [paymentsSuccess /*,error*/] = yield race([
     take(StripeActionType.CanMakePaymentSuccess),
     take(StripeActionType.CanMakePaymentError)
   ]);
 
   // The data on the action is whether web payments are accepted
-  let webPaymentSupported = action && action.data;
+  let webPaymentSupported = paymentsSuccess && paymentsSuccess.data;
   if (!webPaymentSupported) {
     // No support, so navigate to credit card checkout
     yield put({type: HomeActionType.SelectView, data: View.CreditCardCheckout});
