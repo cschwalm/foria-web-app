@@ -12,6 +12,8 @@ import {
   ReactStripeElements
 } from "react-stripe-elements";
 
+import appleStoreBadge from "./appleStoreBadge.svg";
+import googlePlayBadge from "./googlePlayBadge.png";
 import {AppState} from "./redux/store";
 import {
   AuthenticationStatus,
@@ -963,8 +965,7 @@ export class Home extends React.Component<AppPropsT> {
           }}>
           <a
             style={{
-              background:
-                "url('https://linkmaker.itunes.apple.com/images/badges/en-us/badge_appstore-lrg.svg') no-repeat",
+              background: `url('${appleStoreBadge}') no-repeat`,
               backgroundSize: "contain",
               display: "inline-block",
               overflow: "hidden",
@@ -981,8 +982,7 @@ export class Home extends React.Component<AppPropsT> {
           </a>
           <a
             style={{
-              background:
-                "url('https://upload.wikimedia.org/wikipedia/commons/c/cd/Get_it_on_Google_play.svg') no-repeat",
+              background: `url('${googlePlayBadge}') no-repeat`,
               backgroundSize: "contain",
               display: "inline-block",
               overflow: "hidden",
