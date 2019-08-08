@@ -63,9 +63,7 @@ function* createPaymentRequest(
       currency: data.currency.toLowerCase(),
       total: {
         label: "Foria Technologies, Inc",
-        // TODO: Resolve whether the client should round or the api should use the subunit of the currency
-        // 270.65 * 100 == 27064.999999999996
-        amount: Math.round(Number(data.grand_total) * 100),
+        amount: Number(data.grand_total_cents),
       },
       requestPayerName: true,
       requestPayerEmail: true

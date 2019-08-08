@@ -46,6 +46,7 @@ export interface OrderTotal {
   subtotal: string;
   fees: string;
   grand_total: string;
+  grand_total_cents: string;
   currency: string;
 }
 
@@ -119,7 +120,7 @@ function* calculateOrderTotalSaga() {
     ...(stripeToken ? {payment_token: stripeToken.id} : {})
   };
 
-  let orderTotal;
+  let orderTotal: OrderTotal;
   try {
     orderTotal = yield call(calculateOrderTotal, orderPayload, accessToken);
   } catch (err) {
