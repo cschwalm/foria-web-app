@@ -1258,9 +1258,11 @@ export class Home extends React.Component<AppPropsT> {
               alignItems: "center",
               justifyContent: "flex-end"
             }}>
-            <Link to="/help/" style={styles.helpAnchor}>
+            <a
+              style={styles.helpAnchor}
+              href="https://foriatickets.zendesk.com/hc/en-us">
               Help
-            </Link>
+            </a>
             {this.renderLoginToggle()}
           </div>
         </div>
