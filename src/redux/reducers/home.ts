@@ -35,6 +35,7 @@ export interface State {
   ticketsForPurchase: TicketCounts;
   paymentRequest: stripe.Stripe["paymentRequest"] | null;
   canMakePayment: boolean;
+  orderNumber?: string;
   orderSubTotal?: number;
   orderFees?: number;
   orderGrandTotal?: number;
@@ -100,6 +101,11 @@ export const reducer = (state = initialState, action: Action) => {
         orderGrandTotal: Number(action.data.grand_total),
         orderCurrency: action.data.currency
       };
+    case ApiActionType.CheckoutSuccess:
+      return {
+        ...state,
+        orderNumber: action.data
+      };
     case ActionType.AddTicket:
       return {
         ...state,
@@ -141,7 +147,17 @@ export const reducer = (state = initialState, action: Action) => {
     case ApiActionType.CalculateOrderTotalError:
     case Auth0ActionType.AuthenticationError:
     case Auth0ActionType.LoginError:
-      window.alert(`Oops! ${action.type}\n${action.data.toString()}`);
+      setTimeout(
+        () =>
+          window.alert(
+            `Oops! ${action.type}\n${
+              typeof action.data === "object"
+                ? JSON.stringify(action.data)
+                : action.data
+            }`
+          ),
+        1
+      );
       return state;
     default:
       return state;

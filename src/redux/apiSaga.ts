@@ -79,8 +79,9 @@ function* completePurchase(action: {data: string}) {
     payment_token: stripeToken.id
   };
 
+  let checkoutResponse: {id: string};
   try {
-    yield call(completeCheckout, orderPayload, accessToken);
+    checkoutResponse = yield call(completeCheckout, orderPayload, accessToken);
   } catch (err) {
     yield put({
       type: ActionType.CheckoutError,
@@ -90,7 +91,8 @@ function* completePurchase(action: {data: string}) {
   }
 
   yield put({
-    type: ActionType.CheckoutSuccess
+    type: ActionType.CheckoutSuccess,
+    data: checkoutResponse.id
   });
 }
 
