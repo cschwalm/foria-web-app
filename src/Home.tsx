@@ -1,7 +1,6 @@
 import React, {RefObject} from "react";
 import moment from "moment";
 import {connect} from "react-redux";
-import {Link} from "react-router-dom";
 import Skeleton from "react-loading-skeleton";
 import {
   StripeProvider,
