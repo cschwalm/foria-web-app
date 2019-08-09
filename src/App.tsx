@@ -4,14 +4,12 @@ import {initializeStore} from "./redux/store";
 import {BrowserRouter as Router, Route} from "react-router-dom";
 
 import Home from "./Home";
-import Help from "./Help";
 import "./App.css";
 
 const App = () => (
   <Provider store={initializeStore()}>
     <Router>
       <Route exact path="/" component={Home} />
-      <Route path="/help/" component={Help} />
     </Router>
   </Provider>
 );
