@@ -96,9 +96,44 @@ interface AppPropsT {
 const checkoutButtonHeight = "2.5em";
 
 const mobileBaseFont = 16;
-const desktopBaseFont = 18;
+const desktopBaseFont = 16;
 
 const sharedStyles = {
+  helpAnchor: {
+    color: "#7E7E7E",
+    fontFamily: "Roboto",
+    fontSize: "1em",
+    lineHeight: "1.2em",
+    cursor: "pointer",
+    textDecoration: "none"
+  },
+  loginAnchor: {
+    background: "none",
+    border: "none",
+    padding: 0,
+    fontFamily: "Roboto",
+    fontSize: "1em",
+    lineHeight: "1.2em",
+    cursor: "pointer",
+    color: "#FF0266"
+  },
+  footerLink: {
+    color: "#7E7E7E",
+    fontFamily: "Roboto",
+    letterSpacing: "0.02em",
+    fontSize: "0.9em",
+    lineHeight: "1.2em",
+    textDecoration: "none",
+    backgroundColor: "initial",
+    cursor: "pointer"
+  },
+  copyright: {
+    color: "#7E7E7E",
+    fontFamily: "Roboto",
+    letterSpacing: "0.65px",
+    fontSize: "0.9em",
+    lineHeight: "1.2em"
+  },
   visuallyHiddenButScreenReaderAccessible: {
     height: "1px",
     width: "1px",
@@ -109,7 +144,7 @@ const sharedStyles = {
   eventBody: {
     fontFamily: "Rubik",
     fontSize: "1em",
-    lineHeight: "1.2em",
+    lineHeight: "1.4em",
     color: "#7E7E7E"
   },
   ticketsTitle: {
@@ -1262,24 +1297,20 @@ export class Home extends React.Component<AppPropsT> {
     } = this.props;
     let styles = {
       loginAnchor: {
-        background: "none",
-        border: "none",
-        padding: 0,
+        ...sharedStyles.loginAnchor,
+        marginLeft: byLayout("1.5em", "3em")
+      },
+      boldLoginAnchor: {
+        ...sharedStyles.loginAnchor,
         marginLeft: byLayout("1.5em", "3em"),
-        fontFamily: "Roboto",
-        fontSize: "1em",
-        lineHeight: "1.2em",
-        cursor: "pointer",
-        color: "#FF0266"
+        fontWeight: "bold" as "bold"
       }
     };
 
     switch (authenticationStatus) {
       case AuthenticationStatus.Pending:
         return (
-          <div
-            className="ellipsis-anim"
-            style={{...styles.loginAnchor, fontWeight: "bold" as "bold"}}>
+          <div className="ellipsis-anim" style={styles.boldLoginAnchor}>
             <span>.</span>
             <span>.</span>
             <span>.</span>
@@ -1314,25 +1345,6 @@ export class Home extends React.Component<AppPropsT> {
       logo: {
         height: byLayout("2em", "2.6em"),
         cursor: "pointer"
-      },
-      helpAnchor: {
-        color: "#7E7E7E",
-        fontFamily: "Roboto",
-        fontSize: "1em",
-        lineHeight: "1.2em",
-        cursor: "pointer",
-        textDecoration: "none"
-      },
-      loginAnchor: {
-        background: "none",
-        border: "none",
-        padding: 0,
-        marginLeft: byLayout("1.5em", "3em"),
-        fontFamily: "Roboto",
-        fontSize: "1em",
-        lineHeight: "1.2em",
-        cursor: "pointer",
-        color: "#FF0266"
       }
     };
 
@@ -1361,7 +1373,7 @@ export class Home extends React.Component<AppPropsT> {
               justifyContent: "flex-end"
             }}>
             <a
-              style={styles.helpAnchor}
+              style={sharedStyles.helpAnchor}
               href="https://foriatickets.zendesk.com/hc/en-us">
               Help
             </a>
@@ -1437,14 +1449,14 @@ export class Home extends React.Component<AppPropsT> {
           display: "flex",
           maxWidth: `${bodyWidth}px`,
           backgroundColor: byLayout("white", "initial"),
-          margin: byLayout("0 auto", "0 auto 3em auto")
+          margin: "0em auto"
         }}>
         <div
           className="row"
           style={{
             borderRadius: "5px",
             backgroundColor: "white",
-            padding: byLayout("2em 1.5em", "2em 0em 2em 1.5em"),
+            padding: byLayout("1em", "2em"),
             alignItems: "flex-start"
           }}>
           <div className="column" style={{flex: 1}}>
@@ -1510,6 +1522,51 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
+  renderFooter = () => {
+    let {byLayout} = this.props;
+
+    return (
+      <div
+        style={{
+          flex: 1,
+          flexDirection: "column",
+          display: "flex",
+          maxWidth: `${bodyWidth}px`,
+          margin: byLayout("0 auto", "0 auto 3em auto")
+        }}>
+        <div className="column" style={{margin: byLayout("1em", "2em")}}>
+          <div className="row" style={{marginBottom: "0.6em"}}>
+            <a
+              href="https://foriatickets.com/privacy-policy.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={sharedStyles.footerLink}>
+              Privacy Policy
+            </a>
+            <span
+              style={{
+                color: "#7E7E7E",
+                fontFamily: "Roboto",
+                margin: "0 0.4em"
+              }}>
+              |
+            </span>
+            <a
+              href="https://foriatickets.com/terms-of-use.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={sharedStyles.footerLink}>
+              Terms of Use
+            </a>
+          </div>
+          <div style={sharedStyles.copyright}>
+            &copy; 2019 Foria Technologies, Inc. All Rights Reserved.
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   renderEventBodyText = () => {
     let {event} = this.props;
     return (
@@ -1539,6 +1596,7 @@ export class Home extends React.Component<AppPropsT> {
         {this.renderHeader()}
         {this.renderHero()}
         {this.renderBody()}
+        {this.renderFooter()}
         {byLayout(this.renderTicketsPullUp(), null)}
       </div>
     );
