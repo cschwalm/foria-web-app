@@ -64,8 +64,7 @@ const bodyWidth = 960;
 const pink = "#FF0266";
 
 interface AppPropsT {
-  // TODO can return a more specific type (a | b)
-  byLayout: (a: any, b: any) => any;
+  byLayout: <A, B>(a: A, b: B) => A | B;
   pullUpMenuCollapsed: boolean;
   authenticationStatus: AuthenticationStatus;
   initiateLogin: () => void;
