@@ -158,8 +158,9 @@ const sharedStyles = {
     backgroundColor: "#f2f2f2",
     fontFamily: "Roboto",
     fontSize: "1em",
-    lineHeight: "1.2em",
-    marginBottom: "1em"
+    boxSizing: "border-box" as "border-box",
+    /* Provide exact height to line up the menu bottom border with the hero bottom border */
+    height: "3.2em"
   },
   eventSubTitle: {
     fontFamily: "Rubik",
@@ -1260,7 +1261,8 @@ export class Home extends React.Component<AppPropsT> {
             backgroundColor: "white",
             position: "absolute",
             width: `${ticketOverlayWidth}px`,
-            top: "-64px",
+            /* Line up the menu bottom border with the hero bottom border */
+            top: `${-5.2 * desktopBaseFont}px`,
             boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.25)"
           }}>
           {modalView}
