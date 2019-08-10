@@ -46,11 +46,9 @@ function* toCheckoutView() {
       take(Auth0ActionType.AuthenticationError)
     ]);
     if (!success) {
-      // TODO: Handle this case in a user friendly way
       return;
     }
   } else if (!success) {
-    // TODO: Handle this case in a user friendly way
     return;
   }
 
@@ -64,7 +62,6 @@ function* toCheckoutView() {
 
   if (!calculateSuccess) {
     // Unable to calculate a purchase total
-    // TODO display error in a user friendly way
     return;
   }
 

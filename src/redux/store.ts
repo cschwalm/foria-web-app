@@ -22,7 +22,6 @@ export function initializeStore() {
   const store = createStore(
     combineReducers({root, home}),
     {root: rootInitialState, home: homeInitialState},
-    // TODO is apply necessary?
     applyMiddleware(sagaMiddleWare)
   );
 

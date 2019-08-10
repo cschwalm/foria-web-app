@@ -24,7 +24,9 @@ export enum ActionType {
 
   RequestView = "RequestView",
   AddTicket = "AddTicket",
-  RemoveTicket = "RemoveTicket"
+  RemoveTicket = "RemoveTicket",
+
+  ResetError = "ResetError"
 }
 
 export type TicketCounts = {[ticketId: string]: number};
@@ -33,15 +35,16 @@ export interface State {
   pullUpMenuCollapsed: boolean;
   view: View;
   ticketsForPurchase: TicketCounts;
-  paymentRequest: stripe.Stripe["paymentRequest"] | null;
   canMakePayment: boolean;
+  paymentRequest: stripe.paymentRequest.StripePaymentRequest | null;
   orderNumber?: string;
   orderSubTotal?: number;
   orderFees?: number;
   orderGrandTotal?: number;
   orderCurrency?: string;
+  error?: any;
 }
-export const initialState = {
+export const initialState: State = {
   pullUpMenuCollapsed: true,
   // pullUpMenuCollapsed: true,
   view: View.Tickets,
@@ -66,6 +69,7 @@ function updateTicketsQuantityHelper(
     [ticket.id]: currentCount + delta
   };
 }
+
 export const someTicketsSelected = (ticketsForPurchase: TicketCounts) =>
   values(ticketsForPurchase).some(quantity => quantity > 0);
 
@@ -124,6 +128,8 @@ export const reducer = (state = initialState, action: Action) => {
           -1
         )
       };
+    case ActionType.ResetError:
+      return omit(state, "error");
     case StripeActionType.CanMakePaymentSuccess:
       return {
         ...state,
@@ -147,18 +153,10 @@ export const reducer = (state = initialState, action: Action) => {
     case ApiActionType.CalculateOrderTotalError:
     case Auth0ActionType.AuthenticationError:
     case Auth0ActionType.LoginError:
-      setTimeout(
-        () =>
-          window.alert(
-            `Oops! ${action.type}\n${
-              typeof action.data === "object"
-                ? JSON.stringify(action.data)
-                : action.data
-            }`
-          ),
-        1
-      );
-      return state;
+      return {
+        ...state,
+        error: action.data
+      };
     default:
       return state;
   }
@@ -166,6 +164,9 @@ export const reducer = (state = initialState, action: Action) => {
 
 export const resetPullUpMenu = (dispatch: Dispatch<Action>) => () =>
   dispatch({type: ActionType.ResetPullUpMenu});
+
+export const resetError = (dispatch: Dispatch<Action>) => () =>
+  dispatch({type: ActionType.ResetError});
 
 export const showPullUpMenu = (dispatch: Dispatch<Action>) => () =>
   dispatch({type: ActionType.ShowPullUpMenu});

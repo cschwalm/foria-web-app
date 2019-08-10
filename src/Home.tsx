@@ -31,6 +31,7 @@ import {
   selectView as selectViewAction,
   toPreviousView as toPreviousViewAction,
   toNextView as toNextViewAction,
+  resetError as resetErrorAction,
   someTicketsSelected,
   totalTicketsSelected,
   View,
@@ -64,14 +65,14 @@ const bodyWidth = 960;
 const pink = "#FF0266";
 
 interface AppPropsT {
-  // TODO can return a more specific type (a | b)
-  byLayout: (a: any, b: any) => any;
+  byLayout: <A, B>(a: A, b: B) => A | B;
   pullUpMenuCollapsed: boolean;
   authenticationStatus: AuthenticationStatus;
   initiateLogin: () => void;
   initiateLogout: () => void;
   addTicket: (ticket: TicketTypeConfig) => void;
   removeTicket: (ticket: TicketTypeConfig) => void;
+  resetError: () => void;
   resetPullUpMenu: () => void;
   showPullUpMenu: () => void;
   onTokenCreate: (result: stripe.TokenResponse) => void;
@@ -81,7 +82,7 @@ interface AppPropsT {
   toNextView: () => void;
   view: View;
   stripe: stripe.Stripe | null;
-  paymentRequest: stripe.Stripe["paymentRequest"] | null;
+  paymentRequest: stripe.paymentRequest.StripePaymentRequest | null;
   canMakePayment: boolean;
   ticketsForPurchase: TicketCounts;
   profile?: auth0.Auth0UserProfile;
@@ -91,6 +92,7 @@ interface AppPropsT {
   orderFees?: number;
   orderGrandTotal?: number;
   orderCurrency?: string;
+  error?: any;
 }
 
 const checkoutButtonHeight = "2.5em";
@@ -332,7 +334,6 @@ function PaymentRequest(props: any) {
         paymentRequestButton: {
           // theme: "light-outline",
           theme: "dark",
-          // TODO make these computed
           height: byLayout(
             `${mobileBaseFont * 2.5}px`,
             `${desktopBaseFont * 2.5}px`
@@ -1475,11 +1476,13 @@ export class Home extends React.Component<AppPropsT> {
                 </div>
               ) : (
                 <>
-                  <img
-                    src={calendarIcon}
-                    style={styles.calendarIcon}
-                    alt="calendar-icon"
-                  />
+                  <div style={{flex: "0 0 auto"}}>
+                    <img
+                      src={calendarIcon}
+                      style={styles.calendarIcon}
+                      alt="calendar-icon"
+                    />
+                  </div>
                   <div
                     className="column"
                     style={{marginLeft: "0.8em", flex: 1}}>
@@ -1497,13 +1500,15 @@ export class Home extends React.Component<AppPropsT> {
                 </div>
               ) : (
                 <>
-                  <PinpointIcon
-                    width={styles.pinpointIcon.width}
-                    height={styles.pinpointIcon.height}
-                  />
+                  <div style={{flex: "0 0 auto"}}>
+                    <PinpointIcon
+                      width={styles.pinpointIcon.width}
+                      height={styles.pinpointIcon.height}
+                    />
+                  </div>
                   <div className="column" style={{marginLeft: "0.8em"}}>
                     <div style={styles.eventDetailTitle}>
-                      Radio City Music Hall
+                      {event.address.venue_name}
                     </div>
                     <div style={styles.eventDetailSubtitle}>
                       {`${event.address.street_address}, ${
@@ -1532,7 +1537,7 @@ export class Home extends React.Component<AppPropsT> {
           flexDirection: "column",
           display: "flex",
           maxWidth: `${bodyWidth}px`,
-          margin: byLayout("0 auto", "0 auto 3em auto")
+          margin: "0 auto"
         }}>
         <div className="column" style={{margin: byLayout("1em", "2em")}}>
           <div className="row" style={{marginBottom: "0.6em"}}>
@@ -1582,6 +1587,82 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
+  renderErrorOverlay() {
+    let {error, resetError, byLayout} = this.props;
+    if (!error) {
+      return;
+    }
+    const styles = {
+      container: {
+        position: "absolute" as "absolute",
+        backgroundColor: "rgba(0, 0, 0, 0.3)",
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center"
+      },
+      innerContainer: {
+        margin: "1em",
+        maxWidth: byLayout("initial", ticketOverlayWidth + "px"),
+        backgroundColor: "#fff",
+        padding: "1em",
+        borderRadius: "5px",
+        borderBottom: `1px solid #B5B5B5`,
+        boxShadow: "rgb(199, 199, 199) 0 2px 3px 0px",
+        overflow: "hidden"
+      },
+      headerStyle: {
+        fontFamily: "Rubik",
+        fontSize: "1.3em",
+        marginBottom: "16px",
+        lineHeight: "1.2em",
+        fontWeight: 600
+      },
+      body: {
+        ...sharedStyles.eventBody,
+        color: "black",
+        marginBottom: "16px",
+        overflowWrap: "break-word" as "break-word"
+      },
+      buttonContainer: {
+        ...sharedStyles.checkoutButton,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        color: "black",
+        backgroundColor: "#EDEDED"
+      }
+    };
+
+    let errorMessage: string;
+    if (typeof error === "string") {
+      errorMessage = error;
+    } else if (error.message && typeof error.message === "string") {
+      errorMessage = error.message;
+    } else {
+      errorMessage = JSON.stringify(error);
+    }
+
+    return (
+      <div style={styles.container}>
+        <div style={styles.innerContainer}>
+          <div style={styles.headerStyle}>Oops!</div>
+          <p style={{...styles.body, maxHeight: "150px", overflowY: "scroll"}}>
+            {errorMessage}
+          </p>
+          <p style={styles.body}>Please try again.</p>
+          <div onClick={resetError} style={styles.buttonContainer}>
+            Okay
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   render() {
     let {byLayout} = this.props;
 
@@ -1598,6 +1679,7 @@ export class Home extends React.Component<AppPropsT> {
         {this.renderBody()}
         {this.renderFooter()}
         {byLayout(this.renderTicketsPullUp(), null)}
+        {this.renderErrorOverlay()}
       </div>
     );
   }
@@ -1619,7 +1701,8 @@ export default connect(
     orderSubTotal: home.orderSubTotal,
     orderFees: home.orderFees,
     orderGrandTotal: home.orderGrandTotal,
-    orderCurrency: home.orderCurrency
+    orderCurrency: home.orderCurrency,
+    error: home.error
   }),
   dispatch => ({
     initiateLogin: initiateLoginAction(dispatch),
@@ -1632,6 +1715,7 @@ export default connect(
     toPreviousView: toPreviousViewAction(dispatch),
     toNextView: toNextViewAction(dispatch),
     onTokenCreate: onTokenCreateAction(dispatch),
-    onTokenCreateError: onTokenCreateErrorAction(dispatch)
+    onTokenCreateError: onTokenCreateErrorAction(dispatch),
+    resetError: resetErrorAction(dispatch)
   })
 )(Home);
