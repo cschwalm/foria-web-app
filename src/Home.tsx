@@ -1474,11 +1474,13 @@ export class Home extends React.Component<AppPropsT> {
                 </div>
               ) : (
                 <>
-                  <img
-                    src={calendarIcon}
-                    style={styles.calendarIcon}
-                    alt="calendar-icon"
-                  />
+                  <div style={{flex: "0 0 auto"}}>
+                    <img
+                      src={calendarIcon}
+                      style={styles.calendarIcon}
+                      alt="calendar-icon"
+                    />
+                  </div>
                   <div
                     className="column"
                     style={{marginLeft: "0.8em", flex: 1}}>
@@ -1496,10 +1498,12 @@ export class Home extends React.Component<AppPropsT> {
                 </div>
               ) : (
                 <>
-                  <PinpointIcon
-                    width={styles.pinpointIcon.width}
-                    height={styles.pinpointIcon.height}
-                  />
+                  <div style={{flex: "0 0 auto"}}>
+                    <PinpointIcon
+                      width={styles.pinpointIcon.width}
+                      height={styles.pinpointIcon.height}
+                    />
+                  </div>
                   <div className="column" style={{marginLeft: "0.8em"}}>
                     <div style={styles.eventDetailTitle}>
                       Radio City Music Hall
