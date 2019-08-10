@@ -68,7 +68,6 @@ function* createPaymentRequest(
       requestPayerEmail: true
     });
   } catch (err) {
-    // TODO present this error in a user friendly way
     yield put({
       type: ActionType.PaymentRequestCreationError,
       data: err
@@ -109,7 +108,6 @@ function* createPaymentRequest(
   try {
     result = yield paymentRequest.canMakePayment();
   } catch (err) {
-    // TODO present this error in a user friendly way
     yield put({
       type: ActionType.CanMakePaymentError
     });
@@ -154,7 +152,6 @@ function* saga() {
   try {
     stripe = yield call(loadStripeInstance);
   } catch (err) {
-    // TODO present this error in a user friendly way
     yield put({
       type: ActionType.StripeScriptLoadingError
     });
