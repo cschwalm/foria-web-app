@@ -1532,7 +1532,7 @@ export class Home extends React.Component<AppPropsT> {
           flexDirection: "column",
           display: "flex",
           maxWidth: `${bodyWidth}px`,
-          margin: byLayout("0 auto", "0 auto 3em auto")
+          margin: "0 auto"
         }}>
         <div className="column" style={{margin: byLayout("1em", "2em")}}>
           <div className="row" style={{marginBottom: "0.6em"}}>
