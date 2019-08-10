@@ -80,7 +80,7 @@ interface AppPropsT {
   toNextView: () => void;
   view: View;
   stripe: stripe.Stripe | null;
-  paymentRequest: stripe.Stripe["paymentRequest"] | null;
+  paymentRequest: stripe.paymentRequest.StripePaymentRequest | null;
   canMakePayment: boolean;
   ticketsForPurchase: TicketCounts;
   profile?: auth0.Auth0UserProfile;

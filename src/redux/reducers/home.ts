@@ -33,8 +33,8 @@ export interface State {
   pullUpMenuCollapsed: boolean;
   view: View;
   ticketsForPurchase: TicketCounts;
-  paymentRequest: stripe.Stripe["paymentRequest"] | null;
   canMakePayment: boolean;
+  paymentRequest: stripe.paymentRequest.StripePaymentRequest | null;
   orderNumber?: string;
   orderSubTotal?: number;
   orderFees?: number;
