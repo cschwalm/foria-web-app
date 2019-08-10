@@ -1506,7 +1506,7 @@ export class Home extends React.Component<AppPropsT> {
                   </div>
                   <div className="column" style={{marginLeft: "0.8em"}}>
                     <div style={styles.eventDetailTitle}>
-                      Radio City Music Hall
+                      {event.address.venue_name}
                     </div>
                     <div style={styles.eventDetailSubtitle}>
                       {`${event.address.street_address}, ${
