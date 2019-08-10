@@ -334,7 +334,6 @@ function PaymentRequest(props: any) {
         paymentRequestButton: {
           // theme: "light-outline",
           theme: "dark",
-          // TODO make these computed
           height: byLayout(
             `${mobileBaseFont * 2.5}px`,
             `${desktopBaseFont * 2.5}px`
