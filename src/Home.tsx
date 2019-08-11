@@ -84,6 +84,7 @@ interface AppPropsT {
   stripe: stripe.Stripe | null;
   paymentRequest: stripe.paymentRequest.StripePaymentRequest | null;
   canMakePayment: boolean;
+  checkoutPending: boolean;
   ticketsForPurchase: TicketCounts;
   profile?: auth0.Auth0UserProfile;
   event?: Event;
@@ -158,8 +159,9 @@ const sharedStyles = {
     backgroundColor: "#f2f2f2",
     fontFamily: "Roboto",
     fontSize: "1em",
-    lineHeight: "1.2em",
-    marginBottom: "1em"
+    boxSizing: "border-box" as "border-box",
+    /* Provide exact height to line up the menu bottom border with the hero bottom border */
+    height: "3.2em"
   },
   eventSubTitle: {
     fontFamily: "Rubik",
@@ -512,6 +514,13 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
 
 const WrappedCardForm = injectStripe(CardForm);
 
+const Ellipsis = ({style = {}}: {style?: React.CSSProperties}) => (
+  <div className="ellipsis-anim" style={style}>
+    <span>.</span>
+    <span>.</span>
+    <span>.</span>
+  </div>
+);
 export class Home extends React.Component<AppPropsT> {
   pullUpMenuRef: RefObject<HTMLDivElement>;
   constructor(props: AppPropsT) {
@@ -664,7 +673,7 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderDesktopTicketsStep = () => {
-    let {event, toNextView, ticketsForPurchase} = this.props;
+    let {event, toNextView, ticketsForPurchase, checkoutPending} = this.props;
     let someSelected = someTicketsSelected(ticketsForPurchase);
     return (
       <>
@@ -694,7 +703,7 @@ export class Home extends React.Component<AppPropsT> {
               ...(!someSelected ? sharedStyles.disabledCheckoutButton : {})
             }}
             onClick={toNextView}>
-            Checkout
+            Checkout{checkoutPending ? <Ellipsis style={{ fontWeight: 700 }}/> : null}
           </div>
         </div>
       </>
@@ -1260,7 +1269,8 @@ export class Home extends React.Component<AppPropsT> {
             backgroundColor: "white",
             position: "absolute",
             width: `${ticketOverlayWidth}px`,
-            top: "-64px",
+            /* Line up the menu bottom border with the hero bottom border */
+            top: `${-5.2 * desktopBaseFont}px`,
             boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.25)"
           }}>
           {modalView}
@@ -1310,13 +1320,7 @@ export class Home extends React.Component<AppPropsT> {
 
     switch (authenticationStatus) {
       case AuthenticationStatus.Pending:
-        return (
-          <div className="ellipsis-anim" style={styles.boldLoginAnchor}>
-            <span>.</span>
-            <span>.</span>
-            <span>.</span>
-          </div>
-        );
+        return <Ellipsis style={styles.boldLoginAnchor} />;
       case AuthenticationStatus.NoAuth:
         return (
           <button onClick={() => initiateLogin()} style={styles.loginAnchor}>
@@ -1702,7 +1706,8 @@ export default connect(
     orderFees: home.orderFees,
     orderGrandTotal: home.orderGrandTotal,
     orderCurrency: home.orderCurrency,
-    error: home.error
+    error: home.error,
+    checkoutPending: home.checkoutPending
   }),
   dispatch => ({
     initiateLogin: initiateLoginAction(dispatch),

@@ -21,71 +21,81 @@ import {ActionType as ApiActionType} from "./apiSaga";
 // Navigate a user to the appropriate checkout view, by first logging them in,
 // then checking if they have multiple payment options.
 function* toCheckoutView() {
-  let ticketsForPurchase = yield select(getTicketsForPurchase);
-  let someSelected = yield call(someTicketsSelected, ticketsForPurchase);
-  if (!someSelected) {
-    // Only navigate to checkout if some tickets have been selected
-    return;
-  }
+  // Pull out the actual body of the method into a separate function, so that we can put an action before and after it
+  function* _toCheckoutView() {
+    let ticketsForPurchase = yield select(getTicketsForPurchase);
+    let someSelected = yield call(someTicketsSelected, ticketsForPurchase);
+    if (!someSelected) {
+      // Only navigate to checkout if some tickets have been selected
+      return;
+    }
 
-  // Initiate a login if they are not logged in
-  yield put({type: Auth0ActionType.CheckLogin});
-  let [success, noSession /*error*/] = yield race([
-    take(Auth0ActionType.AuthenticationSuccess),
-    take(Auth0ActionType.NoExistingSession),
-    take(Auth0ActionType.AuthenticationError)
-  ]);
-
-  if (noSession) {
-    // We attempt to login the user, if we run into any errors we do not let
-    // user proceed to checkout view
-    yield put({type: Auth0ActionType.InitiateLogin});
-    let [success /*noSession, error*/] = yield race([
+    // Initiate a login if they are not logged in
+    yield put({type: Auth0ActionType.CheckLogin});
+    let [success, noSession /*error*/] = yield race([
       take(Auth0ActionType.AuthenticationSuccess),
       take(Auth0ActionType.NoExistingSession),
       take(Auth0ActionType.AuthenticationError)
     ]);
-    if (!success) {
+
+    if (noSession) {
+      // We attempt to login the user, if we run into any errors we do not let
+      // user proceed to checkout view
+      yield put({type: Auth0ActionType.InitiateLogin});
+      let [success /*noSession, error*/] = yield race([
+        take(Auth0ActionType.AuthenticationSuccess),
+        take(Auth0ActionType.NoExistingSession),
+        take(Auth0ActionType.AuthenticationError)
+      ]);
+      if (!success) {
+        return;
+      }
+    } else if (!success) {
       return;
     }
-  } else if (!success) {
-    return;
+
+    // Fire the events to request an order calculation and to see if we
+    // have web payments support
+    yield put({type: ApiActionType.InitiateCalculateOrder});
+    let [calculateSuccess /*,error*/] = yield race([
+      take(ApiActionType.CalculateOrderTotalSuccess),
+      take(ApiActionType.CalculateOrderTotalError)
+    ]);
+
+    if (!calculateSuccess) {
+      // Unable to calculate a purchase total
+      return;
+    }
+
+    // Create a payment request with the result of the calculate order total result
+    yield put({
+      type: StripeActionType.CreatePaymentRequest,
+      data: calculateSuccess.data
+    });
+
+    // Use `all` to wait for the failure or success of each in parallel
+    let [paymentsSuccess /*,error*/] = yield race([
+      take(StripeActionType.CanMakePaymentSuccess),
+      take(StripeActionType.CanMakePaymentError)
+    ]);
+
+    // The data on the action is whether web payments are accepted
+    let webPaymentSupported = paymentsSuccess && paymentsSuccess.data;
+    if (!webPaymentSupported) {
+      // No support, so navigate to credit card checkout
+      yield put({
+        type: HomeActionType.SelectView,
+        data: View.CreditCardCheckout
+      });
+      return;
+    }
+
+    yield put({type: HomeActionType.SelectView, data: View.ChooseCheckout});
   }
 
-  // Fire the events to request an order calculation and to see if we
-  // have web payments support
-  yield put({type: ApiActionType.InitiateCalculateOrder});
-  let [calculateSuccess /*,error*/] = yield race([
-    take(ApiActionType.CalculateOrderTotalSuccess),
-    take(ApiActionType.CalculateOrderTotalError)
-  ]);
-
-  if (!calculateSuccess) {
-    // Unable to calculate a purchase total
-    return;
-  }
-
-  // Create a payment request with the result of the calculate order total result
-  yield put({
-    type: StripeActionType.CreatePaymentRequest,
-    data: calculateSuccess.data
-  });
-
-  // Use `all` to wait for the failure or success of each in parallel
-  let [paymentsSuccess /*,error*/] = yield race([
-    take(StripeActionType.CanMakePaymentSuccess),
-    take(StripeActionType.CanMakePaymentError)
-  ]);
-
-  // The data on the action is whether web payments are accepted
-  let webPaymentSupported = paymentsSuccess && paymentsSuccess.data;
-  if (!webPaymentSupported) {
-    // No support, so navigate to credit card checkout
-    yield put({type: HomeActionType.SelectView, data: View.CreditCardCheckout});
-    return;
-  }
-
-  yield put({type: HomeActionType.SelectView, data: View.ChooseCheckout});
+  yield put({type: HomeActionType.ToCheckoutPending});
+  yield call(_toCheckoutView);
+  yield put({type: HomeActionType.ToCheckoutCompleted});
 }
 
 // Navigate a user from a checkout view, sends user back to ChooseCheckout if

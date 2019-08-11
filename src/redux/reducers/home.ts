@@ -26,7 +26,10 @@ export enum ActionType {
   AddTicket = "AddTicket",
   RemoveTicket = "RemoveTicket",
 
-  ResetError = "ResetError"
+  ResetError = "ResetError",
+
+  ToCheckoutPending = "ToCheckoutPending",
+  ToCheckoutCompleted = "ToCheckoutCompleted"
 }
 
 export type TicketCounts = {[ticketId: string]: number};
@@ -36,6 +39,7 @@ export interface State {
   view: View;
   ticketsForPurchase: TicketCounts;
   canMakePayment: boolean;
+  checkoutPending: boolean;
   paymentRequest: stripe.paymentRequest.StripePaymentRequest | null;
   orderNumber?: string;
   orderSubTotal?: number;
@@ -51,6 +55,7 @@ export const initialState: State = {
   // view: View.ChooseCheckout,
   paymentRequest: null,
   canMakePayment: false,
+  checkoutPending: false,
   ticketsForPurchase: {}
 };
 
@@ -130,6 +135,16 @@ export const reducer = (state = initialState, action: Action) => {
       };
     case ActionType.ResetError:
       return omit(state, "error");
+    case ActionType.ToCheckoutPending:
+      return {
+        ...state,
+        checkoutPending: true
+      };
+    case ActionType.ToCheckoutCompleted:
+      return {
+        ...state,
+        checkoutPending: false
+      };
     case StripeActionType.CanMakePaymentSuccess:
       return {
         ...state,
