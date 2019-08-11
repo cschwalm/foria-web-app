@@ -1135,7 +1135,7 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderMobileTicketsStep = () => {
-    let {toNextView, ticketsForPurchase} = this.props;
+    let {toNextView, ticketsForPurchase, checkoutPending} = this.props;
     let someSelected = someTicketsSelected(ticketsForPurchase);
     return (
       <>
@@ -1155,7 +1155,7 @@ export class Home extends React.Component<AppPropsT> {
             ...(!someSelected ? sharedStyles.disabledMobileCheckoutButton : {})
           }}
           onClick={toNextView}>
-          Checkout
+          Checkout{checkoutPending ? <Ellipsis style={{ fontWeight: 700 }}/> : null}
         </div>
       </>
     );
