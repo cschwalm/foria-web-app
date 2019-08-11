@@ -9,7 +9,7 @@ import "./App.css";
 const App = () => (
   <Provider store={initializeStore()}>
     <Router>
-      <Route exact path="/" component={Home} />
+      <Route exact path="/events/:eventId/" component={Home} />
     </Router>
   </Provider>
 );
