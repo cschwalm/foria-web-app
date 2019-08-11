@@ -84,6 +84,7 @@ interface AppPropsT {
   stripe: stripe.Stripe | null;
   paymentRequest: stripe.paymentRequest.StripePaymentRequest | null;
   canMakePayment: boolean;
+  checkoutPending: boolean;
   ticketsForPurchase: TicketCounts;
   profile?: auth0.Auth0UserProfile;
   event?: Event;
@@ -672,7 +673,7 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderDesktopTicketsStep = () => {
-    let {event, toNextView, ticketsForPurchase} = this.props;
+    let {event, toNextView, ticketsForPurchase, checkoutPending} = this.props;
     let someSelected = someTicketsSelected(ticketsForPurchase);
     return (
       <>
@@ -702,7 +703,7 @@ export class Home extends React.Component<AppPropsT> {
               ...(!someSelected ? sharedStyles.disabledCheckoutButton : {})
             }}
             onClick={toNextView}>
-            Checkout
+            Checkout{checkoutPending ? <Ellipsis style={{ fontWeight: 700 }}/> : null}
           </div>
         </div>
       </>
@@ -1705,7 +1706,8 @@ export default connect(
     orderFees: home.orderFees,
     orderGrandTotal: home.orderGrandTotal,
     orderCurrency: home.orderCurrency,
-    error: home.error
+    error: home.error,
+    checkoutPending: home.checkoutPending
   }),
   dispatch => ({
     initiateLogin: initiateLoginAction(dispatch),
