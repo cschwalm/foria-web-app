@@ -703,7 +703,8 @@ export class Home extends React.Component<AppPropsT> {
               ...(!someSelected ? sharedStyles.disabledCheckoutButton : {})
             }}
             onClick={toNextView}>
-            Checkout{checkoutPending ? <Ellipsis style={{ fontWeight: 700 }}/> : null}
+            Checkout
+            {checkoutPending ? <Ellipsis style={{fontWeight: 700}} /> : null}
           </div>
         </div>
       </>
