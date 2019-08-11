@@ -513,6 +513,13 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
 
 const WrappedCardForm = injectStripe(CardForm);
 
+const Ellipsis = ({style = {}}: {style?: React.CSSProperties}) => (
+  <div className="ellipsis-anim" style={style}>
+    <span>.</span>
+    <span>.</span>
+    <span>.</span>
+  </div>
+);
 export class Home extends React.Component<AppPropsT> {
   pullUpMenuRef: RefObject<HTMLDivElement>;
   constructor(props: AppPropsT) {
@@ -1312,13 +1319,7 @@ export class Home extends React.Component<AppPropsT> {
 
     switch (authenticationStatus) {
       case AuthenticationStatus.Pending:
-        return (
-          <div className="ellipsis-anim" style={styles.boldLoginAnchor}>
-            <span>.</span>
-            <span>.</span>
-            <span>.</span>
-          </div>
-        );
+        return <Ellipsis style={styles.boldLoginAnchor} />;
       case AuthenticationStatus.NoAuth:
         return (
           <button onClick={() => initiateLogin()} style={styles.loginAnchor}>
