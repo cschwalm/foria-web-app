@@ -85,6 +85,7 @@ interface AppPropsT {
   paymentRequest: stripe.paymentRequest.StripePaymentRequest | null;
   canMakePayment: boolean;
   checkoutPending: boolean;
+  completePending: boolean;
   ticketsForPurchase: TicketCounts;
   profile?: auth0.Auth0UserProfile;
   event?: Event;
@@ -218,9 +219,7 @@ const sharedStyles = {
     color: "#7E7E7E"
   },
   payWithCardButton: {
-    // flex: 1,
     cursor: "pointer",
-    display: "inline-block",
     border: "none",
     height: checkoutButtonHeight,
     backgroundColor: "#FF0266",
@@ -353,7 +352,7 @@ interface OptionalStripe {
 }
 type CardFormProps = Pick<
   AppPropsT,
-  "byLayout" | "onTokenCreate" | "onTokenCreateError"
+  "byLayout" | "onTokenCreate" | "onTokenCreateError" | "completePending"
 > &
   OptionalStripe;
 interface CardFormState {
@@ -397,7 +396,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
   };
   render() {
     let {cardholderName, hasSubmittedOnce, cardElemEmpty} = this.state;
-    let {byLayout} = this.props;
+    let {byLayout, completePending} = this.props;
 
     return (
       <form className="column" onSubmit={this.onSubmit}>
@@ -506,6 +505,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
           className="row"
           style={sharedStyles.payWithCardButton}>
           Purchase
+          {completePending ? <Ellipsis style={{fontWeight: 700}} /> : null}
         </button>
       </form>
     );
@@ -703,7 +703,8 @@ export class Home extends React.Component<AppPropsT> {
               ...(!someSelected ? sharedStyles.disabledCheckoutButton : {})
             }}
             onClick={toNextView}>
-            Checkout{checkoutPending ? <Ellipsis style={{ fontWeight: 700 }}/> : null}
+            Checkout
+            {checkoutPending ? <Ellipsis style={{fontWeight: 700}} /> : null}
           </div>
         </div>
       </>
@@ -852,6 +853,7 @@ export class Home extends React.Component<AppPropsT> {
       byLayout,
       onTokenCreate,
       onTokenCreateError,
+      completePending,
       event,
       toPreviousView
     } = this.props;
@@ -898,6 +900,7 @@ export class Home extends React.Component<AppPropsT> {
                 ]}>
                 <WrappedCardForm
                   byLayout={byLayout}
+                  completePending={completePending}
                   onTokenCreate={onTokenCreate}
                   onTokenCreateError={onTokenCreateError}
                 />
@@ -926,7 +929,13 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderMobileCreditCardCheckoutStep = () => {
-    let {stripe, byLayout, onTokenCreate, onTokenCreateError} = this.props;
+    let {
+      stripe,
+      byLayout,
+      completePending,
+      onTokenCreate,
+      onTokenCreateError
+    } = this.props;
     return (
       <>
         <div style={sharedStyles.mobileTicketHeader}>Checkout</div>
@@ -945,6 +954,7 @@ export class Home extends React.Component<AppPropsT> {
               ]}>
               <WrappedCardForm
                 byLayout={byLayout}
+                completePending={completePending}
                 onTokenCreate={onTokenCreate}
                 onTokenCreateError={onTokenCreateError}
               />
@@ -1155,7 +1165,8 @@ export class Home extends React.Component<AppPropsT> {
             ...(!someSelected ? sharedStyles.disabledMobileCheckoutButton : {})
           }}
           onClick={toNextView}>
-          Checkout{checkoutPending ? <Ellipsis style={{ fontWeight: 700 }}/> : null}
+          Checkout
+          {checkoutPending ? <Ellipsis style={{fontWeight: 700}} /> : null}
         </div>
       </>
     );
@@ -1707,7 +1718,8 @@ export default connect(
     orderGrandTotal: home.orderGrandTotal,
     orderCurrency: home.orderCurrency,
     error: home.error,
-    checkoutPending: home.checkoutPending
+    checkoutPending: home.checkoutPending,
+    completePending: home.completePending
   }),
   dispatch => ({
     initiateLogin: initiateLoginAction(dispatch),

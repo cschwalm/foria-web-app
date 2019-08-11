@@ -29,7 +29,9 @@ export enum ActionType {
   ResetError = "ResetError",
 
   ToCheckoutPending = "ToCheckoutPending",
-  ToCheckoutCompleted = "ToCheckoutCompleted"
+  ToCheckoutCompleted = "ToCheckoutCompleted",
+  ToCompletePending = "ToCompletePending",
+  ToCompleteCompleted = "ToCompleteCompleted"
 }
 
 export type TicketCounts = {[ticketId: string]: number};
@@ -40,6 +42,7 @@ export interface State {
   ticketsForPurchase: TicketCounts;
   canMakePayment: boolean;
   checkoutPending: boolean;
+  completePending: boolean;
   paymentRequest: stripe.paymentRequest.StripePaymentRequest | null;
   orderNumber?: string;
   orderSubTotal?: number;
@@ -56,6 +59,7 @@ export const initialState: State = {
   paymentRequest: null,
   canMakePayment: false,
   checkoutPending: false,
+  completePending: false,
   ticketsForPurchase: {}
 };
 
@@ -144,6 +148,16 @@ export const reducer = (state = initialState, action: Action) => {
       return {
         ...state,
         checkoutPending: false
+      };
+    case ActionType.ToCompletePending:
+      return {
+        ...state,
+        completePending: true
+      };
+    case ActionType.ToCompleteCompleted:
+      return {
+        ...state,
+        completePending: false
       };
     case StripeActionType.CanMakePaymentSuccess:
       return {
