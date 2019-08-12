@@ -1,6 +1,6 @@
 import {
-  actionChannel,
   call,
+  fork,
   put,
   race,
   select,
@@ -156,22 +156,31 @@ function* handleToNextView() {
   }
 }
 
+// Track when a purchase is initiated and completed
+function* trackPurchase() {
+  // When a stripe token is created, we're in a pending state to transition to
+  // the complete view
+  yield takeEvery(StripeActionType.StripeCreateTokenSuccess, function*() {
+    yield put({type: HomeActionType.ToCompletePending});
+  });
+
+  // If checkout succeeds we're not longer in a pending state to transition,
+  // transition to next view
+  yield takeEvery(ApiActionType.CheckoutSuccess, function*() {
+    yield put({type: HomeActionType.ToCompleteCompleted});
+    yield call(handleToNextView);
+  });
+
+  // If checkout fails we're not longer in a pending state to transition
+  yield takeEvery(ApiActionType.CheckoutError, function*() {
+    yield put({type: HomeActionType.ToCompleteCompleted});
+  });
+}
+
 function* saga() {
-  // Before anything, setup a channel to capture any actions we will handle, so
-  // we don't lose actions in the interim
-  let apiCheckoutSuccessChannel = yield actionChannel(
-    ApiActionType.CheckoutSuccess
-  );
-
-  // TODO this is only for development
-  let view = yield select(getView);
-  if (view === View.ChooseCheckout) {
-    yield call(toCheckoutView);
-  }
-
   yield takeEvery(HomeActionType.ToPreviousView, handleToPreviousView);
   yield takeEvery(HomeActionType.ToNextView, handleToNextView);
-  yield takeEvery(apiCheckoutSuccessChannel, handleToNextView);
+  yield fork(trackPurchase);
 }
 
 export default saga;

@@ -82,7 +82,10 @@ function* createPaymentRequest(
 
   // Spawn a saga to handle token creation (and cancellation)
   yield fork(function*() {
-    let {token, complete} = yield onPaymentRequestTokenCreate(paymentRequest);
+    let {token, complete} = yield call(
+      onPaymentRequestTokenCreate,
+      paymentRequest
+    );
     yield put({type: ActionType.StripeCreateTokenSuccess, data: token});
 
     let [success, error, userCancel] = yield race([
