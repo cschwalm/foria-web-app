@@ -11,6 +11,15 @@ import {
   ReactStripeElements
 } from "react-stripe-elements";
 
+import {
+  vividRaspberry,
+  red,
+  white,
+  black,
+  lavenderGray,
+  trolleyGray,
+  antiFlashWhite
+} from "./colors";
 import appleStoreBadge from "./appleStoreBadge.svg";
 import googlePlayBadge from "./googlePlayBadge.png";
 import {AppState} from "./redux/store";
@@ -62,7 +71,6 @@ import minMax from "./minMax";
 
 const ticketOverlayWidth = 385;
 const bodyWidth = 960;
-const pink = "#FF0266";
 
 interface AppPropsT {
   byLayout: <A, B>(a: A, b: B) => A | B;
@@ -98,16 +106,17 @@ interface AppPropsT {
 }
 
 const checkoutButtonHeight = "2.5em";
-
-const mobileBaseFont = 16;
-const desktopBaseFont = 16;
+const font5 = 36;
+const font4 = 18;
+const font3 = 16;
+const font2 = 14;
+const font1 = 12;
 
 const sharedStyles = {
+  dashedLine: {borderBottom: "dashed 4px", color: antiFlashWhite},
   helpAnchor: {
-    color: "#7E7E7E",
+    color: trolleyGray,
     fontFamily: "Roboto",
-    fontSize: "1em",
-    lineHeight: "1.2em",
     cursor: "pointer",
     textDecoration: "none"
   },
@@ -119,23 +128,23 @@ const sharedStyles = {
     fontSize: "1em",
     lineHeight: "1.2em",
     cursor: "pointer",
-    color: "#FF0266"
+    color: vividRaspberry
   },
   footerLink: {
-    color: "#7E7E7E",
+    color: trolleyGray,
     fontFamily: "Roboto",
-    letterSpacing: "0.02em",
-    fontSize: "0.9em",
+    letterSpacing: "0.4px",
+    fontSize: `${font2}px`,
     lineHeight: "1.2em",
     textDecoration: "none",
     backgroundColor: "initial",
     cursor: "pointer"
   },
   copyright: {
-    color: "#7E7E7E",
+    color: trolleyGray,
     fontFamily: "Roboto",
-    letterSpacing: "0.65px",
-    fontSize: "0.9em",
+    letterSpacing: "0.4px",
+    fontSize: `${font2}px`,
     lineHeight: "1.2em"
   },
   visuallyHiddenButScreenReaderAccessible: {
@@ -146,10 +155,8 @@ const sharedStyles = {
     top: "-10px"
   },
   eventBody: {
-    fontFamily: "Rubik",
-    fontSize: "1em",
     lineHeight: "1.4em",
-    color: "#7E7E7E"
+    color: trolleyGray
   },
   ticketsTitle: {
     display: "flex",
@@ -157,78 +164,65 @@ const sharedStyles = {
     alignItems: "center",
     borderRadius: "5px 5px 0px 0px",
     padding: "1em",
-    backgroundColor: "#f2f2f2",
+    backgroundColor: antiFlashWhite,
     fontFamily: "Roboto",
-    fontSize: "1em",
     boxSizing: "border-box" as "border-box",
     /* Provide exact height to line up the menu bottom border with the hero bottom border */
     height: "3.2em"
   },
   eventSubTitle: {
-    fontFamily: "Rubik",
     fontWeight: 500,
-    fontSize: "1em",
-    lineHeight: "1.2em",
-    color: "#7E7E7E"
+    fontSize: `${font4}px`,
+    color: trolleyGray,
+    lineHeight: "1.2em"
   },
   eventTitle: {
     fontFamily: "Rubik",
-    fontWeight: "bold" as "bold",
-    fontSize: "2.0em",
-    lineHeight: "1.2em"
+    fontWeight: 700,
+    fontSize: `${font5}px`,
+    position: "relative" as "relative",
+    lineHeight: "1em",
+    left: "-2px"
   },
   ticketsRestriction: {
-    fontFamily: "Rubik",
     fontWeight: 500,
-    fontSize: "0.75em",
-    lineHeight: "1.2em",
-    color: "#7E7E7E"
+    fontSize: `${font2}px`,
+    color: trolleyGray
   },
   ticketQuantityColumn: {
     justifySelf: "center",
     justifyContent: "space-between",
     alignItems: "center",
     flex: 0
-    // overflow: "hidden",
-    // whiteSpace: "nowrap" as "nowrap",
-    // textOverflow: "ellipsis" as "ellipsis",
   },
-  ticketPriceColumn: {},
-  ticketDescriptionColumn: {},
   mobileTicketHeader: {
-    color: "#c2c2c2",
+    color: lavenderGray,
     textTransform: "uppercase" as "uppercase",
-    fontFamily: "Rubik",
-    fontWeight: 600,
-    margin: "0em 0em 1.5em"
+    fontWeight: 700,
+    margin: "0em 0em 1.5em",
+    fontFamily: "Rubik"
   },
   paymentOrSeparator: {
     display: "flex",
-    justifyContent: "center",
-    color: "#c2c2c2",
-    textTransform: "uppercase" as "uppercase",
     fontFamily: "Rubik",
-    fontSize: "1em",
-    lineHeight: "1.2em",
-    fontWeight: 600
+    justifyContent: "center",
+    color: lavenderGray,
+    textTransform: "uppercase" as "uppercase",
+    fontWeight: 700
   },
   checkoutTicketDetails: {
-    fontFamily: "Rubik",
-    fontSize: "0.75em",
-    lineHeight: "1.2em",
-    color: "#7E7E7E"
+    color: trolleyGray
   },
   payWithCardButton: {
     cursor: "pointer",
+    fontFamily: "Roboto",
     border: "none",
     height: checkoutButtonHeight,
-    backgroundColor: "#FF0266",
+    backgroundColor: vividRaspberry,
     borderRadius: "5px",
-    color: "white",
-    fontFamily: "Rubik",
-    fontWeight: 500,
+    color: white,
     fontSize: "1em",
-    lineHeight: "1.2em",
+    fontWeight: 500,
     justifyContent: "center",
     alignItems: "center"
   },
@@ -241,49 +235,49 @@ const sharedStyles = {
   checkoutButton: {
     cursor: "pointer",
     height: checkoutButtonHeight,
-    backgroundColor: "#FF0266",
+    backgroundColor: vividRaspberry,
     borderRadius: "5px",
-    color: "white",
-    fontFamily: "Rubik",
+    color: white,
     fontWeight: 500,
-    fontSize: "1em",
-    lineHeight: "1.2em",
     justifyContent: "center",
     alignItems: "center"
   },
   ticketSoldOut: {
-    fontFamily: "Rubik",
-    fontWeight: 500,
-    fontSize: "1em",
     lineHeight: "1.2em",
+    fontWeight: 500,
     flex: 1,
-    opacity: 0.3
+    color: lavenderGray
   },
   ticketTitle: {
-    fontFamily: "Rubik",
+    fontSize: `${font3}px`,
     overflow: "hidden",
     whiteSpace: "nowrap" as "nowrap",
     textOverflow: "ellipsis" as "ellipsis",
     fontWeight: 500,
     lineHeight: "1.2em",
-    color: "#7E7E7E"
+    color: trolleyGray
   },
   ticketPriceFee: {
-    fontFamily: "Rubik",
-    fontSize: "0.6em",
+    fontSize: `${font1}px`,
+    color: trolleyGray,
     lineHeight: "1.2em"
   },
+  ticketDescription: {
+    fontSize: `${font1}px`,
+    lineHeight: "1.2em",
+    color: trolleyGray
+  },
   ticketPrice: {
+    fontWeight: 700,
     fontFamily: "Rubik",
-    fontWeight: "bold" as "bold",
-    fontSize: "1.3em",
+    fontSize: `${font4}px`,
     lineHeight: "1.2em",
     display: "flex"
   },
   ticketNumeral: {
+    fontWeight: 700,
     fontFamily: "Rubik",
-    fontWeight: "bold" as "bold",
-    fontSize: "1.3em",
+    fontSize: `${font4}px`,
     lineHeight: "1.2em",
     display: "flex",
     justifyContent: "center",
@@ -295,16 +289,13 @@ const sharedStyles = {
     alignItems: "center",
     justifyContent: "center",
     padding: "0.8em",
-    background: "#FF0266",
+    background: vividRaspberry,
     borderRadius: "24px",
-    color: "white",
-    fontFamily: "Rubik",
+    color: white,
     fontWeight: 500,
     cursor: "pointer"
   },
   eventDetailSubtitle: {
-    fontFamily: "Rubik",
-    fontSize: "1em",
     lineHeight: "1.2em"
   },
   semibold: {
@@ -312,20 +303,18 @@ const sharedStyles = {
   },
   eventDetailTitle: {
     marginBottom: "0.2em",
-    fontFamily: "Rubik",
-    fontSize: "1.3em",
+    fontSize: `${font4}px`,
     lineHeight: "1.2em"
   },
   getTicketsFromForiaApp: {
-    fontFamily: "Rubik",
-    color: pink,
-    fontSize: "1.3em",
+    color: vividRaspberry,
+    fontSize: `${font4}px`,
     lineHeight: "1.2em"
   }
 };
 
 function PaymentRequest(props: any) {
-  let {canMakePayment, paymentRequest, byLayout}: any = props;
+  let {canMakePayment, paymentRequest}: any = props;
 
   return !(canMakePayment && paymentRequest) ? null : (
     <PaymentRequestButtonElement
@@ -333,12 +322,8 @@ function PaymentRequest(props: any) {
       paymentRequest={paymentRequest}
       style={{
         paymentRequestButton: {
-          // theme: "light-outline",
           theme: "dark",
-          height: byLayout(
-            `${mobileBaseFont * 2.5}px`,
-            `${desktopBaseFont * 2.5}px`
-          )
+          height: `${font3 * 2.5}px`
         }
       }}
     />
@@ -404,8 +389,6 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
           <span
             style={{
               fontWeight: 500,
-              fontFamily: "Rubik",
-              fontSize: "1em",
               lineHeight: "1.2em",
               marginBottom: "0.6em"
             }}>
@@ -415,10 +398,8 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
             style={{
               marginLeft: "0.2em",
               fontWeight: 500,
-              fontFamily: "Rubik",
-              fontSize: "1em",
               lineHeight: "1.2em",
-              color: "red"
+              color: red
             }}>
             *{" "}
             {hasSubmittedOnce && !cardholderName
@@ -438,11 +419,10 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
             WebkitAppearance: "none",
             MozAppearance: "none",
             appearance: "none",
-            border: "solid 1.75px #ddd",
+            border: `solid 1.75px ${lavenderGray}`,
             marginBottom: "1em",
             borderRadius: "5px",
-            // Use mobile font size also for desktop, note that the placeholder style fontSize, should agree with this fontSize
-            fontSize: `${mobileBaseFont}px`,
+            fontSize: `${font3}px`,
             padding: byLayout("7px", "9px"),
             boxSizing: "border-box"
           }}
@@ -454,8 +434,6 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
           <span
             style={{
               fontWeight: 500,
-              fontFamily: "Rubik",
-              fontSize: "1em",
               lineHeight: "1.2em",
               marginBottom: "0.6em"
             }}>
@@ -465,10 +443,9 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
             style={{
               marginLeft: "0.2em",
               fontWeight: 500,
-              fontFamily: "Rubik",
-              fontSize: `${mobileBaseFont}px`,
+              fontSize: `${font3}px`,
               lineHeight: "1.2em",
-              color: "red"
+              color: red
             }}>
             *{" "}
             {hasSubmittedOnce && cardElemEmpty ? "This field is required" : ""}
@@ -476,7 +453,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
         </div>
         <div
           style={{
-            border: "solid 1.75px #ddd",
+            border: `solid 1.75px ${lavenderGray}`,
             borderRadius: "5px",
             padding: byLayout("7px", "9px"),
             boxSizing: "border-box",
@@ -486,16 +463,15 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
             onChange={this.onCardElementChange}
             style={{
               base: {
-                // Use mobile font size also for desktop
-                fontSize: `${mobileBaseFont}px`,
-                color: "#424770",
-                fontFamily: "Rubik, monospace",
+                fontSize: `${font3}px`,
+                color: black,
+                fontFamily: "Roboto, monospace",
                 "::placeholder": {
-                  color: "#aab7c4"
+                  color: lavenderGray
                 }
               },
               invalid: {
-                color: "#9e2146"
+                color: red
               }
             }}
           />
@@ -554,20 +530,22 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderTicketDescriptionColumn = (ticketType: TicketTypeConfig) => {
-    let {byLayout} = this.props;
     let soldOut = ticketType.amount_remaining === 0;
     return (
-      <div className="column" style={sharedStyles.ticketDescriptionColumn}>
+      <div className="column">
         <div
           style={{
             ...sharedStyles.ticketTitle,
-            fontSize: byLayout("1em", "0.8em"),
-            opacity: soldOut ? 0.3 : 1
+            ...(soldOut ? {color: lavenderGray} : {}),
+            marginBottom: "0.1em"
           }}>
           {ticketType.name}
         </div>
         <div
-          style={{...sharedStyles.ticketPriceFee, opacity: soldOut ? 0.3 : 1}}>
+          style={{
+            ...sharedStyles.ticketDescription,
+            ...(soldOut ? {color: lavenderGray} : {})
+          }}>
           {ticketType.description}
         </div>
       </div>
@@ -577,13 +555,21 @@ export class Home extends React.Component<AppPropsT> {
   renderTicketPriceColumn = (ticketType: TicketTypeConfig) => {
     let soldOut = ticketType.amount_remaining === 0;
     return (
-      <div
-        className="column"
-        style={{...sharedStyles.ticketPriceColumn, opacity: soldOut ? 0.3 : 1}}>
-        <div style={sharedStyles.ticketPrice}>
+      <div className="column">
+        <div
+          style={{
+            ...sharedStyles.ticketPrice,
+            ...(soldOut ? {color: lavenderGray} : {}),
+            marginBottom: "0.1em"
+          }}>
           {feeFormatter(Number(ticketType.price), ticketType.currency)}
         </div>
-        <div style={sharedStyles.ticketPriceFee}>
+        <div
+          style={{
+            ...sharedStyles.ticketPriceFee,
+            ...(soldOut ? {color: lavenderGray} : {}),
+            marginBottom: "0.1em"
+          }}>
           +
           {feeFormatter(Number(ticketType.calculated_fee), ticketType.currency)}{" "}
           fee
@@ -594,7 +580,6 @@ export class Home extends React.Component<AppPropsT> {
 
   renderTicketQuantityColumn = (ticketType: TicketTypeConfig) => {
     let {ticketsForPurchase, addTicket, removeTicket} = this.props;
-    // TODO, gray out the quantity if it's zero
 
     let soldOut = ticketType.amount_remaining === 0;
     if (soldOut) {
@@ -625,7 +610,13 @@ export class Home extends React.Component<AppPropsT> {
             onClick={() => removeTicket(ticketType)}
           />
         </div>
-        <div style={sharedStyles.ticketNumeral}>{amountSelected}</div>
+        <div
+          style={{
+            ...sharedStyles.ticketNumeral,
+            ...(amountSelected === 0 ? {color: lavenderGray} : {})
+          }}>
+          {amountSelected}
+        </div>
         <div
           style={{
             cursor: canIncrement ? "pointer" : "not-allowed",
@@ -673,7 +664,13 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderDesktopTicketsStep = () => {
-    let {event, toNextView, ticketsForPurchase, checkoutPending} = this.props;
+    let {
+      event,
+      toNextView,
+      ticketsForPurchase,
+      checkoutPending,
+      byLayout
+    } = this.props;
     let someSelected = someTicketsSelected(ticketsForPurchase);
     return (
       <>
@@ -682,7 +679,7 @@ export class Home extends React.Component<AppPropsT> {
         </div>
         <div
           style={{
-            margin: "1em"
+            margin: byLayout("1em", "1.5em 1em")
           }}>
           <div style={{margin: "0em 0em 1.5em 0em"}}>
             <div style={sharedStyles.ticketsRestriction}>
@@ -729,8 +726,7 @@ export class Home extends React.Component<AppPropsT> {
                 <Elements
                   fonts={[
                     {
-                      cssSrc:
-                        "https://fonts.googleapis.com/css?family=Roboto|Rubik:400,500,700&display=swap"
+                      cssSrc: "https://fonts.googleapis.com/css?family=Roboto"
                     }
                   ]}>
                   <WrappedPaymentRequest
@@ -758,7 +754,7 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderDesktopChooseCheckoutStep = () => {
-    let {event, toPreviousView} = this.props;
+    let {event, toPreviousView, byLayout} = this.props;
     return (
       <>
         <div style={{...sharedStyles.ticketsTitle, position: "relative"}}>
@@ -786,16 +782,16 @@ export class Home extends React.Component<AppPropsT> {
           />
           <span style={event ? {} : {opacity: 0}}>Checkout</span>
         </div>
-        <div style={{margin: "1em"}}>
+        <div style={{margin: byLayout("1em", "1.5em 1em")}}>
           {this.renderCheckoutSummary()}
           <div style={{margin: "0 0em 1.5em 0em"}}>
-            <div style={{borderBottom: "dashed 4px", color: "#F2F2F2"}} />
+            <div style={sharedStyles.dashedLine} />
           </div>
           <div style={{margin: "0 0em 1.5em 0em"}}>
             {this.renderCheckoutDisclaimer()}
           </div>
           <div style={{margin: "0 0em 1.5em 0em"}}>
-            <div style={{borderBottom: "dashed 4px", color: "#F2F2F2"}} />
+            <div style={sharedStyles.dashedLine} />
           </div>
           {this.renderPaymentDelegateView()}
         </div>
@@ -805,8 +801,14 @@ export class Home extends React.Component<AppPropsT> {
 
   renderCheckoutDisclaimer = () => {
     return (
-      <div style={sharedStyles.checkoutTicketDetails}>
-        By continuing, I acknowledge that tickets are <b>NON-REFUNDABLE</b> and
+      <div
+        style={{
+          ...sharedStyles.checkoutTicketDetails,
+          lineHeight: "1.4em",
+          fontSize: `${font2}px`
+        }}>
+        By continuing, I acknowledge that tickets are{" "}
+        <span style={{color: black, fontWeight: 500}}>NON-REFUNDABLE</span> and
         that my tickets are delivered via the Foria mobile app. The app is
         available on iOS and Android devices.
       </div>
@@ -826,7 +828,7 @@ export class Home extends React.Component<AppPropsT> {
       <div style={{marginBottom: "1.5em"}} className="column">
         <div
           className="row"
-          style={{marginBottom: "0.6em", justifyContent: "space-between"}}>
+          style={{marginBottom: "0.4em", justifyContent: "space-between"}}>
           <div style={sharedStyles.checkoutTicketDetails} className="column">
             Ticket price {totalSelected > 0 ? `(x${totalSelected})` : ""}
           </div>
@@ -836,7 +838,7 @@ export class Home extends React.Component<AppPropsT> {
         </div>
         <div
           className="row"
-          style={{marginBottom: "0.6em", justifyContent: "space-between"}}>
+          style={{marginBottom: "0.4em", justifyContent: "space-between"}}>
           <div style={sharedStyles.checkoutTicketDetails} className="column">
             Service fee
           </div>
@@ -846,12 +848,20 @@ export class Home extends React.Component<AppPropsT> {
         </div>
         <div className="row" style={{justifyContent: "space-between"}}>
           <div
-            style={{...sharedStyles.checkoutTicketDetails, color: "black"}}
+            style={{
+              ...sharedStyles.checkoutTicketDetails,
+              color: black,
+              fontWeight: 500
+            }}
             className="column">
             Total price
           </div>
           <div
-            style={{...sharedStyles.checkoutTicketDetails, color: "black"}}
+            style={{
+              ...sharedStyles.checkoutTicketDetails,
+              color: black,
+              fontWeight: 500
+            }}
             className="column">
             {twoDecimalFormatter(
               orderGrandTotal as number,
@@ -900,24 +910,23 @@ export class Home extends React.Component<AppPropsT> {
           />
           <span style={event ? {} : {opacity: 0}}>Checkout</span>
         </div>
-        <div style={{margin: "1em"}}>
+        <div style={{margin: byLayout("1em", "1.5em 1em")}}>
           {this.renderCheckoutSummary()}
           <div style={{margin: "0 0em 1.5em 0em"}}>
-            <div style={{borderBottom: "dashed 4px", color: "#F2F2F2"}} />
+            <div style={sharedStyles.dashedLine} />
           </div>
           <div style={{margin: "0 0em 1.5em 0em"}}>
             {this.renderCheckoutDisclaimer()}
           </div>
           <div style={{margin: "0 0em 1.5em 0em"}}>
-            <div style={{borderBottom: "dashed 4px", color: "#F2F2F2"}} />
+            <div style={sharedStyles.dashedLine} />
           </div>
           {stripe ? (
             <StripeProvider stripe={stripe}>
               <Elements
                 fonts={[
                   {
-                    cssSrc:
-                      "https://fonts.googleapis.com/css?family=Roboto|Rubik:400,500,700&display=swap"
+                    cssSrc: "https://fonts.googleapis.com/css?family=Roboto"
                   }
                 ]}>
                 <WrappedCardForm
@@ -943,12 +952,12 @@ export class Home extends React.Component<AppPropsT> {
         <div style={sharedStyles.mobileTicketHeader}>Checkout</div>
         {this.renderCheckoutSummary()}
         <div style={{marginBottom: "1.5em"}}>
-          <div style={{borderBottom: "dashed 4px", color: "#F2F2F2"}} />
+          <div style={sharedStyles.dashedLine} />
           <div style={{margin: "0 0em 1.5em 0em"}}>
             {this.renderCheckoutDisclaimer()}
           </div>
           <div style={{margin: "0 0em 1.5em 0em"}}>
-            <div style={{borderBottom: "dashed 4px", color: "#F2F2F2"}} />
+            <div style={sharedStyles.dashedLine} />
           </div>
         </div>
         {this.renderPaymentDelegateView()}
@@ -969,21 +978,20 @@ export class Home extends React.Component<AppPropsT> {
         <div style={sharedStyles.mobileTicketHeader}>Checkout</div>
         {this.renderCheckoutSummary()}
         <div style={{marginBottom: "1.5em"}}>
-          <div style={{borderBottom: "dashed 4px", color: "#F2F2F2"}} />
+          <div style={sharedStyles.dashedLine} />
         </div>
         <div style={{margin: "0 0em 1.5em 0em"}}>
           {this.renderCheckoutDisclaimer()}
         </div>
         <div style={{margin: "0 0em 1.5em 0em"}}>
-          <div style={{borderBottom: "dashed 4px", color: "#F2F2F2"}} />
+          <div style={sharedStyles.dashedLine} />
         </div>
         {stripe ? (
           <StripeProvider stripe={stripe}>
             <Elements
               fonts={[
                 {
-                  cssSrc:
-                    "https://fonts.googleapis.com/css?family=Roboto|Rubik:400,500,700&display=swap"
+                  cssSrc: "https://fonts.googleapis.com/css?family=Roboto"
                 }
               ]}>
               <WrappedCardForm
@@ -1003,7 +1011,7 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderDesktopCompleteStep = () => {
-    let event = this.props.event!;
+    let {event, byLayout} = this.props;
     return (
       <>
         <div style={sharedStyles.ticketsTitle}>
@@ -1011,7 +1019,7 @@ export class Home extends React.Component<AppPropsT> {
         </div>
         <div
           style={{
-            margin: "1em"
+            margin: byLayout("1em", "1.5em 1em")
           }}>
           {this.renderCompleteStepBody()}
         </div>
@@ -1020,7 +1028,7 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderCompleteStepBody = () => {
-    let {byLayout, orderNumber} = this.props;
+    let {orderNumber} = this.props;
     return (
       <>
         <p style={sharedStyles.eventBody}>Thank you for your purchase!</p>
@@ -1039,14 +1047,9 @@ export class Home extends React.Component<AppPropsT> {
         </p>
         <div
           style={{
-            // height: '500px',
             display: "grid",
-            gridTemplateColumns: `repeat(auto-fill, ${3.375 *
-              2.5 *
-              byLayout(mobileBaseFont, desktopBaseFont)}px)`,
-            // gridTemplateRows: `repeat(auto-fill, ${2.5 * byLayout(mobileBaseFont, desktopBaseFont)}px)`,
-            gridAutoRows: `minmax(0, ${2.5 *
-              byLayout(mobileBaseFont, desktopBaseFont)}px)`,
+            gridTemplateColumns: `repeat(auto-fill, ${3.375 * 2.5 * font3}px)`,
+            gridAutoRows: `minmax(0, ${2.5 * font3}px)`,
             gridColumnGap: "0.6em",
             gridRowGap: "0.6em",
             alignItems: "center"
@@ -1135,7 +1138,6 @@ export class Home extends React.Component<AppPropsT> {
         style={sharedStyles.pullUpMenuTicketsButton}>
         <span
           style={{
-            fontSize: "1em",
             lineHeight: "1.2em"
           }}>
           Tickets
@@ -1161,9 +1163,7 @@ export class Home extends React.Component<AppPropsT> {
             <div
               style={{
                 padding: "0.8em",
-                fontFamily: "Rubik",
                 fontWeight: 500,
-                fontSize: "1em",
                 lineHeight: "1.2em",
                 marginRight: "1em"
               }}>
@@ -1230,10 +1230,9 @@ export class Home extends React.Component<AppPropsT> {
     return (
       <div
         style={{
-          // Create a 100px white rectangle, so that content does not run
-          // under the fixed position pullup menu
-          height: "100px",
-          backgroundColor: "white"
+          // Create an empty rectangle the size of the collapsed pull up menu,
+          // so that the footer is not hidden beneath the menu
+          height: `${5 * font3}px`
         }}>
         <div
           ref={this.pullUpMenuRef}
@@ -1250,11 +1249,12 @@ export class Home extends React.Component<AppPropsT> {
           <div
             style={{
               boxSizing: "border-box",
-              boxShadow: "rgba(0, 0, 0, 0.21) 0 -2px 8px 4px",
+              boxShadow: "rgba(0, 0, 0, 0.21) 0 -2px 16px 4px",
               display: "flex",
               justifyContent: "center",
-              backgroundColor: "white",
-              padding: "1.5em",
+              backgroundColor: white,
+              minHeight: `${4.75 * font3}px`,
+              padding: "1em",
               position: "relative"
             }}
             className="column">
@@ -1266,8 +1266,8 @@ export class Home extends React.Component<AppPropsT> {
                   style={{
                     cursor: "pointer",
                     position: "absolute",
-                    top: "1.5em",
-                    right: "1.5em"
+                    top: "1em",
+                    right: "1em"
                   }}>
                   <CloseIcon onClick={resetPullUpMenu} />
                 </div>
@@ -1304,18 +1304,18 @@ export class Home extends React.Component<AppPropsT> {
       <div
         style={{
           borderRadius: "5px",
-          marginLeft: "2em",
+          right: "-1.5em",
           position: "relative",
           flex: `0 0 ${ticketOverlayWidth}px`
         }}>
         <div
           style={{
             borderRadius: "5px",
-            backgroundColor: "white",
+            backgroundColor: white,
             position: "absolute",
             width: `${ticketOverlayWidth}px`,
             /* Line up the menu bottom border with the hero bottom border */
-            top: `${-5.2 * desktopBaseFont}px`,
+            top: `${-5.2 * font3}px`,
             boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.25)"
           }}>
           {modalView}
@@ -1389,7 +1389,7 @@ export class Home extends React.Component<AppPropsT> {
     let {byLayout} = this.props;
     let styles = {
       header: {
-        backgroundColor: "#fff",
+        backgroundColor: white,
         boxShadow: "0px 0px 2px 3px #ccc"
       },
       logo: {
@@ -1406,13 +1406,12 @@ export class Home extends React.Component<AppPropsT> {
             margin: "auto",
             display: "flex",
             alignItems: "center",
-            padding: byLayout("1em", "1em 2em"),
+            padding: byLayout("1em", "1em 1.5em"),
             boxSizing: "border-box"
           }}>
-          {
-            // TODO: redirect to foria homepage on click
-          }
-          <div style={{display: "flex", flex: 1}}>
+          <div
+            style={{display: "flex", flex: 1}}
+            onClick={() => (window.location.href = "/")}>
             <img src={foriaLogo} alt="logo" style={styles.logo} />
           </div>
           <div
@@ -1449,6 +1448,7 @@ export class Home extends React.Component<AppPropsT> {
     }
     return startMoment.format("MMM Do") + " - " + endMoment.format("MMM Do");
   }
+
   formatEventDate(start: string, end: string) {
     let startMoment = moment(start);
     let endMoment = moment(end);
@@ -1479,7 +1479,8 @@ export class Home extends React.Component<AppPropsT> {
       },
       eventDetailSubtitle: {
         ...sharedStyles.eventDetailSubtitle,
-        ...byLayout({...sharedStyles.semibold, color: pink}, {})
+        color: vividRaspberry,
+        ...byLayout({...sharedStyles.semibold}, {})
       },
       calendarIcon: {
         width: "1.38em",
@@ -1498,20 +1499,24 @@ export class Home extends React.Component<AppPropsT> {
           flexDirection: "column",
           display: "flex",
           maxWidth: `${bodyWidth}px`,
-          backgroundColor: byLayout("white", "initial"),
+          backgroundColor: byLayout(white, "initial"),
           margin: "0em auto"
         }}>
         <div
           className="row"
           style={{
             borderRadius: "5px",
-            backgroundColor: "white",
-            padding: byLayout("1em", "2em"),
+            backgroundColor: white,
+            padding: byLayout("1em", "2em 1.5em"),
             alignItems: "flex-start"
           }}>
           <div className="column" style={{flex: 1}}>
-            <div style={{margin: "0em 0em 2em 0em"}}>
-              <div style={sharedStyles.eventTitle}>
+            <div style={{marginBottom: byLayout("1.5em", "2em")}}>
+              <div
+                style={{
+                  ...sharedStyles.eventTitle,
+                  marginBottom: `${0.5 * font3}px`
+                }}>
                 {(event && event.name) || <Skeleton />}
               </div>
               <div style={sharedStyles.eventSubTitle}>
@@ -1542,7 +1547,9 @@ export class Home extends React.Component<AppPropsT> {
                 </>
               )}
             </div>
-            <div className="row" style={{marginBottom: "2em"}}>
+            <div
+              className="row"
+              style={{marginBottom: byLayout("1.5em", "2em")}}>
               {!event ? (
                 <div style={{flex: 1}}>
                   <Skeleton height={"2em"} />
@@ -1588,7 +1595,7 @@ export class Home extends React.Component<AppPropsT> {
           maxWidth: `${bodyWidth}px`,
           margin: "0 auto"
         }}>
-        <div className="column" style={{margin: byLayout("1em", "2em")}}>
+        <div className="column" style={{margin: byLayout("1em", "2em 1.5em")}}>
           <div className="row" style={{marginBottom: "0.6em"}}>
             <a
               href="https://foriatickets.com/privacy-policy.html"
@@ -1599,7 +1606,7 @@ export class Home extends React.Component<AppPropsT> {
             </a>
             <span
               style={{
-                color: "#7E7E7E",
+                color: trolleyGray,
                 fontFamily: "Roboto",
                 margin: "0 0.4em"
               }}>
@@ -1657,7 +1664,7 @@ export class Home extends React.Component<AppPropsT> {
       innerContainer: {
         margin: "1em",
         maxWidth: byLayout("initial", ticketOverlayWidth + "px"),
-        backgroundColor: "#fff",
+        backgroundColor: white,
         padding: "1em",
         borderRadius: "5px",
         borderBottom: `1px solid #B5B5B5`,
@@ -1665,15 +1672,14 @@ export class Home extends React.Component<AppPropsT> {
         overflow: "hidden"
       },
       headerStyle: {
-        fontFamily: "Rubik",
-        fontSize: "1.3em",
+        fontSize: `${font4}px`,
         marginBottom: "16px",
         lineHeight: "1.2em",
         fontWeight: 600
       },
       body: {
         ...sharedStyles.eventBody,
-        color: "black",
+        color: black,
         marginBottom: "16px",
         overflowWrap: "break-word" as "break-word"
       },
@@ -1682,7 +1688,7 @@ export class Home extends React.Component<AppPropsT> {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        color: "black",
+        color: black,
         backgroundColor: "#EDEDED"
       }
     };
@@ -1719,9 +1725,11 @@ export class Home extends React.Component<AppPropsT> {
       <div
         className="App"
         style={{
-          fontSize: byLayout(`${mobileBaseFont}px`, `${desktopBaseFont}px`),
+          fontSize: `${font3}px`,
+          fontFamily: "Roboto",
+          lineHeight: "1.2em",
           overflowY: "scroll",
-          backgroundColor: "#f2f2f2"
+          backgroundColor: antiFlashWhite
         }}>
         {this.renderHeader()}
         {this.renderHero()}

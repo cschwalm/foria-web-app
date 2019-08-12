@@ -3,6 +3,7 @@ import {call, put, race, takeEvery} from "redux-saga/effects";
 import {Dispatch} from "redux";
 
 import Action from "./Action";
+import {vividRaspberry} from "../colors";
 
 export enum ActionType {
   CheckLogin = "CheckLogin",
@@ -69,7 +70,7 @@ function createLock() {
       loginAfterSignUp: true,
       theme: {
         logo: "https://foriatickets.com/img/foria-logo-color.png",
-        primaryColor: "#FF0266"
+        primaryColor: vividRaspberry
       }
     }
   );
