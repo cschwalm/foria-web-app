@@ -791,9 +791,25 @@ export class Home extends React.Component<AppPropsT> {
           <div style={{margin: "0 0em 1.5em 0em"}}>
             <div style={{borderBottom: "dashed 4px", color: "#F2F2F2"}} />
           </div>
+          <div style={{margin: "0 0em 1.5em 0em"}}>
+            {this.renderCheckoutDisclaimer()}
+          </div>
+          <div style={{margin: "0 0em 1.5em 0em"}}>
+            <div style={{borderBottom: "dashed 4px", color: "#F2F2F2"}} />
+          </div>
           {this.renderPaymentDelegateView()}
         </div>
       </>
+    );
+  };
+
+  renderCheckoutDisclaimer = () => {
+    return (
+      <div style={sharedStyles.checkoutTicketDetails}>
+        By continuing, I acknowledge that tickets are <b>NON-REFUNDABLE</b> and
+        that my tickets are delivered via the Foria mobile app. The app is
+        available on iOS and Android devices.
+      </div>
     );
   };
 
@@ -889,6 +905,12 @@ export class Home extends React.Component<AppPropsT> {
           <div style={{margin: "0 0em 1.5em 0em"}}>
             <div style={{borderBottom: "dashed 4px", color: "#F2F2F2"}} />
           </div>
+          <div style={{margin: "0 0em 1.5em 0em"}}>
+            {this.renderCheckoutDisclaimer()}
+          </div>
+          <div style={{margin: "0 0em 1.5em 0em"}}>
+            <div style={{borderBottom: "dashed 4px", color: "#F2F2F2"}} />
+          </div>
           {stripe ? (
             <StripeProvider stripe={stripe}>
               <Elements
@@ -922,6 +944,12 @@ export class Home extends React.Component<AppPropsT> {
         {this.renderCheckoutSummary()}
         <div style={{marginBottom: "1.5em"}}>
           <div style={{borderBottom: "dashed 4px", color: "#F2F2F2"}} />
+          <div style={{margin: "0 0em 1.5em 0em"}}>
+            {this.renderCheckoutDisclaimer()}
+          </div>
+          <div style={{margin: "0 0em 1.5em 0em"}}>
+            <div style={{borderBottom: "dashed 4px", color: "#F2F2F2"}} />
+          </div>
         </div>
         {this.renderPaymentDelegateView()}
       </>
@@ -941,6 +969,12 @@ export class Home extends React.Component<AppPropsT> {
         <div style={sharedStyles.mobileTicketHeader}>Checkout</div>
         {this.renderCheckoutSummary()}
         <div style={{marginBottom: "1.5em"}}>
+          <div style={{borderBottom: "dashed 4px", color: "#F2F2F2"}} />
+        </div>
+        <div style={{margin: "0 0em 1.5em 0em"}}>
+          {this.renderCheckoutDisclaimer()}
+        </div>
+        <div style={{margin: "0 0em 1.5em 0em"}}>
           <div style={{borderBottom: "dashed 4px", color: "#F2F2F2"}} />
         </div>
         {stripe ? (

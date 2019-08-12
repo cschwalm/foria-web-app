@@ -53,9 +53,7 @@ export interface State {
 }
 export const initialState: State = {
   pullUpMenuCollapsed: true,
-  // pullUpMenuCollapsed: true,
   view: View.Tickets,
-  // view: View.ChooseCheckout,
   paymentRequest: null,
   canMakePayment: false,
   checkoutPending: false,
