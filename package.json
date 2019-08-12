@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@sentry/browser": "^5.6.1",
     "@types/auth0-lock": "^11.4.12",
     "@types/jest": "24.0.15",
     "@types/lodash": "^4.14.136",
