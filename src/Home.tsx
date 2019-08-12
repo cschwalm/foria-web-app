@@ -953,12 +953,12 @@ export class Home extends React.Component<AppPropsT> {
         {this.renderCheckoutSummary()}
         <div style={{marginBottom: "1.5em"}}>
           <div style={sharedStyles.dashedLine} />
-          <div style={{margin: "0 0em 1.5em 0em"}}>
-            {this.renderCheckoutDisclaimer()}
-          </div>
-          <div style={{margin: "0 0em 1.5em 0em"}}>
-            <div style={sharedStyles.dashedLine} />
-          </div>
+        </div>
+        <div style={{marginBottom: "1.5em"}}>
+          {this.renderCheckoutDisclaimer()}
+        </div>
+        <div style={{marginBottom: "1.5em"}}>
+          <div style={sharedStyles.dashedLine} />
         </div>
         {this.renderPaymentDelegateView()}
       </>
