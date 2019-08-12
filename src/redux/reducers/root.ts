@@ -52,7 +52,7 @@ export interface State {
 }
 
 const parseEventIdFromURL = (): string | void => {
-  let match = window.location.pathname.match(/^\/events\/(.*)\/$/);
+  let match = window.location.search.match(/^\?eventId=(.*)$/);
   if (match && match[1]) {
     return match[1];
   }
