@@ -153,6 +153,8 @@ function* saga() {
   let event;
   try {
     event = yield call(fetchEvent, eventId);
+    // event.start_time = "2019-06-19T20:07:09";
+    // event.end_time = "2019-06-19T21:07:09";
   } catch (err) {
     yield put({
       type: ActionType.EventFetchError,

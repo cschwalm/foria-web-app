@@ -52,11 +52,11 @@ export interface State {
 }
 
 const parseEventIdFromURL = (): string | void => {
-  let match = window.location.pathname.match(/^\/events\/(.*)\/$/);
+  let match = window.location.search.match(/^\?eventId=(.*)$/);
   if (match && match[1]) {
     return match[1];
   }
-  window.location.href = "/";
+  window.location.href = "https://foriatickets.com";
 };
 
 export const initialState: State = {

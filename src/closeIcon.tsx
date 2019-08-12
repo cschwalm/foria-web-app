@@ -1,5 +1,7 @@
 import React from "react";
 
+import {trolleyGray} from "./colors";
+
 export default ({onClick = () => {}}: {onClick?: (event: object) => void}) => (
   <svg
     width="0.7em"
@@ -13,7 +15,7 @@ export default ({onClick = () => {}}: {onClick?: (event: object) => void}) => (
     <defs />
     <g fill="none" fillRule="evenodd" id="Page-1" stroke="none" strokeWidth="1">
       <g
-        fill="#000000"
+        fill={trolleyGray}
         id="Core"
         transform="translate(-341.000000, -89.000000)">
         <g id="close" transform="translate(341.000000, 89.000000)">
