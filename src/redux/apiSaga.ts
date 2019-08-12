@@ -152,8 +152,6 @@ function* saga() {
   let eventId = yield select(getEventId);
   let event;
   try {
-    // TODO remove this comment after development
-    // let delay = require('../delay').default; yield delay(5000);
     event = yield call(fetchEvent, eventId);
   } catch (err) {
     yield put({

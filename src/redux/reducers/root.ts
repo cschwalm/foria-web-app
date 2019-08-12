@@ -51,10 +51,17 @@ export interface State {
   stripeToken?: stripe.Token;
 }
 
+const parseEventIdFromURL = (): string | void => {
+  let match = window.location.pathname.match(/^\/events\/(.*)\/$/);
+  if (match && match[1]) {
+    return match[1];
+  }
+  window.location.href = "/";
+};
+
 export const initialState: State = {
   layout: getLayout(),
-  // TODO: parse from URL
-  eventId: "52991c6d-7703-488d-93ae-1aacdd7c4291",
+  eventId: parseEventIdFromURL() as string,
   authenticationStatus: AuthenticationStatus.NoAuth,
   stripe: null
 };
