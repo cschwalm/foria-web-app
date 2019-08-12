@@ -1411,8 +1411,8 @@ export class Home extends React.Component<AppPropsT> {
           }}>
           <div
             style={{display: "flex", flex: 1}}
-            onClick={() => (window.location.href = "/")}>
-            <img src={foriaLogo} alt="logo" style={styles.logo} />
+            onClick={() => (window.location.href = "https://foriatickets.com")}>
+            <img src={foriaLogo} alt="Foria Logo" style={styles.logo} />
           </div>
           <div
             style={{
