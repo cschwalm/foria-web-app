@@ -57,8 +57,6 @@ import calendarIcon from "./calendar_icon.png";
 import PinpointIcon from "./pinpointIcon";
 import DecrementIcon from "./decrementIcon";
 import IncrementIcon from "./incrementIcon";
-// TODO Remove downwardChevron
-// import DownwardChevron from "./downwardChevron";
 import CloseIcon from "./closeIcon";
 import LeftChevron from "./leftChevron";
 import UpwardChevron from "./upwardChevron";
