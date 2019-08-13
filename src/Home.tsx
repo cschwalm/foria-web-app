@@ -912,7 +912,6 @@ export class Home extends React.Component<AppPropsT> {
         </Elements>
       </StripeProvider>
     ) : (
-      /* TODO test this Skeleton */
       <Skeleton />
     );
   };
