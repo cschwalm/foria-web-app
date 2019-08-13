@@ -160,7 +160,9 @@ function* login() {
 
 function logout() {
   let lock = createLock();
-  lock.logout({returnTo: process.env.REACT_APP_AUTH0_RETURN_TO as string});
+
+  // Auth0 requires a redirect for logout, redirect back to the current page
+  lock.logout({ returnTo: window.location.href });
 }
 
 function* checkAlreadyLoggedIn() {
