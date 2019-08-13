@@ -99,7 +99,6 @@ function* createPaymentRequest(
       complete("fail");
     } else if (userCancel) {
       complete("fail");
-      // TODO:
       // This is where you would handle a user cancelling the payment after
       // the payment token has been sent off to the backend, by issuing a refund if necesary
       // https://stripe.com/docs/stripe-js/elements/payment-request-button#complete-payment
