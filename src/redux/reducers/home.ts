@@ -1,5 +1,6 @@
 import {Dispatch} from "redux";
 import {values, omit} from "lodash";
+import * as Sentry from "@sentry/browser";
 
 import Action from "../Action";
 import {TicketTypeConfig} from "./root";
@@ -181,6 +182,16 @@ export const reducer = (state = initialState, action: Action) => {
     case ApiActionType.CalculateOrderTotalError:
     case Auth0ActionType.AuthenticationError:
     case Auth0ActionType.LoginError:
+      Sentry.withScope(scope => {
+        let error;
+        if (action.data instanceof Error) {
+          error = action.data;
+        } else {
+          error = new Error(action.data);
+        }
+        scope.setExtra("reduxAction", action.type);
+        Sentry.captureException(error);
+      });
       return {
         ...state,
         error: action.data
