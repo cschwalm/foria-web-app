@@ -86,8 +86,8 @@ function* createPaymentRequest(
       onPaymentRequestTokenCreate,
       paymentRequest
     );
-    yield put({type: ActionType.StripeCreateTokenSuccess, data: token});
 
+    yield put({type: ActionType.StripeCreateTokenSuccess, data: token});
     let [success, error, userCancel] = yield race([
       take(ApiActionType.CheckoutSuccess),
       take(ApiActionType.CheckoutError),
@@ -116,6 +116,7 @@ function* createPaymentRequest(
     });
     return;
   }
+
   yield put({
     type: ActionType.CanMakePaymentSuccess,
     data: !!result

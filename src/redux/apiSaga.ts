@@ -2,12 +2,7 @@ import {call, select, put, takeEvery, actionChannel} from "redux-saga/effects";
 
 import normalizeFetchResponse from "../normalizeFetchResponse";
 import {ActionType as StripeActionType} from "./stripeSaga";
-import {
-  getEventId,
-  getTicketsForPurchase,
-  getAccessToken,
-  getStripeToken
-} from "./selectors";
+import {getEventId, getTicketsForPurchase, getAccessToken} from "./selectors";
 import {TicketCounts} from "./reducers/home";
 
 const foriaBackend = process.env.REACT_APP_FORIA_BACKEND_BASE_URL as "string";
@@ -67,16 +62,15 @@ function completeCheckout(data: OrderPayload, accessToken: string) {
   }).then(normalizeFetchResponse);
 }
 
-function* completePurchase(action: {data: string}) {
+function* completePurchase({data: {id: stripeToken}}: {data: {id: string}}) {
   let eventId = yield select(getEventId);
   let accessToken = yield select(getAccessToken);
-  let stripeToken = yield select(getStripeToken);
   let ticketsForPurchase = yield select(getTicketsForPurchase);
 
   let orderPayload: OrderPayload = {
     event_id: eventId,
     ticket_line_item_list: getTicketItemList(ticketsForPurchase),
-    payment_token: stripeToken.id
+    payment_token: stripeToken
   };
 
   let checkoutResponse: {id: string};
@@ -113,13 +107,11 @@ function calculateOrderTotal(data: OrderTotalPayload, accessToken: string) {
 function* calculateOrderTotalSaga() {
   let eventId = yield select(getEventId);
   let accessToken = yield select(getAccessToken);
-  let stripeToken = yield select(getStripeToken);
   let ticketsForPurchase = yield select(getTicketsForPurchase);
 
   let orderPayload: OrderTotalPayload = {
     event_id: eventId,
-    ticket_line_item_list: getTicketItemList(ticketsForPurchase),
-    ...(stripeToken ? {payment_token: stripeToken.id} : {})
+    ticket_line_item_list: getTicketItemList(ticketsForPurchase)
   };
 
   let orderTotal: OrderTotal;
