@@ -21,7 +21,6 @@ export enum ActionType {
   CanMakePaymentError = "CanMakePaymentError",
   StripeInstantiated = "StripeInstantiated",
   StripeScriptLoadingError = "StripeScriptLoadingError",
-  StripeCreateTokenNetworkError = "StripeCreateTokenNetworkError",
   StripeCreateTokenError = "StripeCreateTokenError",
   StripeCreateTokenSuccess = "StripeCreateTokenSuccess"
 }
@@ -86,8 +85,8 @@ function* createPaymentRequest(
       onPaymentRequestTokenCreate,
       paymentRequest
     );
-    yield put({type: ActionType.StripeCreateTokenSuccess, data: token});
 
+    yield put({type: ActionType.StripeCreateTokenSuccess, data: token});
     let [success, error, userCancel] = yield race([
       take(ApiActionType.CheckoutSuccess),
       take(ApiActionType.CheckoutError),
@@ -100,7 +99,6 @@ function* createPaymentRequest(
       complete("fail");
     } else if (userCancel) {
       complete("fail");
-      // TODO:
       // This is where you would handle a user cancelling the payment after
       // the payment token has been sent off to the backend, by issuing a refund if necesary
       // https://stripe.com/docs/stripe-js/elements/payment-request-button#complete-payment
@@ -116,6 +114,7 @@ function* createPaymentRequest(
     });
     return;
   }
+
   yield put({
     type: ActionType.CanMakePaymentSuccess,
     data: !!result

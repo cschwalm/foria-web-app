@@ -158,22 +158,32 @@ function* handleToNextView() {
 
 // Track when a purchase is initiated and completed
 function* trackPurchase() {
-  // When a stripe token is created, we're in a pending state to transition to
-  // the complete view
-  yield takeEvery(StripeActionType.StripeCreateTokenSuccess, function*() {
-    yield put({type: HomeActionType.ToCompletePending});
-  });
+  // Map these events to a purchase pending event
+  yield takeEvery(
+    [
+      HomeActionType.CreditCardSubmit,
+      StripeActionType.StripeCreateTokenSuccess
+    ],
+    function*() {
+      yield put({type: HomeActionType.PurchasePending});
+    }
+  );
 
-  // If checkout succeeds we're not longer in a pending state to transition,
-  // transition to next view
+  // Map these events to a purchase no longer pending event
+  yield takeEvery(
+    [
+      StripeActionType.StripeCreateTokenError,
+      ApiActionType.CheckoutError,
+      ApiActionType.CheckoutSuccess
+    ],
+    function*() {
+      yield put({type: HomeActionType.PurchaseNotPending});
+    }
+  );
+
+  // On checkout success transition to the next view
   yield takeEvery(ApiActionType.CheckoutSuccess, function*() {
-    yield put({type: HomeActionType.ToCompleteCompleted});
     yield call(handleToNextView);
-  });
-
-  // If checkout fails we're not longer in a pending state to transition
-  yield takeEvery(ApiActionType.CheckoutError, function*() {
-    yield put({type: HomeActionType.ToCompleteCompleted});
   });
 }
 
