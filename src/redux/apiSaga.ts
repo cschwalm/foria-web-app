@@ -160,7 +160,6 @@ function* saga() {
     data: event
   });
 
-  // TODO change this to not depend  on stripe events
   yield takeEvery(stripeTokenChannel, completePurchase);
   yield takeEvery(calculateOrderChannel, calculateOrderTotalSaga);
 }
