@@ -1054,6 +1054,7 @@ export class Home extends React.Component<AppPropsT> {
               width: "100%",
               height: "100%"
             }}
+            href="https://foriatickets.com "
             target="_blank"
             rel="noopener noreferrer">
             <span style={sharedStyles.visuallyHiddenButScreenReaderAccessible}>
@@ -1070,6 +1071,7 @@ export class Home extends React.Component<AppPropsT> {
               width: "100%",
               height: "100%"
             }}
+            href="https://foriatickets.com"
             target="_blank"
             rel="noopener noreferrer">
             <span style={sharedStyles.visuallyHiddenButScreenReaderAccessible}>
