@@ -30,8 +30,10 @@ export enum ActionType {
 
   ToCheckoutPending = "ToCheckoutPending",
   ToCheckoutCompleted = "ToCheckoutCompleted",
-  ToCompletePending = "ToCompletePending",
-  ToCompleteCompleted = "ToCompleteCompleted"
+  PurchasePending = "PurchasePending",
+  PurchaseNotPending = "PurchaseNotPending",
+
+  CreditCardSubmit = "CreditCardSubmit"
 }
 
 export type TicketCounts = {[ticketId: string]: number};
@@ -42,7 +44,7 @@ export interface State {
   ticketsForPurchase: TicketCounts;
   canMakePayment: boolean;
   checkoutPending: boolean;
-  completePending: boolean;
+  purchasePending: boolean;
   paymentRequest: stripe.paymentRequest.StripePaymentRequest | null;
   orderNumber?: string;
   orderSubTotal?: number;
@@ -57,7 +59,7 @@ export const initialState: State = {
   paymentRequest: null,
   canMakePayment: false,
   checkoutPending: false,
-  completePending: false,
+  purchasePending: false,
   ticketsForPurchase: {}
 };
 
@@ -147,15 +149,15 @@ export const reducer = (state = initialState, action: Action) => {
         ...state,
         checkoutPending: false
       };
-    case ActionType.ToCompletePending:
+    case ActionType.PurchasePending:
       return {
         ...state,
-        completePending: true
+        purchasePending: true
       };
-    case ActionType.ToCompleteCompleted:
+    case ActionType.PurchaseNotPending:
       return {
         ...state,
-        completePending: false
+        purchasePending: false
       };
     case StripeActionType.CanMakePaymentSuccess:
       return {
@@ -216,3 +218,6 @@ export const addTicket = (dispatch: Dispatch<Action>) => (
 export const removeTicket = (dispatch: Dispatch<Action>) => (
   ticket: TicketTypeConfig
 ) => dispatch({type: ActionType.RemoveTicket, data: ticket});
+
+export const onCreditCardSubmit = (dispatch: Dispatch<Action>) => () =>
+  dispatch({type: ActionType.CreditCardSubmit});

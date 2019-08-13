@@ -40,6 +40,7 @@ import {
   selectView as selectViewAction,
   toPreviousView as toPreviousViewAction,
   toNextView as toNextViewAction,
+  onCreditCardSubmit as onCreditCardSubmitAction,
   resetError as resetErrorAction,
   someTicketsSelected,
   totalTicketsSelected,
@@ -85,6 +86,7 @@ interface AppPropsT {
   showPullUpMenu: () => void;
   onTokenCreate: (result: stripe.TokenResponse) => void;
   onTokenCreateError: (err: string) => void;
+  onCreditCardSubmit: () => void;
   selectView: (view: View) => void;
   toPreviousView: () => void;
   toNextView: () => void;
@@ -93,7 +95,7 @@ interface AppPropsT {
   paymentRequest: stripe.paymentRequest.StripePaymentRequest | null;
   canMakePayment: boolean;
   checkoutPending: boolean;
-  completePending: boolean;
+  purchasePending: boolean;
   ticketsForPurchase: TicketCounts;
   profile?: auth0.Auth0UserProfile;
   event?: Event;
@@ -337,12 +339,16 @@ interface OptionalStripe {
 }
 type CardFormProps = Pick<
   AppPropsT,
-  "byLayout" | "onTokenCreate" | "onTokenCreateError" | "completePending"
+  | "byLayout"
+  | "onTokenCreate"
+  | "onTokenCreateError"
+  | "purchasePending"
+  | "onCreditCardSubmit"
 > &
   OptionalStripe;
 interface CardFormState {
   cardholderName: string;
-  hasSubmittedOnce: boolean;
+  showErrors: boolean;
   cardElemEmpty: boolean;
 }
 
@@ -351,20 +357,31 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
     super(props);
     this.state = {
       cardholderName: "",
-      hasSubmittedOnce: false,
+      showErrors: false,
       cardElemEmpty: true
     };
   }
+
   onSubmit = (evt: React.FormEvent<HTMLFormElement>) => {
     evt.preventDefault();
     let {cardholderName} = this.state;
-    let {stripe, onTokenCreate, onTokenCreateError} = this.props;
+    let {
+      stripe,
+      onTokenCreate,
+      onTokenCreateError,
+      onCreditCardSubmit,
+      purchasePending
+    } = this.props;
+    if (purchasePending) {
+      return;
+    }
     if (!cardholderName) {
       this.setState({
-        hasSubmittedOnce: true
+        showErrors: true
       });
       return;
     }
+    onCreditCardSubmit();
     (stripe as ReactStripeElements.StripeProps)
       .createToken({name: cardholderName})
       .then(onTokenCreate)
@@ -380,8 +397,8 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
     this.setState({cardElemEmpty: event.empty});
   };
   render() {
-    let {cardholderName, hasSubmittedOnce, cardElemEmpty} = this.state;
-    let {byLayout, completePending} = this.props;
+    let {cardholderName, showErrors, cardElemEmpty} = this.state;
+    let {byLayout, purchasePending} = this.props;
 
     return (
       <form className="column" onSubmit={this.onSubmit}>
@@ -401,10 +418,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
               lineHeight: "1.2em",
               color: red
             }}>
-            *{" "}
-            {hasSubmittedOnce && !cardholderName
-              ? "This field is required"
-              : ""}
+            * {showErrors && !cardholderName ? "This field is required" : ""}
           </span>
         </div>
         <input
@@ -447,8 +461,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
               lineHeight: "1.2em",
               color: red
             }}>
-            *{" "}
-            {hasSubmittedOnce && cardElemEmpty ? "This field is required" : ""}
+            * {showErrors && cardElemEmpty ? "This field is required" : ""}
           </span>
         </div>
         <div
@@ -481,7 +494,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
           className="row"
           style={sharedStyles.payWithCardButton}>
           Purchase
-          {completePending ? <Ellipsis style={{fontWeight: 700}} /> : null}
+          {purchasePending ? <Ellipsis style={{fontWeight: 700}} /> : null}
         </button>
       </form>
     );
@@ -497,6 +510,7 @@ const Ellipsis = ({style = {}}: {style?: React.CSSProperties}) => (
     <span>.</span>
   </div>
 );
+
 export class Home extends React.Component<AppPropsT> {
   pullUpMenuRef: RefObject<HTMLDivElement>;
   constructor(props: AppPropsT) {
@@ -873,16 +887,40 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
-  renderDesktopCreditCardCheckoutStep = () => {
+  renderCreditCardForm = () => {
     let {
       stripe,
+      purchasePending,
       byLayout,
       onTokenCreate,
       onTokenCreateError,
-      completePending,
-      event,
-      toPreviousView
+      onCreditCardSubmit
     } = this.props;
+    return stripe ? (
+      <StripeProvider stripe={stripe}>
+        <Elements
+          fonts={[
+            {
+              cssSrc: "https://fonts.googleapis.com/css?family=Roboto"
+            }
+          ]}>
+          <WrappedCardForm
+            byLayout={byLayout}
+            purchasePending={purchasePending}
+            onTokenCreate={onTokenCreate}
+            onTokenCreateError={onTokenCreateError}
+            onCreditCardSubmit={onCreditCardSubmit}
+          />
+        </Elements>
+      </StripeProvider>
+    ) : (
+      /* TODO test this Skeleton */
+      <Skeleton />
+    );
+  };
+
+  renderDesktopCreditCardCheckoutStep = () => {
+    let {byLayout, event, toPreviousView} = this.props;
     return (
       <>
         <div style={{...sharedStyles.ticketsTitle, position: "relative"}}>
@@ -921,26 +959,7 @@ export class Home extends React.Component<AppPropsT> {
           <div style={{margin: "0 0em 1.5em 0em"}}>
             <div style={sharedStyles.dashedLine} />
           </div>
-          {stripe ? (
-            <StripeProvider stripe={stripe}>
-              <Elements
-                fonts={[
-                  {
-                    cssSrc: "https://fonts.googleapis.com/css?family=Roboto"
-                  }
-                ]}>
-                <WrappedCardForm
-                  byLayout={byLayout}
-                  completePending={completePending}
-                  onTokenCreate={onTokenCreate}
-                  onTokenCreateError={onTokenCreateError}
-                />
-              </Elements>
-            </StripeProvider>
-          ) : (
-            /* TODO test this Skeleton */
-            <Skeleton />
-          )}
+          {this.renderCreditCardForm()}
         </div>
       </>
     );
@@ -966,13 +985,6 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderMobileCreditCardCheckoutStep = () => {
-    let {
-      stripe,
-      byLayout,
-      completePending,
-      onTokenCreate,
-      onTokenCreateError
-    } = this.props;
     return (
       <>
         <div style={sharedStyles.mobileTicketHeader}>Checkout</div>
@@ -986,26 +998,7 @@ export class Home extends React.Component<AppPropsT> {
         <div style={{margin: "0 0em 1.5em 0em"}}>
           <div style={sharedStyles.dashedLine} />
         </div>
-        {stripe ? (
-          <StripeProvider stripe={stripe}>
-            <Elements
-              fonts={[
-                {
-                  cssSrc: "https://fonts.googleapis.com/css?family=Roboto"
-                }
-              ]}>
-              <WrappedCardForm
-                byLayout={byLayout}
-                completePending={completePending}
-                onTokenCreate={onTokenCreate}
-                onTokenCreateError={onTokenCreateError}
-              />
-            </Elements>
-          </StripeProvider>
-        ) : (
-          /* TODO test this Skeleton */
-          <Skeleton />
-        )}
+        {this.renderCreditCardForm()}
       </>
     );
   };
@@ -1761,7 +1754,7 @@ export default connect(
     orderCurrency: home.orderCurrency,
     error: home.error,
     checkoutPending: home.checkoutPending,
-    completePending: home.completePending
+    purchasePending: home.purchasePending
   }),
   dispatch => ({
     initiateLogin: initiateLoginAction(dispatch),
@@ -1775,6 +1768,7 @@ export default connect(
     toNextView: toNextViewAction(dispatch),
     onTokenCreate: onTokenCreateAction(dispatch),
     onTokenCreateError: onTokenCreateErrorAction(dispatch),
+    onCreditCardSubmit: onCreditCardSubmitAction(dispatch),
     resetError: resetErrorAction(dispatch)
   })
 )(Home);
