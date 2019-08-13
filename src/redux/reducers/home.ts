@@ -173,7 +173,6 @@ export const reducer = (state = initialState, action: Action) => {
     case StripeActionType.PaymentRequestCreationError:
     case StripeActionType.CanMakePaymentError:
     case StripeActionType.StripeScriptLoadingError:
-    case StripeActionType.StripeCreateTokenNetworkError:
     case StripeActionType.StripeCreateTokenError:
     case ApiActionType.EventFetchError:
     case ApiActionType.CheckoutError:

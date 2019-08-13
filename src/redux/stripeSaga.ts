@@ -21,7 +21,6 @@ export enum ActionType {
   CanMakePaymentError = "CanMakePaymentError",
   StripeInstantiated = "StripeInstantiated",
   StripeScriptLoadingError = "StripeScriptLoadingError",
-  StripeCreateTokenNetworkError = "StripeCreateTokenNetworkError",
   StripeCreateTokenError = "StripeCreateTokenError",
   StripeCreateTokenSuccess = "StripeCreateTokenSuccess"
 }
