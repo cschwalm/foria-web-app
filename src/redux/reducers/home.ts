@@ -187,7 +187,11 @@ export const reducer = (state = initialState, action: Action) => {
         if (action.data instanceof Error) {
           error = action.data;
         } else {
-          error = new Error(action.data);
+          error = new Error(
+            typeof action.data === "string"
+              ? action.data
+              : JSON.stringify(action.data)
+          );
         }
         scope.setExtra("reduxAction", action.type);
         Sentry.captureException(error);
