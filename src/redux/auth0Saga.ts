@@ -162,7 +162,7 @@ function logout() {
   let lock = createLock();
 
   // Auth0 requires a redirect for logout, redirect back to the current page
-  lock.logout({ returnTo: window.location.href });
+  lock.logout({returnTo: window.location.href});
 }
 
 function* checkAlreadyLoggedIn() {
