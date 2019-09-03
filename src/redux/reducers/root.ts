@@ -48,7 +48,6 @@ export interface State {
   profile?: auth0.Auth0UserProfile;
   event?: Event;
   accessToken?: string;
-  stripeToken?: stripe.Token;
 }
 
 const parseEventIdFromURL = (): string | void => {
@@ -107,11 +106,6 @@ export const reducer = (state = initialState, action: Action) => {
       return {
         ...state,
         stripe: action.data
-      };
-    case StripeActionType.StripeCreateTokenSuccess:
-      return {
-        ...state,
-        stripeToken: action.data
       };
     default:
       return state;
