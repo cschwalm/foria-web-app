@@ -10,10 +10,22 @@ pipelines:
           - npm install
           - npm test
   tags:
-    release-*:
+    release-stage*:
       - step:
           name: Test, Build, and Deploy
-          deployment: production
+          deployment: Staging
+          script:
+            - npm install
+            - npm run build
+            - apt-get update
+            - apt-get install python-pip -q -y
+            - pip install awscli --upgrade --ignore-installed six
+            - aws s3 sync ./build s3://$AWS_BUCKET
+            - aws s3 cp --cache-control max-age=0 ./build/service-worker.js s3://$AWS_BUCKET/
+    release-prod*:
+      - step:
+          name: Test, Build, and Deploy Prod
+          deployment: Production
           script:
             - npm install
             - npm run build
