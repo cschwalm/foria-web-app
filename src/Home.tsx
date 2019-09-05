@@ -20,8 +20,8 @@ import {
   trolleyGray,
   antiFlashWhite
 } from "./colors";
-import appleStoreBadge from "./appleStoreBadge.svg";
-import googlePlayBadge from "./googlePlayBadge.png";
+//import appleStoreBadge from "./appleStoreBadge.svg";
+//import googlePlayBadge from "./googlePlayBadge.png";
 import {AppState} from "./redux/store";
 import {
   AuthenticationStatus,
