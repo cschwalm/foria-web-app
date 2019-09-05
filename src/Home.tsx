@@ -687,7 +687,7 @@ export class Home extends React.Component<AppPropsT> {
     return (
       <>
         <div style={sharedStyles.ticketsTitle}>
-          <span style={event ? {} : {opacity: 0}}>Tickets</span>
+          <span style={event ? {} : {opacity: 0}}>Foria Passes</span>
         </div>
         <div
           style={{
@@ -1044,7 +1044,7 @@ export class Home extends React.Component<AppPropsT> {
             gridRowGap: "0.6em",
             alignItems: "center"
           }}>
-          <a
+          {/*<a
             style={{
               background: `url('${appleStoreBadge}') no-repeat`,
               backgroundSize: "contain",
@@ -1077,7 +1077,7 @@ export class Home extends React.Component<AppPropsT> {
             <span style={sharedStyles.visuallyHiddenButScreenReaderAccessible}>
               Download the Foria Android app
             </span>
-          </a>
+          </a>*/}
         </div>
       </>
     );
