@@ -20,8 +20,8 @@ import {
   trolleyGray,
   antiFlashWhite
 } from "./colors";
-//import appleStoreBadge from "./appleStoreBadge.svg";
-//import googlePlayBadge from "./googlePlayBadge.png";
+import appleStoreBadge from "./appleStoreBadge.svg";
+import googlePlayBadge from "./googlePlayBadge.png";
 import {AppState} from "./redux/store";
 import {
   AuthenticationStatus,
@@ -1044,7 +1044,7 @@ export class Home extends React.Component<AppPropsT> {
             gridRowGap: "0.6em",
             alignItems: "center"
           }}>
-          {/*<a
+          <a
             style={{
               background: `url('${appleStoreBadge}') no-repeat`,
               backgroundSize: "contain",
@@ -1054,7 +1054,7 @@ export class Home extends React.Component<AppPropsT> {
               width: "100%",
               height: "100%"
             }}
-            href="https://foriatickets.com "
+            href="https://apps.apple.com/us/app/foria/id1475421513"
             target="_blank"
             rel="noopener noreferrer">
             <span style={sharedStyles.visuallyHiddenButScreenReaderAccessible}>
@@ -1071,13 +1071,13 @@ export class Home extends React.Component<AppPropsT> {
               width: "100%",
               height: "100%"
             }}
-            href="https://foriatickets.com"
+            href="https://play.google.com/store/apps/details?id=com.foriatickets.foria"
             target="_blank"
             rel="noopener noreferrer">
             <span style={sharedStyles.visuallyHiddenButScreenReaderAccessible}>
               Download the Foria Android app
             </span>
-          </a>*/}
+          </a>
         </div>
       </>
     );
