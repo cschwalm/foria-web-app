@@ -1026,14 +1026,14 @@ export class Home extends React.Component<AppPropsT> {
           Your order number is #{orderNumber as string}
         </p>
         <p style={sharedStyles.getTicketsFromForiaApp}>
-          To get your tickets, download the Foria app
+            Access your tickets in the Foria app
         </p>
         <p style={{...sharedStyles.eventBody, marginBottom: "1.5em"}}>
-          Tickets are only available through the Foria app to ensure
-          authenticity. Please download and sign-in to the app in advance of the
-          event. If you can’t present the mobile ticket for any reason, then you
-          MUST have a government ID with the same name you used to purchase the
-          ticket.
+            To ensure authenticity, your tickets are only available in the Foria app. You will not receive tickets
+            via email. We recommend that you locate your tickets in-app before the event.
+            Once located, the tickets will be saved to your device, and you will not need internet at the event.
+            If you haven't located your tickets in-app, for any reason,
+            then you must have a government ID that shows the name on your Foria account.
         </p>
         <div
           style={{
@@ -1125,7 +1125,7 @@ export class Home extends React.Component<AppPropsT> {
           style={{
             lineHeight: "1.2em"
           }}>
-          Tickets
+          Passes
         </span>
         <div
           style={{

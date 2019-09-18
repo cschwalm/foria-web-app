@@ -1,10 +1,9 @@
 import React from "react";
-import ReactDOM from "react-dom";
 import Enzyme, {shallow} from "enzyme";
 import Adapter from "enzyme-adapter-react-16";
 
 import {Home} from "./Home";
-import {AuthenticationStatus, Event} from "./redux/reducers/root";
+import {AuthenticationStatus} from "./redux/reducers/root";
 import {View} from "./redux/reducers/home";
 
 Enzyme.configure({adapter: new Adapter()});
