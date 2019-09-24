@@ -307,7 +307,7 @@ const sharedStyles = {
     lineHeight: "1.2em"
   },
   getTicketsFromForiaApp: {
-    color: vividRaspberry,
+    color: black,
     fontSize: `${font4}px`,
     lineHeight: "1.2em"
   }
