@@ -307,7 +307,7 @@ const sharedStyles = {
     lineHeight: "1.2em"
   },
   getTicketsFromForiaApp: {
-    color: black,
+    color: vividRaspberry,
     fontSize: `${font4}px`,
     lineHeight: "1.2em"
   }
@@ -1026,7 +1026,13 @@ export class Home extends React.Component<AppPropsT> {
           Your order number is #{orderNumber as string}
         </p>
         <p style={sharedStyles.getTicketsFromForiaApp}>
-            Access your tickets in the Foria app
+            <a
+                style={sharedStyles.getTicketsFromForiaApp}
+                href="https://foria.app.link/9UDqrSsTi0"
+                target="_blank"
+                rel="noopener noreferrer">
+                Access your tickets in the Foria app
+            </a>
         </p>
         <p style={{...sharedStyles.eventBody, marginBottom: "1.5em"}}>
             To ensure authenticity, your tickets are only available in the Foria app. You will not receive tickets
