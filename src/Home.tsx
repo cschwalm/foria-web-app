@@ -1031,9 +1031,7 @@ export class Home extends React.Component<AppPropsT> {
                 href="https://foria.app.link/9UDqrSsTi0"
                 target="_blank"
                 rel="noopener noreferrer">
-            <span style={sharedStyles.visuallyHiddenButScreenReaderAccessible}>
-              Access your tickets in the Foria app
-            </span>
+                Access your tickets in the Foria app
             </a>
         </p>
         <p style={{...sharedStyles.eventBody, marginBottom: "1.5em"}}>
