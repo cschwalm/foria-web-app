@@ -48,7 +48,7 @@ function createLock() {
         audience: process.env.REACT_APP_AUTH0_AUDIENCE as string,
         redirect: false
       },
-      initialScreen: 'signUp',
+      initialScreen: "signUp",
       additionalSignUpFields: [
         {
           name: "given_name",

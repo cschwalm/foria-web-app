@@ -1026,20 +1026,22 @@ export class Home extends React.Component<AppPropsT> {
           Your order number is #{orderNumber as string}
         </p>
         <p style={sharedStyles.getTicketsFromForiaApp}>
-            <a
-                style={sharedStyles.getTicketsFromForiaApp}
-                href="https://foria.app.link/9UDqrSsTi0"
-                target="_blank"
-                rel="noopener noreferrer">
-                Access your tickets in the Foria app
-            </a>
+          <a
+            style={sharedStyles.getTicketsFromForiaApp}
+            href="https://foria.app.link/9UDqrSsTi0"
+            target="_blank"
+            rel="noopener noreferrer">
+            Access your tickets in the Foria app
+          </a>
         </p>
         <p style={{...sharedStyles.eventBody, marginBottom: "1.5em"}}>
-            To ensure authenticity, your tickets are only available in the Foria app. You will not receive tickets
-            via email. We recommend that you locate your tickets in-app before the event.
-            Once located, the tickets will be saved to your device, and you will not need internet at the event.
-            If you haven't located your tickets in-app, for any reason,
-            then you must have a government ID that shows the name on your Foria account.
+          To ensure authenticity, your tickets are only available in the Foria
+          app. You will not receive tickets via email. We recommend that you
+          locate your tickets in-app before the event. Once located, the tickets
+          will be saved to your device, and you will not need internet at the
+          event. If you haven't located your tickets in-app, for any reason,
+          then you must have a government ID that shows the name on your Foria
+          account.
         </p>
         <div
           style={{
