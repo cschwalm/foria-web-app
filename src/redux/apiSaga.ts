@@ -1,6 +1,5 @@
 import {call, select, put, takeEvery, actionChannel} from "redux-saga/effects";
 
-import normalizeFetchResponse from "../normalizeFetchResponse";
 import {ActionType as StripeActionType} from "./stripeSaga";
 import {getEventId, getTicketsForPurchase, getAccessToken} from "./selectors";
 import {TicketCounts} from "./reducers/home";
@@ -9,11 +8,14 @@ const foriaBackend = process.env.REACT_APP_FORIA_BACKEND_BASE_URL as "string";
 
 export enum ActionType {
   EventFetchError = "EventFetchError",
+  EventFetchCriticalError = "EventFetchCriticalError",
   EventFetchSuccess = "EventFetchSuccess",
   CheckoutSuccess = "CheckoutSuccess",
   CheckoutError = "CheckoutError",
+  CheckoutCriticalError = "CheckoutCriticalError",
   InitiateCalculateOrder = "InitiateCalculateOrder",
   CalculateOrderTotalError = "CalculateOrderTotalError",
+  CalculateOrderTotalCriticalError = "CalculateOrderTotalCriticalError",
   CalculateOrderTotalSuccess = "CalculateOrderTotalSuccess"
 }
 
@@ -26,10 +28,40 @@ const authHeaders = (accessToken: string) => ({
   Authorization: `Bearer ${accessToken}`
 });
 
+async function tupleResponse(promise: Promise<Response>) {
+  // A tuple response is a promise which always succeeds
+  // It yields a tuple
+  // [success body if successful, a 400 body, a 500 body, a connection/parsing error]
+  let response;
+  let text;
+  try {
+    response = await promise;
+    text = await response.text();
+  } catch (err) {
+    return [null, null, null, err];
+  }
+
+  let body = text;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    // Unable to parse as json
+  }
+
+  if (response.status >= 500) {
+    return [null, null, body, null];
+  } else if (response.status >= 400) {
+    return [null, body, null, null];
+  }
+  return [body, null, null, null];
+}
+
 function fetchEvent(eventId: string) {
-  return fetch(`${foriaBackend}/v1/event/${eventId}`, {
-    headers: defaultHeaders
-  }).then(normalizeFetchResponse);
+  return tupleResponse(
+    fetch(`${foriaBackend}/v1/event/${eventId}`, {
+      headers: defaultHeaders
+    })
+  );
 }
 
 interface CheckoutTicket {
@@ -55,11 +87,13 @@ type OrderTotalPayload = Omit<OrderPayload, "payment_token"> & {
 };
 
 function completeCheckout(data: OrderPayload, accessToken: string) {
-  return fetch(`${foriaBackend}/v1/ticket/checkout/`, {
-    method: "POST",
-    body: JSON.stringify(data),
-    headers: {...defaultHeaders, ...authHeaders(accessToken)}
-  }).then(normalizeFetchResponse);
+  return tupleResponse(
+    fetch(`${foriaBackend}/v1/ticket/checkout/`, {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: {...defaultHeaders, ...authHeaders(accessToken)}
+    })
+  );
 }
 
 function* completePurchase({data: {id: stripeToken}}: {data: {id: string}}) {
@@ -73,13 +107,21 @@ function* completePurchase({data: {id: stripeToken}}: {data: {id: string}}) {
     payment_token: stripeToken
   };
 
-  let checkoutResponse: {id: string};
-  try {
-    checkoutResponse = yield call(completeCheckout, orderPayload, accessToken);
-  } catch (err) {
+  let [checkoutResponse, error400, error500, connectionError] = yield call(
+    completeCheckout,
+    orderPayload,
+    accessToken
+  );
+  if (error400) {
     yield put({
       type: ActionType.CheckoutError,
-      data: err
+      data: error400
+    });
+    return;
+  } else if (error500 || connectionError) {
+    yield put({
+      type: ActionType.CheckoutCriticalError,
+      data: error500 || connectionError
     });
     return;
   }
@@ -97,11 +139,13 @@ const getTicketItemList = (ticketsForPurchase: TicketCounts) =>
   }));
 
 function calculateOrderTotal(data: OrderTotalPayload, accessToken: string) {
-  return fetch(`${foriaBackend}/v1/ticket/calculateOrderTotal/`, {
-    method: "POST",
-    body: JSON.stringify(data),
-    headers: {...defaultHeaders, ...authHeaders(accessToken)}
-  }).then(normalizeFetchResponse);
+  return tupleResponse(
+    fetch(`${foriaBackend}/v1/ticket/calculateOrderTotal/`, {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: {...defaultHeaders, ...authHeaders(accessToken)}
+    })
+  );
 }
 
 function* calculateOrderTotalSaga() {
@@ -114,13 +158,21 @@ function* calculateOrderTotalSaga() {
     ticket_line_item_list: getTicketItemList(ticketsForPurchase)
   };
 
-  let orderTotal: OrderTotal;
-  try {
-    orderTotal = yield call(calculateOrderTotal, orderPayload, accessToken);
-  } catch (err) {
+  let [orderTotal, error400, error500, connectionError] = yield call(
+    calculateOrderTotal,
+    orderPayload,
+    accessToken
+  );
+  if (error400) {
     yield put({
       type: ActionType.CalculateOrderTotalError,
-      data: err
+      data: error400
+    });
+    return;
+  } else if (error500 || connectionError) {
+    yield put({
+      type: ActionType.CalculateOrderTotalCriticalError,
+      data: error500 || connectionError
     });
     return;
   }
@@ -142,15 +194,20 @@ function* saga() {
   );
 
   let eventId = yield select(getEventId);
-  let event;
-  try {
-    event = yield call(fetchEvent, eventId);
-    // event.start_time = "2019-06-19T20:07:09";
-    // event.end_time = "2019-06-19T21:07:09";
-  } catch (err) {
+  let [event, error400, error500, connectionError] = yield call(
+    fetchEvent,
+    eventId
+  );
+  if (error400) {
     yield put({
       type: ActionType.EventFetchError,
-      data: err
+      data: error400
+    });
+    return;
+  } else if (error500 || connectionError) {
+    yield put({
+      type: ActionType.EventFetchCriticalError,
+      data: error500 || connectionError
     });
     return;
   }
