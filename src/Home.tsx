@@ -1635,7 +1635,7 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderErrorOverlay() {
-    let {error, resetError, byLayout} = this.props;
+    let {error, resetError} = this.props;
     if (!error) {
       return;
     }
@@ -1654,7 +1654,7 @@ export class Home extends React.Component<AppPropsT> {
       },
       innerContainer: {
         margin: "1em",
-        maxWidth: byLayout("initial", ticketOverlayWidth + "px"),
+        width: ticketOverlayWidth + "px",
         backgroundColor: white,
         padding: "1em",
         borderRadius: "5px",
