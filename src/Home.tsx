@@ -765,7 +765,6 @@ export class Home extends React.Component<AppPropsT> {
   renderPaymentDelegateView = () => {
     // If we support more than one payment method, render a view to choose a payment method first
     let {
-      selectView,
       stripe,
       canMakePayment,
       paymentRequest,
@@ -793,16 +792,11 @@ export class Home extends React.Component<AppPropsT> {
             </div>
             <div
               style={{...sharedStyles.paymentOrSeparator, marginBottom: "1em"}}>
-              Or
+              Or enter card details
             </div>
           </>
         ) : null}
-        <div
-          className="row"
-          style={sharedStyles.checkoutButton}
-          onClick={() => selectView(View.CreditCardCheckout)}>
-          Pay with card
-        </div>
+        {this.renderCreditCardForm()}
       </>
     );
   };
@@ -958,52 +952,6 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
-  renderDesktopCreditCardCheckoutStep = () => {
-    let {byLayout, event, toPreviousView} = this.props;
-    return (
-      <>
-        <div style={{...sharedStyles.ticketsTitle, position: "relative"}}>
-          <div
-            style={{
-              position: "absolute",
-              display: "flex",
-              alignItems: "center",
-              top: "1em",
-              bottom: "1em",
-              left: "1em"
-            }}>
-            <LeftChevron />
-          </div>
-          <div
-            style={{
-              position: "absolute",
-              top: "0em",
-              bottom: "0em",
-              left: "0em",
-              width: "3em",
-              cursor: "pointer"
-            }}
-            onClick={toPreviousView}
-          />
-          <span style={event ? {} : {opacity: 0}}>Checkout</span>
-        </div>
-        <div style={{margin: byLayout("1em", "1.5em 1em")}}>
-          {this.renderCheckoutSummary()}
-          <div style={{margin: "0 0em 1.5em 0em"}}>
-            <div style={sharedStyles.dashedLine} />
-          </div>
-          <div style={{margin: "0 0em 1.5em 0em"}}>
-            {this.renderCheckoutDisclaimer()}
-          </div>
-          <div style={{margin: "0 0em 1.5em 0em"}}>
-            <div style={sharedStyles.dashedLine} />
-          </div>
-          {this.renderCreditCardForm()}
-        </div>
-      </>
-    );
-  };
-
   renderMobileChooseCheckoutStep = () => {
     return (
       <>
@@ -1019,25 +967,6 @@ export class Home extends React.Component<AppPropsT> {
           <div style={sharedStyles.dashedLine} />
         </div>
         {this.renderPaymentDelegateView()}
-      </>
-    );
-  };
-
-  renderMobileCreditCardCheckoutStep = () => {
-    return (
-      <>
-        <div style={sharedStyles.mobileTicketHeader}>Checkout</div>
-        {this.renderCheckoutSummary()}
-        <div style={{marginBottom: "1.5em"}}>
-          <div style={sharedStyles.dashedLine} />
-        </div>
-        <div style={{margin: "0 0em 1.5em 0em"}}>
-          {this.renderCheckoutDisclaimer()}
-        </div>
-        <div style={{margin: "0 0em 1.5em 0em"}}>
-          <div style={sharedStyles.dashedLine} />
-        </div>
-        {this.renderCreditCardForm()}
       </>
     );
   };
@@ -1252,9 +1181,6 @@ export class Home extends React.Component<AppPropsT> {
       case View.ChooseCheckout:
         modalView = this.renderMobileChooseCheckoutStep();
         break;
-      case View.CreditCardCheckout:
-        modalView = this.renderMobileCreditCardCheckoutStep();
-        break;
       case View.Complete:
         modalView = this.renderMobileCompleteStep();
         break;
@@ -1340,9 +1266,6 @@ export class Home extends React.Component<AppPropsT> {
         break;
       case View.ChooseCheckout:
         modalView = this.renderDesktopChooseCheckoutStep();
-        break;
-      case View.CreditCardCheckout:
-        modalView = this.renderDesktopCreditCardCheckoutStep();
         break;
       case View.Complete:
         modalView = this.renderDesktopCompleteStep();
@@ -1519,7 +1442,6 @@ export class Home extends React.Component<AppPropsT> {
         );
         break;
       case View.ChooseCheckout:
-      case View.CreditCardCheckout:
         leftIcon = (
           <div className="column">
             <LeftChevron />
