@@ -1483,8 +1483,10 @@ export class Home extends React.Component<AppPropsT> {
               flex: 1,
               alignSelf: "center",
               justifyContent: "center",
+              textAlign: "center",
               fontWeight: 500,
-              fontSize: `${font4}px`
+              fontSize: `${font4}px`,
+              lineHeight: "1.2em"
             }}>
             {(event && event.name) || <Skeleton />}
           </div>
