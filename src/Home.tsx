@@ -1533,6 +1533,18 @@ export class Home extends React.Component<AppPropsT> {
     );
   }
 
+  buildGoogleMapsSearchUrl = () => {
+    let {event} = this.props;
+    if (!event) {
+      return "";
+    }
+    let query = `${event.address.venue_name}, ${
+      event.address.street_address
+    }, ${event.address.city}, ${event.address.state} ${event.address.zip}`;
+    query = encodeURIComponent(query);
+    return `https://www.google.com/maps/search/?api=1&query=${query}`;
+  };
+
   renderBody = () => {
     let {event, byLayout} = this.props;
 
@@ -1613,7 +1625,26 @@ export class Home extends React.Component<AppPropsT> {
             </div>
             <div
               className="row"
-              style={{marginBottom: byLayout("1.5em", "2em")}}>
+              style={{
+                position: "relative",
+                marginBottom: byLayout("1.5em", "2em")
+              }}>
+              <a
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  top: 0
+                }}
+                rel="noopener noreferrer"
+                href={this.buildGoogleMapsSearchUrl()}
+                target="_blank">
+                <span
+                  style={sharedStyles.visuallyHiddenButScreenReaderAccessible}>
+                  Event location in Google Maps
+                </span>
+              </a>
               {!event ? (
                 <div style={{flex: 1}}>
                   <Skeleton height={"2em"} />
