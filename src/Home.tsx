@@ -57,7 +57,8 @@ import calendarIcon from "./calendar_icon.png";
 import PinpointIcon from "./pinpointIcon";
 import DecrementIcon from "./decrementIcon";
 import IncrementIcon from "./incrementIcon";
-import CloseIcon from "./closeIcon";
+import CloseIconMobile from "./closeIconMobile";
+import BackIconMobile from "./backIconMobile";
 import LeftChevron from "./leftChevron";
 import UpwardChevron from "./upwardChevron";
 import {
@@ -203,7 +204,7 @@ const sharedStyles = {
   paymentOrSeparator: {
     display: "flex",
     justifyContent: "center",
-    color: trolleyGray,
+    color: trolleyGray
   },
   checkoutTicketDetails: {
     color: trolleyGray
@@ -764,12 +765,7 @@ export class Home extends React.Component<AppPropsT> {
 
   renderPaymentDelegateView = () => {
     // If we support more than one payment method, render a view to choose a payment method first
-    let {
-      stripe,
-      canMakePayment,
-      paymentRequest,
-      byLayout
-    } = this.props;
+    let {stripe, canMakePayment, paymentRequest, byLayout} = this.props;
     return (
       <>
         {stripe && canMakePayment ? (
@@ -1421,12 +1417,12 @@ export class Home extends React.Component<AppPropsT> {
       case View.Complete:
         leftIcon = (
           <span style={{opacity: 0}}>
-            <CloseIcon />
+            <CloseIconMobile />
           </span>
         );
         rightIcon = (
           <div className="column">
-            <CloseIcon />
+            <CloseIconMobile />
             <div
               onClick={resetPullUpMenu}
               style={{
@@ -1444,7 +1440,7 @@ export class Home extends React.Component<AppPropsT> {
       case View.ChooseCheckout:
         leftIcon = (
           <div className="column">
-            <LeftChevron />
+            <BackIconMobile />
             <div
               onClick={toPreviousView}
               style={{
@@ -1460,7 +1456,7 @@ export class Home extends React.Component<AppPropsT> {
         );
         rightIcon = (
           <span style={{opacity: 0}}>
-            <LeftChevron />
+            <BackIconMobile />
           </span>
         );
         break;
