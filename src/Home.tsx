@@ -1472,7 +1472,7 @@ export class Home extends React.Component<AppPropsT> {
             margin: "auto",
             display: "flex",
             alignItems: "center",
-            padding: `${1.5 * font3}px ${font3}px`,
+            padding: `${font3}px`,
             boxSizing: "border-box"
           }}>
           {leftIcon}
