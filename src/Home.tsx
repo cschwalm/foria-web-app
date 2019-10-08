@@ -1,4 +1,4 @@
-import React, {RefObject} from "react";
+import React from "react";
 import moment from "moment";
 import {connect} from "react-redux";
 import Skeleton from "react-loading-skeleton";
@@ -507,83 +507,6 @@ const Ellipsis = ({style = {}}: {style?: React.CSSProperties}) => (
 );
 
 export class Home extends React.Component<AppPropsT> {
-  pullUpHeaderRef: RefObject<HTMLDivElement>;
-  pullUpBodyRef: RefObject<HTMLDivElement>;
-  constructor(props: AppPropsT) {
-    super(props);
-    this.pullUpHeaderRef = React.createRef<HTMLDivElement>();
-    this.pullUpBodyRef = React.createRef<HTMLDivElement>();
-  }
-  componentDidMount() {
-    // We must manually register listeners because React doesn't currently
-    // support non-passive event listeners. On iOS passive listeners are the
-    // default, and passive listeners cannot cancel their events. We need to
-    // cancel scroll events.
-    //
-    // When you scroll on iOS in a fixed container, and reach the boundary of
-    // a scroll, the scroll is propagated to the parent element. On mobile,
-    // when you scroll to the end of the list of tickets to checkout, the
-    // parent which has the event information would scroll too.
-    //
-    // The only way is to disable the scroll at this boundary. You can cancel
-    // the event from propagating, but the scroll still occurs. Disabling at
-    // the boundary (as is done here) has the unfortunate effect of disabling
-    // the rubber band effect.
-
-    // Disable any scroll that happens on the pull up menu header
-    if (this.pullUpHeaderRef.current) {
-      this.pullUpHeaderRef.current.addEventListener(
-        "touchmove",
-        e => e.preventDefault(),
-        {passive: false}
-      );
-    }
-
-    if (this.pullUpBodyRef.current) {
-      // We use the scroll start of the scroll to compute the vertical scroll direction
-      let scrollStartY: null | number;
-      this.pullUpBodyRef.current.addEventListener(
-        "touchstart",
-        e => {
-          // We only care about single touch events
-          if (e.targetTouches.length > 1) {
-            return;
-          }
-          scrollStartY = e.targetTouches[0].clientY;
-        },
-        {passive: false}
-      );
-      this.pullUpBodyRef.current.addEventListener(
-        "touchmove",
-        function(e) {
-          // We only care about single touch events
-          if (e.targetTouches.length > 1) {
-            return;
-          }
-
-          if (!e.cancelable) {
-            return;
-          }
-
-          let upwardScroll =
-            e.targetTouches[0].clientY > (scrollStartY as number);
-          let downwardScroll = !upwardScroll;
-          let atOrAboveTop = this.scrollTop <= 0;
-          let atOrBelowBottom =
-            this.scrollTop + this.clientHeight >= this.scrollHeight;
-
-          if (
-            (e.cancelable && (atOrAboveTop && upwardScroll)) ||
-            (atOrBelowBottom && downwardScroll)
-          ) {
-            e.preventDefault();
-          }
-        },
-        {passive: false}
-      );
-    }
-  }
-
   renderTicketDescriptionColumn = (ticketType: TicketTypeConfig) => {
     let soldOut = ticketType.amount_remaining === 0;
     return (
@@ -1087,60 +1010,7 @@ export class Home extends React.Component<AppPropsT> {
     return `${minAmountStr} - ${maxAmountStr}`;
   };
 
-  renderTicketsPullUpCollapsed = () => {
-    let {showPullUpMenu, event} = this.props;
-
-    let numTickets = event ? event.ticket_type_config.length : 0;
-    let showPriceRange = !event || numTickets > 1;
-    let ticketsButton = (
-      <div
-        onClick={showPullUpMenu}
-        style={sharedStyles.pullUpMenuTicketsButton}>
-        <span
-          style={{
-            lineHeight: "1.2em"
-          }}>
-          Passes
-        </span>
-        <div
-          style={{
-            fontSize: "0.8em",
-            lineHeight: "1.2em",
-            marginLeft: "0.6em",
-            display: "flex"
-          }}>
-          <UpwardChevron />
-        </div>
-      </div>
-    );
-
-    return !event ? (
-      <Skeleton />
-    ) : (
-      <div className="row" style={{justifyContent: "center"}}>
-        {showPriceRange ? (
-          <>
-            <div
-              style={{
-                padding: "0.8em",
-                fontWeight: 500,
-                lineHeight: "1.2em",
-                marginRight: "1em"
-              }}>
-              {this.renderTicketsPriceRange()}
-            </div>
-            {ticketsButton}
-          </>
-        ) : (
-          ticketsButton
-        )}
-      </div>
-    );
-  };
-
   renderMobileTicketsStep = () => {
-    let {toNextView, ticketsForPurchase, checkoutPending} = this.props;
-    let someSelected = someTicketsSelected(ticketsForPurchase);
     return (
       <>
         <div style={sharedStyles.mobileTicketHeader}>Tickets</div>
@@ -1152,22 +1022,12 @@ export class Home extends React.Component<AppPropsT> {
         <div style={{margin: "0em 0em 2em 0em"}}>
           {this.renderTicketsGrid()}
         </div>
-        <div
-          className="row"
-          style={{
-            ...sharedStyles.checkoutButton,
-            ...(!someSelected ? sharedStyles.disabledMobileCheckoutButton : {})
-          }}
-          onClick={toNextView}>
-          Checkout
-          {checkoutPending ? <Ellipsis style={{fontWeight: 700}} /> : null}
-        </div>
       </>
     );
   };
 
   renderTicketsPullUp = () => {
-    let {pullUpMenuCollapsed, view} = this.props;
+    let {view} = this.props;
 
     let modalView;
     switch (view) {
@@ -1184,70 +1044,48 @@ export class Home extends React.Component<AppPropsT> {
         throw new Error(`Unhandled view: ${view}`);
     }
 
-    if (pullUpMenuCollapsed) {
-      return (
+    return (
+      <div className="column" style={{height: "100%", position: "relative"}}>
         <div
           style={{
-            // Create an empty rectangle the size of the collapsed pull up menu,
-            // so that the footer is not hidden beneath the menu
-            height: `${5 * font3}px`
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            width: "100%",
+            backgroundColor: white,
+            height: `calc(100vh - ${8 * font3}px)`
+          }}
+        />
+        {this.renderPullUpMenuHeader()}
+        <div
+          style={{
+            position: "relative",
+            borderBottom: `2px solid ${lavenderGray}`
+          }}
+        />
+        <div
+          style={{
+            width: "100%",
+            flex: 1,
+            overflowY: "scroll",
+            position: "relative"
           }}>
           <div
             style={{
-              position: "fixed",
-              bottom: "0",
-              width: "100%"
-            }}>
-            <div
-              style={{
-                height: "4em"
-              }}
-            />
-            <div
-              style={{
-                boxSizing: "border-box",
-                boxShadow: "rgba(0, 0, 0, 0.21) 0 -2px 16px 4px",
-                display: "flex",
-                backgroundColor: white,
-                minHeight: `${4.75 * font3}px`,
-                height: "100%",
-                padding: "1em",
-                position: "relative"
-              }}
-              className="column">
-              {this.renderTicketsPullUpCollapsed()}
-            </div>
+              boxSizing: "border-box",
+              display: "flex",
+              backgroundColor: white,
+              minHeight: `${4.75 * font3}px`,
+              height: "100%",
+              overflowY: "scroll",
+              padding: "1.5em 1em 1em 1em",
+              position: "relative"
+            }}
+            className="column">
+            {modalView}
           </div>
         </div>
-      );
-    }
-
-    return (
-      <div
-        className="column"
-        style={{
-          position: "fixed",
-          bottom: "0",
-          width: "100%",
-          height: "100%"
-        }}>
-        {this.renderPullUpMenuHeader()}
-        <div style={{borderBottom: `1px solid ${lavenderGray}`}} />
-        <div
-          ref={this.pullUpBodyRef}
-          style={{
-            boxSizing: "border-box",
-            display: "flex",
-            backgroundColor: white,
-            minHeight: `${4.75 * font3}px`,
-            height: "100%",
-            overflowY: "scroll",
-            padding: "1.5em 1em 1em 1em",
-            position: "relative"
-          }}
-          className="column">
-          {modalView}
-        </div>
+        {view === View.Tickets ? this.renderFixedCheckoutButton() : null}
       </div>
     );
   };
@@ -1406,8 +1244,10 @@ export class Home extends React.Component<AppPropsT> {
     let {event, view, resetPullUpMenu, toPreviousView} = this.props;
     let styles = {
       header: {
+        position: "relative" as "relative",
         backgroundColor: white,
-        boxShadow: "0px 0px 2px 3px #ccc"
+        display: "inline-block",
+        width: "100%"
       }
     };
     let spacer = <div className="column" style={{flex: `0 0 ${font3}px`}} />;
@@ -1464,7 +1304,7 @@ export class Home extends React.Component<AppPropsT> {
         throw new Error(`Unhandled view: ${view}`);
     }
     return (
-      <div style={styles.header} ref={this.pullUpHeaderRef}>
+      <div style={styles.header}>
         <div
           style={{
             position: "relative",
@@ -1492,6 +1332,52 @@ export class Home extends React.Component<AppPropsT> {
           </div>
           {spacer}
           {rightIcon}
+        </div>
+      </div>
+    );
+  };
+
+  renderFixedCheckoutButton = () => {
+    let {toNextView, ticketsForPurchase, checkoutPending} = this.props;
+    let someSelected = someTicketsSelected(ticketsForPurchase);
+    return (
+      <div
+        style={{
+          // Create an empty rectangle the size of the collapsed pull up menu,
+          // so that the footer is not hidden beneath the menu
+          height: `${3 * font3}px`
+        }}>
+        <div
+          style={{
+            position: "fixed",
+            bottom: "0",
+            width: "100%"
+          }}>
+          <div
+            style={{
+              boxSizing: "border-box",
+              boxShadow: "rgba(0, 0, 0, 0.21) 0 -2px 8px 2px",
+              display: "flex",
+              backgroundColor: white,
+              minHeight: `${4.75 * font3}px`,
+              height: "100%",
+              padding: "1em",
+              position: "relative"
+            }}
+            className="column">
+            <div
+              className="row"
+              style={{
+                ...sharedStyles.checkoutButton,
+                ...(!someSelected
+                  ? sharedStyles.disabledMobileCheckoutButton
+                  : {})
+              }}
+              onClick={toNextView}>
+              Checkout
+              {checkoutPending ? <Ellipsis style={{fontWeight: 700}} /> : null}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -1688,6 +1574,7 @@ export class Home extends React.Component<AppPropsT> {
           flexDirection: "column",
           display: "flex",
           maxWidth: `${bodyWidth}px`,
+          position: "relative",
           margin: "0 auto"
         }}>
         <div className="column" style={{margin: byLayout("1em", "2em 1.5em")}}>
@@ -1719,6 +1606,13 @@ export class Home extends React.Component<AppPropsT> {
             &copy; 2019 Foria Technologies, Inc. All Rights Reserved.
           </div>
         </div>
+        <div
+          style={{
+            // Create an empty rectangle the size of the collapsed pull up menu,
+            // so that the footer is not hidden beneath the menu
+            height: `${5 * font3}px`
+          }}
+        />
       </div>
     );
   };
@@ -1734,6 +1628,79 @@ export class Home extends React.Component<AppPropsT> {
             .split("\n")
             .map((paragraph, index) => <p key={index}>{paragraph}</p>)
         )}
+      </div>
+    );
+  };
+
+  renderPullUpFooter = () => {
+    let {showPullUpMenu, event} = this.props;
+
+    let numTickets = event ? event.ticket_type_config.length : 0;
+    let showPriceRange = !event || numTickets > 1;
+    let ticketsButton = (
+      <div
+        onClick={showPullUpMenu}
+        style={sharedStyles.pullUpMenuTicketsButton}>
+        <span
+          style={{
+            lineHeight: "1.2em"
+          }}>
+          Passes
+        </span>
+        <div
+          style={{
+            fontSize: "0.8em",
+            lineHeight: "1.2em",
+            marginLeft: "0.6em",
+            display: "flex"
+          }}>
+          <UpwardChevron />
+        </div>
+      </div>
+    );
+
+    return (
+      <div
+        style={{
+          position: "fixed",
+          bottom: "0",
+          width: "100%"
+        }}>
+        <div
+          style={{
+            boxSizing: "border-box",
+            boxShadow: "rgba(0, 0, 0, 0.21) 0 -2px 8px 2px",
+            display: "flex",
+            backgroundColor: white,
+            minHeight: `${4.75 * font3}px`,
+            height: "100%",
+            padding: "1em",
+            position: "relative"
+          }}
+          className="column">
+          {!event ? (
+            <Skeleton />
+          ) : (
+            <div className="row" style={{justifyContent: "center"}}>
+              {showPriceRange ? (
+                <>
+                  <div
+                    style={{
+                      padding: "0.8em",
+                      fontWeight: 500,
+                      lineHeight: "1.2em",
+                      marginRight: "1em"
+                    }}>
+                    {this.renderTicketsPriceRange()}
+                  </div>
+                  {ticketsButton}
+                </>
+              ) : (
+                ticketsButton
+              )}
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -1814,7 +1781,7 @@ export class Home extends React.Component<AppPropsT> {
   }
 
   render() {
-    let {byLayout} = this.props;
+    let {byLayout, pullUpMenuCollapsed} = this.props;
 
     return (
       <div
@@ -1823,14 +1790,29 @@ export class Home extends React.Component<AppPropsT> {
           fontSize: `${font3}px`,
           fontFamily: "Roboto",
           lineHeight: "1.2em",
-          overflowY: "scroll",
           backgroundColor: antiFlashWhite
         }}>
-        {this.renderHeader()}
-        {this.renderHero()}
-        {this.renderBody()}
-        {this.renderFooter()}
-        {byLayout(this.renderTicketsPullUp(), null)}
+        <div
+          style={{
+            position: "fixed",
+            bottom: 0,
+            width: "100%",
+            backgroundColor: antiFlashWhite,
+            height: "100%"
+          }}
+        />
+        {/* The scrollable region */}
+        {pullUpMenuCollapsed ? (
+          <div style={{overflowY: "scroll", position: "relative"}}>
+            {this.renderHeader()}
+            {this.renderHero()}
+            {this.renderBody()}
+            {this.renderFooter()}
+          </div>
+        ) : (
+          byLayout(this.renderTicketsPullUp(), null)
+        )}
+        {pullUpMenuCollapsed ? byLayout(this.renderPullUpFooter(), null) : null}
         {this.renderErrorOverlay()}
       </div>
     );

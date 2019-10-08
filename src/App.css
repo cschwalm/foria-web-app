@@ -21,10 +21,6 @@ input.desktop::placeholder {
   font-size: 16px !important;
 }
 
-body, html, #root, .App {
-    height: 100%;
-}
-
 p {
     margin: 0em 0em 1em 0em;
 }
