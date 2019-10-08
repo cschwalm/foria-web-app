@@ -50,17 +50,18 @@ export interface State {
   accessToken?: string;
 }
 
-const parseEventIdFromURL = (): string | void => {
-  let match = window.location.search.match(/^\?eventId=(.*)$/);
-  if (match && match[1]) {
-    return match[1];
+const getEventIdFromUrl = (): string | void => {
+  let params = new URLSearchParams(window.location.search);
+  let eventId = params.get('eventId')
+  if (eventId != null) {
+    return eventId;
   }
   window.location.href = "https://foriatickets.com";
 };
 
 export const initialState: State = {
   layout: getLayout(),
-  eventId: parseEventIdFromURL() as string,
+  eventId: getEventIdFromUrl() as string,
   authenticationStatus: AuthenticationStatus.NoAuth,
   stripe: null
 };
