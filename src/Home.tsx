@@ -1026,20 +1026,22 @@ export class Home extends React.Component<AppPropsT> {
           Your order number is #{orderNumber as string}
         </p>
         <p style={sharedStyles.getTicketsFromForiaApp}>
-            <a
-                style={sharedStyles.getTicketsFromForiaApp}
-                href="https://foria.app.link/9UDqrSsTi0"
-                target="_blank"
-                rel="noopener noreferrer">
-                Access your tickets in the Foria app
-            </a>
+          <a
+            style={sharedStyles.getTicketsFromForiaApp}
+            href="https://foria.app.link/9UDqrSsTi0"
+            target="_blank"
+            rel="noopener noreferrer">
+            Access your tickets in the Foria app
+          </a>
         </p>
         <p style={{...sharedStyles.eventBody, marginBottom: "1.5em"}}>
-            To ensure authenticity, your tickets are only available in the Foria app. You will not receive tickets
-            via email. We recommend that you locate your tickets in-app before the event.
-            Once located, the tickets will be saved to your device, and you will not need internet at the event.
-            If you haven't located your tickets in-app, for any reason,
-            then you must have a government ID that shows the name on your Foria account.
+          To ensure authenticity, your tickets are only available in the Foria
+          app. You will not receive tickets via email. We recommend that you
+          locate your tickets in-app before the event. Once located, the tickets
+          will be saved to your device, and you will not need internet at the
+          event. If you haven't located your tickets in-app, for any reason,
+          then you must have a government ID that shows the name on your Foria
+          account.
         </p>
         <div
           style={{
@@ -1635,7 +1637,7 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderErrorOverlay() {
-    let {error, resetError, byLayout} = this.props;
+    let {error, resetError} = this.props;
     if (!error) {
       return;
     }
@@ -1654,7 +1656,7 @@ export class Home extends React.Component<AppPropsT> {
       },
       innerContainer: {
         margin: "1em",
-        maxWidth: byLayout("initial", ticketOverlayWidth + "px"),
+        width: ticketOverlayWidth + "px",
         backgroundColor: white,
         padding: "1em",
         borderRadius: "5px",
@@ -1697,7 +1699,7 @@ export class Home extends React.Component<AppPropsT> {
       <div style={styles.container}>
         <div style={styles.innerContainer}>
           <div style={styles.headerStyle}>Oops!</div>
-          <p style={{...styles.body, maxHeight: "150px", overflowY: "scroll"}}>
+          <p style={{...styles.body, maxHeight: "150px", overflowY: "auto"}}>
             {errorMessage}
           </p>
           <p style={styles.body}>Please try again.</p>

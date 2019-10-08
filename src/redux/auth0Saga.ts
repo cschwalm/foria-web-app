@@ -17,6 +17,7 @@ export enum ActionType {
   AuthenticationSuccess = "AuthenticationSuccess",
   AuthenticationError = "AuthenticationError",
   AuthenticationCancelled = "AuthenticationCancelled",
+  UnrecoverableError = "UnrecoverableError",
 
   // Login success refers to our ability to get back a profile
   LoginSuccess = "LoginSuccess",
@@ -47,7 +48,7 @@ function createLock() {
         audience: process.env.REACT_APP_AUTH0_AUDIENCE as string,
         redirect: false
       },
-      initialScreen: 'signUp',
+      initialScreen: "signUp",
       additionalSignUpFields: [
         {
           name: "given_name",
@@ -120,10 +121,18 @@ function* login() {
     didHidePromise
   ]);
 
-  if (error || unrecoverable) {
+  if (error) {
     yield put({
       type: ActionType.AuthenticationError,
       data: error || unrecoverable
+    });
+    return;
+  }
+
+  if (unrecoverable) {
+    yield put({
+      type: ActionType.UnrecoverableError,
+      data: unrecoverable
     });
     return;
   }

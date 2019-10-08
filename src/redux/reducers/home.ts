@@ -87,6 +87,34 @@ export const totalTicketsSelected = (ticketsForPurchase: TicketCounts) =>
   values(ticketsForPurchase).reduce((a, b) => a + b, 0);
 
 export const reducer = (state = initialState, action: Action) => {
+  // Special case those errors we wish to report to Sentry
+  switch (action.type) {
+    case StripeActionType.PaymentRequestCreationError:
+    case StripeActionType.CanMakePaymentError:
+    case StripeActionType.StripeScriptLoadingError:
+    case StripeActionType.StripeCreateTokenError:
+    case Auth0ActionType.UnrecoverableError:
+    case Auth0ActionType.LoginError:
+    case ApiActionType.EventFetchCriticalError:
+    case ApiActionType.CheckoutCriticalError:
+    case ApiActionType.CalculateOrderTotalCriticalError:
+      Sentry.withScope(scope => {
+        let error;
+        if (action.data instanceof Error) {
+          error = action.data;
+        } else {
+          error = new Error(
+            typeof action.data === "string"
+              ? action.data
+              : JSON.stringify(action.data)
+          );
+        }
+        scope.setExtra("reduxAction", action.type);
+        Sentry.captureException(error);
+      });
+      break;
+  }
+
   switch (action.type) {
     // Due to mobile space constraints, there is no back button to undo
     // selected tickets, as a substitute, the user can close the menu, and
@@ -173,29 +201,22 @@ export const reducer = (state = initialState, action: Action) => {
         // is created, we reset canMakePayment
         canMakePayment: false
       };
+    // This is a class of user-errors that are handled by auth0
+    // See: https://auth0.com/docs/libraries/error-messages
+    //
+    // case Auth0ActionType.AuthenticationError:
     case StripeActionType.PaymentRequestCreationError:
     case StripeActionType.CanMakePaymentError:
     case StripeActionType.StripeScriptLoadingError:
     case StripeActionType.StripeCreateTokenError:
+    case Auth0ActionType.UnrecoverableError:
+    case Auth0ActionType.LoginError:
     case ApiActionType.EventFetchError:
     case ApiActionType.CheckoutError:
     case ApiActionType.CalculateOrderTotalError:
-    case Auth0ActionType.AuthenticationError:
-    case Auth0ActionType.LoginError:
-      Sentry.withScope(scope => {
-        let error;
-        if (action.data instanceof Error) {
-          error = action.data;
-        } else {
-          error = new Error(
-            typeof action.data === "string"
-              ? action.data
-              : JSON.stringify(action.data)
-          );
-        }
-        scope.setExtra("reduxAction", action.type);
-        Sentry.captureException(error);
-      });
+    case ApiActionType.EventFetchCriticalError:
+    case ApiActionType.CheckoutCriticalError:
+    case ApiActionType.CalculateOrderTotalCriticalError:
       return {
         ...state,
         error: action.data
