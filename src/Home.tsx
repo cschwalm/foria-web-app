@@ -1046,16 +1046,6 @@ export class Home extends React.Component<AppPropsT> {
 
     return (
       <div className="column" style={{height: "100%", position: "relative"}}>
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            bottom: 0,
-            width: "100%",
-            backgroundColor: white,
-            height: `calc(100vh - ${8 * font3}px)`
-          }}
-        />
         {this.renderPullUpMenuHeader()}
         <div
           style={{
@@ -1783,6 +1773,12 @@ export class Home extends React.Component<AppPropsT> {
   render() {
     let {byLayout, pullUpMenuCollapsed} = this.props;
 
+    let backgroundColor = byLayout(
+      // On mobile, we render a white bg behind the pull up menu
+      pullUpMenuCollapsed ? antiFlashWhite : white,
+      antiFlashWhite
+    );
+
     return (
       <div
         className="App"
@@ -1790,17 +1786,8 @@ export class Home extends React.Component<AppPropsT> {
           fontSize: `${font3}px`,
           fontFamily: "Roboto",
           lineHeight: "1.2em",
-          backgroundColor: antiFlashWhite
+          backgroundColor: backgroundColor
         }}>
-        <div
-          style={{
-            position: "fixed",
-            bottom: 0,
-            width: "100%",
-            backgroundColor: antiFlashWhite,
-            height: "100%"
-          }}
-        />
         {/* The scrollable region */}
         {pullUpMenuCollapsed ? (
           <div style={{overflowY: "scroll", position: "relative"}}>
