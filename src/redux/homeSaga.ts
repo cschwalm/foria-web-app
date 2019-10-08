@@ -8,7 +8,7 @@ import {
   takeEvery
 } from "redux-saga/effects";
 
-import {getView, getCanMakePayment, getTicketsForPurchase} from "./selectors";
+import {getView, getTicketsForPurchase} from "./selectors";
 import {
   View,
   ActionType as HomeActionType,
@@ -18,8 +18,7 @@ import {ActionType as StripeActionType} from "./stripeSaga";
 import {ActionType as Auth0ActionType} from "./auth0Saga";
 import {ActionType as ApiActionType} from "./apiSaga";
 
-// Navigate a user to the appropriate checkout view, by first logging them in,
-// then checking if they have multiple payment options.
+// Login a user then navigate to payment options
 function* toCheckoutView() {
   // Pull out the actual body of the method into a separate function, so that we can put an action before and after it
   function* _toCheckoutView() {
@@ -74,21 +73,10 @@ function* toCheckoutView() {
     });
 
     // Use `all` to wait for the failure or success of each in parallel
-    let [paymentsSuccess /*,error*/] = yield race([
+    yield race([
       take(StripeActionType.CanMakePaymentSuccess),
       take(StripeActionType.CanMakePaymentError)
     ]);
-
-    // The data on the action is whether web payments are accepted
-    let webPaymentSupported = paymentsSuccess && paymentsSuccess.data;
-    if (!webPaymentSupported) {
-      // No support, so navigate to credit card checkout
-      yield put({
-        type: HomeActionType.SelectView,
-        data: View.CreditCardCheckout
-      });
-      return;
-    }
 
     yield put({type: HomeActionType.SelectView, data: View.ChooseCheckout});
   }
@@ -96,20 +84,6 @@ function* toCheckoutView() {
   yield put({type: HomeActionType.ToCheckoutPending});
   yield call(_toCheckoutView);
   yield put({type: HomeActionType.ToCheckoutCompleted});
-}
-
-// Navigate a user from a checkout view, sends user back to ChooseCheckout if
-// they had multiple payment options, or to Tickets if they never had multiple
-// options
-function* fromCheckoutView() {
-  let canMakePayment = yield select(getCanMakePayment);
-
-  if (canMakePayment) {
-    yield put({type: HomeActionType.SelectView, data: View.ChooseCheckout});
-    return;
-  }
-
-  yield put({type: HomeActionType.SelectView, data: View.Tickets});
 }
 
 function* handleToPreviousView() {
@@ -125,11 +99,6 @@ function* handleToPreviousView() {
     case View.ChooseCheckout:
       yield put({type: HomeActionType.SelectView, data: View.Tickets});
       return;
-    case View.CreditCardCheckout:
-      // Defer to a method, we may either send the user to Tickets or
-      // to ChooseCheckout if they have options
-      yield call(fromCheckoutView);
-      break;
     default:
       throw new Error(`Unhandled view: ${currentView}`);
   }
@@ -143,12 +112,10 @@ function* handleToNextView() {
     case View.Complete:
       return;
     case View.ChooseCheckout:
-    case View.CreditCardCheckout:
       yield put({type: HomeActionType.SelectView, data: View.Complete});
       return;
     case View.Tickets:
-      // Defer to a method, we may either send user to CreditCardCheckout or
-      // to ChooseCheckout if they have options
+      // Defer to a method, login user then proceed to ChooseCheckout
       yield call(toCheckoutView);
       break;
     default:

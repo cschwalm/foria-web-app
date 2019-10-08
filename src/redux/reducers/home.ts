@@ -11,7 +11,6 @@ import {ActionType as Auth0ActionType} from "../auth0Saga";
 export enum View {
   Tickets,
   ChooseCheckout,
-  CreditCardCheckout,
   Complete
 }
 

@@ -57,7 +57,8 @@ import calendarIcon from "./calendar_icon.png";
 import PinpointIcon from "./pinpointIcon";
 import DecrementIcon from "./decrementIcon";
 import IncrementIcon from "./incrementIcon";
-import CloseIcon from "./closeIcon";
+import CloseIconMobile from "./closeIconMobile";
+import BackIconMobile from "./backIconMobile";
 import LeftChevron from "./leftChevron";
 import UpwardChevron from "./upwardChevron";
 import {
@@ -196,19 +197,14 @@ const sharedStyles = {
     flex: 0
   },
   mobileTicketHeader: {
-    color: lavenderGray,
-    textTransform: "uppercase" as "uppercase",
-    fontWeight: 700,
-    margin: "0em 0em 1.5em",
-    fontFamily: "Rubik"
+    fontWeight: 500,
+    margin: "0em 0em 1em",
+    fontSize: `${font4}px`
   },
   paymentOrSeparator: {
     display: "flex",
-    fontFamily: "Rubik",
     justifyContent: "center",
-    color: lavenderGray,
-    textTransform: "uppercase" as "uppercase",
-    fontWeight: 700
+    color: trolleyGray
   },
   checkoutTicketDetails: {
     color: trolleyGray
@@ -235,6 +231,7 @@ const sharedStyles = {
   checkoutButton: {
     cursor: "pointer",
     height: checkoutButtonHeight,
+    flex: `0 0 ${checkoutButtonHeight}`,
     backgroundColor: vividRaspberry,
     borderRadius: "5px",
     color: white,
@@ -510,36 +507,82 @@ const Ellipsis = ({style = {}}: {style?: React.CSSProperties}) => (
 );
 
 export class Home extends React.Component<AppPropsT> {
-  pullUpMenuRef: RefObject<HTMLDivElement>;
+  pullUpHeaderRef: RefObject<HTMLDivElement>;
+  pullUpBodyRef: RefObject<HTMLDivElement>;
   constructor(props: AppPropsT) {
     super(props);
-    this.pullUpMenuRef = React.createRef<HTMLDivElement>();
+    this.pullUpHeaderRef = React.createRef<HTMLDivElement>();
+    this.pullUpBodyRef = React.createRef<HTMLDivElement>();
   }
   componentDidMount() {
-    if (this.pullUpMenuRef.current) {
-      // Disable scroll behind the pull up menu
-      this.pullUpMenuRef.current.addEventListener(
+    // We must manually register listeners because React doesn't currently
+    // support non-passive event listeners. On iOS passive listeners are the
+    // default, and passive listeners cannot cancel their events. We need to
+    // cancel scroll events.
+    //
+    // When you scroll on iOS in a fixed container, and reach the boundary of
+    // a scroll, the scroll is propagated to the parent element. On mobile,
+    // when you scroll to the end of the list of tickets to checkout, the
+    // parent which has the event information would scroll too.
+    //
+    // The only way is to disable the scroll at this boundary. You can cancel
+    // the event from propagating, but the scroll still occurs. Disabling at
+    // the boundary (as is done here) has the unfortunate effect of disabling
+    // the rubber band effect.
+
+    // Disable any scroll that happens on the pull up menu header
+    if (this.pullUpHeaderRef.current) {
+      this.pullUpHeaderRef.current.addEventListener(
         "touchmove",
-        this.disableEvent,
+        e => e.preventDefault(),
+        {passive: false}
+      );
+    }
+
+    if (this.pullUpBodyRef.current) {
+      // We use the scroll start of the scroll to compute the vertical scroll direction
+      let scrollStartY: null | number;
+      this.pullUpBodyRef.current.addEventListener(
+        "touchstart",
+        e => {
+          // We only care about single touch events
+          if (e.targetTouches.length > 1) {
+            return;
+          }
+          scrollStartY = e.targetTouches[0].clientY;
+        },
+        {passive: false}
+      );
+      this.pullUpBodyRef.current.addEventListener(
+        "touchmove",
+        function(e) {
+          // We only care about single touch events
+          if (e.targetTouches.length > 1) {
+            return;
+          }
+
+          if (!e.cancelable) {
+            return;
+          }
+
+          let upwardScroll =
+            e.targetTouches[0].clientY > (scrollStartY as number);
+          let downwardScroll = !upwardScroll;
+          let atOrAboveTop = this.scrollTop <= 0;
+          let atOrBelowBottom =
+            this.scrollTop + this.clientHeight >= this.scrollHeight;
+
+          if (
+            (e.cancelable && (atOrAboveTop && upwardScroll)) ||
+            (atOrBelowBottom && downwardScroll)
+          ) {
+            e.preventDefault();
+          }
+        },
         {passive: false}
       );
     }
   }
-
-  componentWillUnmount() {
-    if (this.pullUpMenuRef.current) {
-      this.pullUpMenuRef.current.removeEventListener(
-        "touchmove",
-        this.disableEvent
-      );
-    }
-  }
-
-  disableEvent = (e: TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-  };
 
   renderTicketDescriptionColumn = (ticketType: TicketTypeConfig) => {
     let soldOut = ticketType.amount_remaining === 0;
@@ -722,13 +765,7 @@ export class Home extends React.Component<AppPropsT> {
 
   renderPaymentDelegateView = () => {
     // If we support more than one payment method, render a view to choose a payment method first
-    let {
-      selectView,
-      stripe,
-      canMakePayment,
-      paymentRequest,
-      byLayout
-    } = this.props;
+    let {stripe, canMakePayment, paymentRequest, byLayout} = this.props;
     return (
       <>
         {stripe && canMakePayment ? (
@@ -751,16 +788,11 @@ export class Home extends React.Component<AppPropsT> {
             </div>
             <div
               style={{...sharedStyles.paymentOrSeparator, marginBottom: "1em"}}>
-              Or
+              Or enter card details
             </div>
           </>
         ) : null}
-        <div
-          className="row"
-          style={sharedStyles.checkoutButton}
-          onClick={() => selectView(View.CreditCardCheckout)}>
-          Pay with card
-        </div>
+        {this.renderCreditCardForm()}
       </>
     );
   };
@@ -916,52 +948,6 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
-  renderDesktopCreditCardCheckoutStep = () => {
-    let {byLayout, event, toPreviousView} = this.props;
-    return (
-      <>
-        <div style={{...sharedStyles.ticketsTitle, position: "relative"}}>
-          <div
-            style={{
-              position: "absolute",
-              display: "flex",
-              alignItems: "center",
-              top: "1em",
-              bottom: "1em",
-              left: "1em"
-            }}>
-            <LeftChevron />
-          </div>
-          <div
-            style={{
-              position: "absolute",
-              top: "0em",
-              bottom: "0em",
-              left: "0em",
-              width: "3em",
-              cursor: "pointer"
-            }}
-            onClick={toPreviousView}
-          />
-          <span style={event ? {} : {opacity: 0}}>Checkout</span>
-        </div>
-        <div style={{margin: byLayout("1em", "1.5em 1em")}}>
-          {this.renderCheckoutSummary()}
-          <div style={{margin: "0 0em 1.5em 0em"}}>
-            <div style={sharedStyles.dashedLine} />
-          </div>
-          <div style={{margin: "0 0em 1.5em 0em"}}>
-            {this.renderCheckoutDisclaimer()}
-          </div>
-          <div style={{margin: "0 0em 1.5em 0em"}}>
-            <div style={sharedStyles.dashedLine} />
-          </div>
-          {this.renderCreditCardForm()}
-        </div>
-      </>
-    );
-  };
-
   renderMobileChooseCheckoutStep = () => {
     return (
       <>
@@ -977,25 +963,6 @@ export class Home extends React.Component<AppPropsT> {
           <div style={sharedStyles.dashedLine} />
         </div>
         {this.renderPaymentDelegateView()}
-      </>
-    );
-  };
-
-  renderMobileCreditCardCheckoutStep = () => {
-    return (
-      <>
-        <div style={sharedStyles.mobileTicketHeader}>Checkout</div>
-        {this.renderCheckoutSummary()}
-        <div style={{marginBottom: "1.5em"}}>
-          <div style={sharedStyles.dashedLine} />
-        </div>
-        <div style={{margin: "0 0em 1.5em 0em"}}>
-          {this.renderCheckoutDisclaimer()}
-        </div>
-        <div style={{margin: "0 0em 1.5em 0em"}}>
-          <div style={sharedStyles.dashedLine} />
-        </div>
-        {this.renderCreditCardForm()}
       </>
     );
   };
@@ -1200,7 +1167,7 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderTicketsPullUp = () => {
-    let {pullUpMenuCollapsed, resetPullUpMenu, view} = this.props;
+    let {pullUpMenuCollapsed, view} = this.props;
 
     let modalView;
     switch (view) {
@@ -1210,9 +1177,6 @@ export class Home extends React.Component<AppPropsT> {
       case View.ChooseCheckout:
         modalView = this.renderMobileChooseCheckoutStep();
         break;
-      case View.CreditCardCheckout:
-        modalView = this.renderMobileCreditCardCheckoutStep();
-        break;
       case View.Complete:
         modalView = this.renderMobileCompleteStep();
         break;
@@ -1220,54 +1184,69 @@ export class Home extends React.Component<AppPropsT> {
         throw new Error(`Unhandled view: ${view}`);
     }
 
-    return (
-      <div
-        style={{
-          // Create an empty rectangle the size of the collapsed pull up menu,
-          // so that the footer is not hidden beneath the menu
-          height: `${5 * font3}px`
-        }}>
+    if (pullUpMenuCollapsed) {
+      return (
         <div
-          ref={this.pullUpMenuRef}
           style={{
-            position: "fixed",
-            bottom: "0",
-            width: "100%"
+            // Create an empty rectangle the size of the collapsed pull up menu,
+            // so that the footer is not hidden beneath the menu
+            height: `${5 * font3}px`
           }}>
           <div
             style={{
-              height: "4em"
-            }}
-          />
-          <div
-            style={{
-              boxSizing: "border-box",
-              boxShadow: "rgba(0, 0, 0, 0.21) 0 -2px 16px 4px",
-              display: "flex",
-              justifyContent: "center",
-              backgroundColor: white,
-              minHeight: `${4.75 * font3}px`,
-              padding: "1em",
-              position: "relative"
-            }}
-            className="column">
-            {pullUpMenuCollapsed ? (
-              this.renderTicketsPullUpCollapsed()
-            ) : (
-              <>
-                <div
-                  style={{
-                    cursor: "pointer",
-                    position: "absolute",
-                    top: "1em",
-                    right: "1em"
-                  }}>
-                  <CloseIcon onClick={resetPullUpMenu} />
-                </div>
-                {modalView}
-              </>
-            )}
+              position: "fixed",
+              bottom: "0",
+              width: "100%"
+            }}>
+            <div
+              style={{
+                height: "4em"
+              }}
+            />
+            <div
+              style={{
+                boxSizing: "border-box",
+                boxShadow: "rgba(0, 0, 0, 0.21) 0 -2px 16px 4px",
+                display: "flex",
+                backgroundColor: white,
+                minHeight: `${4.75 * font3}px`,
+                height: "100%",
+                padding: "1em",
+                position: "relative"
+              }}
+              className="column">
+              {this.renderTicketsPullUpCollapsed()}
+            </div>
           </div>
+        </div>
+      );
+    }
+
+    return (
+      <div
+        className="column"
+        style={{
+          position: "fixed",
+          bottom: "0",
+          width: "100%",
+          height: "100%"
+        }}>
+        {this.renderPullUpMenuHeader()}
+        <div style={{borderBottom: `1px solid ${lavenderGray}`}} />
+        <div
+          ref={this.pullUpBodyRef}
+          style={{
+            boxSizing: "border-box",
+            display: "flex",
+            backgroundColor: white,
+            minHeight: `${4.75 * font3}px`,
+            height: "100%",
+            overflowY: "scroll",
+            padding: "1.5em 1em 1em 1em",
+            position: "relative"
+          }}
+          className="column">
+          {modalView}
         </div>
       </div>
     );
@@ -1283,9 +1262,6 @@ export class Home extends React.Component<AppPropsT> {
         break;
       case View.ChooseCheckout:
         modalView = this.renderDesktopChooseCheckoutStep();
-        break;
-      case View.CreditCardCheckout:
-        modalView = this.renderDesktopCreditCardCheckoutStep();
         break;
       case View.Complete:
         modalView = this.renderDesktopCompleteStep();
@@ -1426,6 +1402,101 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
+  renderPullUpMenuHeader = () => {
+    let {event, view, resetPullUpMenu, toPreviousView} = this.props;
+    let styles = {
+      header: {
+        backgroundColor: white,
+        boxShadow: "0px 0px 2px 3px #ccc"
+      }
+    };
+    let spacer = <div className="column" style={{flex: `0 0 ${font3}px`}} />;
+    let leftIcon, rightIcon;
+    switch (view) {
+      case View.Tickets:
+      case View.Complete:
+        leftIcon = (
+          <span style={{opacity: 0}}>
+            <CloseIconMobile />
+          </span>
+        );
+        rightIcon = (
+          <div className="column">
+            <CloseIconMobile />
+            <div
+              onClick={resetPullUpMenu}
+              style={{
+                top: "0",
+                right: "0",
+                bottom: "0",
+                width: `${3 * font3}px`,
+                cursor: "pointer",
+                position: "absolute"
+              }}
+            />
+          </div>
+        );
+        break;
+      case View.ChooseCheckout:
+        leftIcon = (
+          <div className="column">
+            <BackIconMobile />
+            <div
+              onClick={toPreviousView}
+              style={{
+                top: "0",
+                left: "0",
+                bottom: "0",
+                width: `${3 * font3}px`,
+                cursor: "pointer",
+                position: "absolute"
+              }}
+            />
+          </div>
+        );
+        rightIcon = (
+          <span style={{opacity: 0}}>
+            <BackIconMobile />
+          </span>
+        );
+        break;
+      default:
+        throw new Error(`Unhandled view: ${view}`);
+    }
+    return (
+      <div style={styles.header} ref={this.pullUpHeaderRef}>
+        <div
+          style={{
+            position: "relative",
+            maxWidth: `${bodyWidth}px`,
+            margin: "auto",
+            display: "flex",
+            alignItems: "center",
+            padding: `${font3}px`,
+            boxSizing: "border-box"
+          }}>
+          {leftIcon}
+          {spacer}
+          <div
+            style={{
+              display: "flex",
+              flex: 1,
+              alignSelf: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              fontWeight: 500,
+              fontSize: `${font4}px`,
+              lineHeight: "1.2em"
+            }}>
+            {(event && event.name) || <Skeleton />}
+          </div>
+          {spacer}
+          {rightIcon}
+        </div>
+      </div>
+    );
+  };
+
   formatCheckoutEventDate(start: string, end: string) {
     let startMoment = moment(start);
     let endMoment = moment(end);
@@ -1461,6 +1532,18 @@ export class Home extends React.Component<AppPropsT> {
       endMoment.format("MMM Do, h:mmA")
     );
   }
+
+  buildGoogleMapsSearchUrl = () => {
+    let {event} = this.props;
+    if (!event) {
+      return "";
+    }
+    let query = `${event.address.venue_name}, ${
+      event.address.street_address
+    }, ${event.address.city}, ${event.address.state} ${event.address.zip}`;
+    query = encodeURIComponent(query);
+    return `https://www.google.com/maps/search/?api=1&query=${query}`;
+  };
 
   renderBody = () => {
     let {event, byLayout} = this.props;
@@ -1542,7 +1625,26 @@ export class Home extends React.Component<AppPropsT> {
             </div>
             <div
               className="row"
-              style={{marginBottom: byLayout("1.5em", "2em")}}>
+              style={{
+                position: "relative",
+                marginBottom: byLayout("1.5em", "2em")
+              }}>
+              <a
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  top: 0
+                }}
+                rel="noopener noreferrer"
+                href={this.buildGoogleMapsSearchUrl()}
+                target="_blank">
+                <span
+                  style={sharedStyles.visuallyHiddenButScreenReaderAccessible}>
+                  Event location in Google Maps
+                </span>
+              </a>
               {!event ? (
                 <div style={{flex: 1}}>
                   <Skeleton height={"2em"} />
