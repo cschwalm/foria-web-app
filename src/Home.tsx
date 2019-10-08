@@ -1790,16 +1790,16 @@ export class Home extends React.Component<AppPropsT> {
         }}>
         {/* The scrollable region */}
         {pullUpMenuCollapsed ? (
-          <div style={{overflowY: "scroll", position: "relative"}}>
+          <>
             {this.renderHeader()}
             {this.renderHero()}
             {this.renderBody()}
             {this.renderFooter()}
-          </div>
+            {byLayout(this.renderPullUpFooter(), null)}
+          </>
         ) : (
           byLayout(this.renderTicketsPullUp(), null)
         )}
-        {pullUpMenuCollapsed ? byLayout(this.renderPullUpFooter(), null) : null}
         {this.renderErrorOverlay()}
       </div>
     );
