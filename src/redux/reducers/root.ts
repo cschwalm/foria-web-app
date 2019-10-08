@@ -52,7 +52,7 @@ export interface State {
 
 const getEventIdFromUrl = (): string | void => {
   let params = new URLSearchParams(window.location.search);
-  let eventId = params.get('eventId')
+  let eventId = params.get("eventId");
   if (eventId != null) {
     return eventId;
   }
