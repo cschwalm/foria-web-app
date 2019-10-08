@@ -1,5 +1,6 @@
 import Auth0Lock from "auth0-lock";
-import {call, put, race, takeEvery} from "redux-saga/effects";
+import {eventChannel} from "redux-saga";
+import {call, put, take, takeEvery} from "redux-saga/effects";
 import {Dispatch} from "redux";
 
 import Action from "./Action";
@@ -78,17 +79,22 @@ function createLock() {
   );
 }
 
-const didAuthenticate = (lock: Auth0LockStatic) =>
-  new Promise(resolve => lock.on("authenticated", resolve));
-
-const didAuthError = (lock: Auth0LockStatic) =>
-  new Promise(resolve => lock.on("authorization_error", resolve));
-
-const didUnrecoverableError = (lock: Auth0LockStatic) =>
-  new Promise(resolve => lock.on("unrecoverable_error", resolve));
-
-const didHide = (lock: Auth0LockStatic) =>
-  new Promise(resolve => lock.on("hide", resolve));
+function createLockEventChannel(lock: Auth0LockStatic) {
+  return eventChannel(emitter => {
+    let subscribed = true;
+    lock.on("authenticated", d => subscribed && emitter([d, null, null, null]));
+    lock.on(
+      "authorization_error",
+      d => subscribed && emitter([null, d, null, null])
+    );
+    lock.on(
+      "unrecoverable_error",
+      d => subscribed && emitter([null, null, d, null])
+    );
+    lock.on("hide", () => subscribed && emitter([null, null, null, true]));
+    return () => (subscribed = false);
+  });
+}
 
 function getUserInfo(lock: Auth0LockStatic, accessToken: string) {
   return new Promise((resolve, reject) =>
@@ -108,43 +114,50 @@ function checkSession(lock: Auth0LockStatic) {
 
 function* login() {
   let lock = createLock();
-  let didAuthenticatePromise = didAuthenticate(lock);
-  let didAuthErrorPromise = didAuthError(lock);
-  let didUnrecoverableErrorPromise = didUnrecoverableError(lock);
-  let didHidePromise = didHide(lock);
+  let channel = yield call(createLockEventChannel, lock);
   lock.show();
 
-  let [authResult, error, unrecoverable /*hidden*/] = yield race([
-    didAuthenticatePromise,
-    didAuthErrorPromise,
-    didUnrecoverableErrorPromise,
-    didHidePromise
-  ]);
+  let authResult, error, unrecoverable, hidden;
+  while (true) {
+    [authResult, error, unrecoverable, hidden] = yield take(channel);
 
-  if (error) {
-    yield put({
-      type: ActionType.AuthenticationError,
-      data: error || unrecoverable
-    });
-    return;
+    if (authResult) {
+      break;
+    }
+
+    if (unrecoverable) {
+      yield put({
+        type: ActionType.UnrecoverableError,
+        data: unrecoverable
+      });
+      break;
+    }
+
+    if (hidden) {
+      yield put({
+        type: ActionType.AuthenticationCancelled
+      });
+      break;
+    }
+
+    if (error) {
+      yield put({
+        type: ActionType.AuthenticationError,
+        data: error
+      });
+    }
   }
 
-  if (unrecoverable) {
-    yield put({
-      type: ActionType.UnrecoverableError,
-      data: unrecoverable
-    });
-    return;
+  // No harm in doing this explicitly
+  channel.close();
+
+  if (!hidden) {
+    lock.hide();
   }
 
   if (!authResult) {
-    yield put({
-      type: ActionType.AuthenticationCancelled
-    });
     return;
   }
-
-  lock.hide();
 
   yield put({
     type: ActionType.AuthenticationSuccess,
