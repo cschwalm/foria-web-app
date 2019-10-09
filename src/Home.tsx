@@ -228,6 +228,14 @@ const sharedStyles = {
   disabledMobileCheckoutButton: {
     backgroundColor: "#c3c3c3"
   },
+  iconButton: {
+    background: "none",
+    color: "inherit",
+    border: "none",
+    padding: 0,
+    font: "inherit",
+    outline: "inherit"
+  },
   checkoutButton: {
     cursor: "pointer",
     height: checkoutButtonHeight,
@@ -576,18 +584,32 @@ export class Home extends React.Component<AppPropsT> {
     let canDecrement = amountSelected - 1 >= 0;
 
     return (
-      <div className="row" style={sharedStyles.ticketQuantityColumn}>
-        <div
+      <div
+        className="row"
+        style={{
+          ...sharedStyles.ticketQuantityColumn,
+          position: "relative",
+          height: "100%"
+        }}>
+        <DecrementIcon disabled={!canDecrement} />
+        <button
+          type="button"
+          onClick={(e: React.MouseEvent<HTMLElement>) => {
+            if (canDecrement) {
+              e.nativeEvent.stopPropagation();
+              removeTicket(ticketType);
+            }
+          }}
           style={{
+            ...sharedStyles.iconButton,
             cursor: canDecrement ? "pointer" : "not-allowed",
-            display: "flex",
-            flex: 0
-          }}>
-          <DecrementIcon
-            disabled={!canDecrement}
-            onClick={() => removeTicket(ticketType)}
-          />
-        </div>
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            width: "50%",
+            height: "100%"
+          }}
+        />
         <div
           style={{
             ...sharedStyles.ticketNumeral,
@@ -595,17 +617,25 @@ export class Home extends React.Component<AppPropsT> {
           }}>
           {amountSelected}
         </div>
-        <div
+        <IncrementIcon disabled={!canIncrement} />
+        <button
+          type="button"
+          onClick={(e: React.MouseEvent<HTMLElement>) => {
+            if (canIncrement) {
+              e.nativeEvent.stopPropagation();
+              addTicket(ticketType);
+            }
+          }}
           style={{
+            ...sharedStyles.iconButton,
             cursor: canIncrement ? "pointer" : "not-allowed",
-            display: "flex",
-            flex: 0
-          }}>
-          <IncrementIcon
-            disabled={!canIncrement}
-            onClick={() => addTicket(ticketType)}
-          />
-        </div>
+            position: "absolute",
+            bottom: 0,
+            right: 0,
+            width: "50%",
+            height: "100%"
+          }}
+        />
       </div>
     );
   };
