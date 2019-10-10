@@ -1087,7 +1087,6 @@ export class Home extends React.Component<AppPropsT> {
           style={{
             width: "100%",
             flex: 1,
-            overflowY: "scroll",
             position: "relative"
           }}>
           <div
@@ -1096,8 +1095,6 @@ export class Home extends React.Component<AppPropsT> {
               display: "flex",
               backgroundColor: white,
               minHeight: `${4.75 * font3}px`,
-              height: "100%",
-              overflowY: "scroll",
               padding: "1.5em 1em 1em 1em",
               position: "relative"
             }}
@@ -1140,10 +1137,12 @@ export class Home extends React.Component<AppPropsT> {
             borderRadius: "5px",
             backgroundColor: white,
             position: "absolute",
+            zIndex: 1,
             width: `${ticketOverlayWidth}px`,
             /* Line up the menu bottom border with the hero bottom border */
             top: `${-5.2 * font3}px`,
-            boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.25)"
+            boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.25)",
+            marginBottom: `${5 * font3}px`
           }}>
           {modalView}
         </div>
@@ -1361,12 +1360,13 @@ export class Home extends React.Component<AppPropsT> {
     let {toNextView, ticketsForPurchase, checkoutPending} = this.props;
     let someSelected = someTicketsSelected(ticketsForPurchase);
     return (
-      <div
-        style={{
-          // Create an empty rectangle the size of the collapsed pull up menu,
-          // so that the footer is not hidden beneath the menu
-          height: `${3 * font3}px`
-        }}>
+      <div>
+        <div
+          style={{
+            // Create an empty rectangle so that content doesn't flow behind this fixed button
+            height: `${3 * font3}px`
+          }}
+        />
         <div
           style={{
             position: "fixed",
@@ -1594,6 +1594,7 @@ export class Home extends React.Component<AppPropsT> {
           flexDirection: "column",
           display: "flex",
           maxWidth: `${bodyWidth}px`,
+          backgroundColor: antiFlashWhite,
           position: "relative",
           margin: "0 auto"
         }}>
@@ -1732,7 +1733,7 @@ export class Home extends React.Component<AppPropsT> {
     }
     const styles = {
       container: {
-        position: "absolute" as "absolute",
+        position: "fixed" as "fixed",
         backgroundColor: "rgba(0, 0, 0, 0.3)",
         top: 0,
         bottom: 0,
@@ -1801,13 +1802,20 @@ export class Home extends React.Component<AppPropsT> {
   }
 
   render() {
-    let {byLayout, pullUpMenuCollapsed} = this.props;
+    let {error, byLayout, pullUpMenuCollapsed} = this.props;
 
     let backgroundColor = byLayout(
       // On mobile, we render a white bg behind the pull up menu
       pullUpMenuCollapsed ? antiFlashWhite : white,
       antiFlashWhite
     );
+
+    // On mobile we introduce these styles to prevent the scrolling of the bg
+    // content when an error exists (the error modal is rendered in the fg)
+    let iosErrorStyles = {
+      position: "fixed",
+      width: "100%"
+    };
 
     return (
       <div
@@ -1816,9 +1824,16 @@ export class Home extends React.Component<AppPropsT> {
           fontSize: `${font3}px`,
           fontFamily: "Roboto",
           lineHeight: "1.2em",
-          backgroundColor: backgroundColor
+          // Mobile cannot have scroll here, because iOS will render a white
+          // boundary over the tickets pull up button
+          overflowY: byLayout("initial", "auto"),
+          // Using vh, so that we can work around the fact that we're not
+          // setting the height on all ancester elements
+          height: "100vh",
+          backgroundColor: backgroundColor,
+          position: "relative",
+          ...(error ? byLayout(iosErrorStyles, {}) : {})
         }}>
-        {/* The scrollable region */}
         {pullUpMenuCollapsed ? (
           <>
             {this.renderHeader()}
