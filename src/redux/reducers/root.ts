@@ -19,6 +19,8 @@ export interface Address {
   country: string;
 }
 
+export const FREE_TICKET_PRICE = "0.00";
+
 export interface TicketTypeConfig {
   id: string;
   name: string;
@@ -32,7 +34,7 @@ export interface TicketTypeConfig {
 export interface Event {
   name: string;
   address: Address;
-  ticket_type_config: [TicketTypeConfig];
+  ticket_type_config: TicketTypeConfig[];
   image_url: string;
   start_time: string;
   end_time: string;

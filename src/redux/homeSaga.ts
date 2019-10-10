@@ -8,7 +8,7 @@ import {
   takeEvery
 } from "redux-saga/effects";
 
-import {getView, getTicketsForPurchase} from "./selectors";
+import {getView, getTicketsForPurchase, isFreePurchase} from "./selectors";
 import {
   View,
   ActionType as HomeActionType,
@@ -66,17 +66,18 @@ function* toCheckoutView() {
       return;
     }
 
-    // Create a payment request with the result of the calculate order total result
-    yield put({
-      type: StripeActionType.CreatePaymentRequest,
-      data: calculateSuccess.data
-    });
-
-    // Use `all` to wait for the failure or success of each in parallel
-    yield race([
-      take(StripeActionType.CanMakePaymentSuccess),
-      take(StripeActionType.CanMakePaymentError)
-    ]);
+    let isFree = yield select(isFreePurchase);
+    if (!isFree) {
+      // Create a payment request with the result of the calculate order total result
+      yield put({
+        type: StripeActionType.CreatePaymentRequest,
+        data: calculateSuccess.data
+      });
+      yield race([
+        take(StripeActionType.CanMakePaymentSuccess),
+        take(StripeActionType.CanMakePaymentError)
+      ]);
+    }
 
     yield put({type: HomeActionType.SelectView, data: View.Checkout});
   }
@@ -128,6 +129,7 @@ function* trackPurchase() {
   // Map these events to a purchase pending event
   yield takeEvery(
     [
+      HomeActionType.FreePurchaseSubmit,
       HomeActionType.CreditCardSubmit,
       StripeActionType.StripeCreateTokenSuccess
     ],

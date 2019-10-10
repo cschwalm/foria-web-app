@@ -1,8 +1,9 @@
 import {call, select, put, takeEvery, actionChannel} from "redux-saga/effects";
 
+import Action from "./Action";
 import {ActionType as StripeActionType} from "./stripeSaga";
 import {getEventId, getTicketsForPurchase, getAccessToken} from "./selectors";
-import {TicketCounts} from "./reducers/home";
+import {TicketCounts, ActionType as HomeActionType} from "./reducers/home";
 
 const foriaBackend = process.env.REACT_APP_FORIA_BACKEND_BASE_URL as "string";
 
@@ -96,7 +97,12 @@ function completeCheckout(data: OrderPayload, accessToken: string) {
   );
 }
 
-function* completePurchase({data: {id: stripeToken}}: {data: {id: string}}) {
+function* completePurchase(action: Action) {
+  let stripeToken;
+  if (action.type === StripeActionType.StripeCreateTokenSuccess) {
+    stripeToken = action.data.id;
+  } // else we are dealing with a free transaction
+
   let eventId = yield select(getEventId);
   let accessToken = yield select(getAccessToken);
   let ticketsForPurchase = yield select(getTicketsForPurchase);
@@ -104,7 +110,7 @@ function* completePurchase({data: {id: stripeToken}}: {data: {id: string}}) {
   let orderPayload: OrderPayload = {
     event_id: eventId,
     ticket_line_item_list: getTicketItemList(ticketsForPurchase),
-    payment_token: stripeToken
+    payment_token: stripeToken || null
   };
 
   let [checkoutResponse, error400, error500, connectionError] = yield call(
@@ -192,6 +198,9 @@ function* saga() {
   let calculateOrderChannel = yield actionChannel(
     ActionType.InitiateCalculateOrder
   );
+  let freePurchaseChannel = yield actionChannel(
+    HomeActionType.FreePurchaseSubmit
+  );
 
   let eventId = yield select(getEventId);
   let [event, error400, error500, connectionError] = yield call(
@@ -217,6 +226,7 @@ function* saga() {
     data: event
   });
 
+  yield takeEvery(freePurchaseChannel, completePurchase);
   yield takeEvery(stripeTokenChannel, completePurchase);
   yield takeEvery(calculateOrderChannel, calculateOrderTotalSaga);
 }

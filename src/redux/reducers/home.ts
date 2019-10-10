@@ -33,7 +33,8 @@ export enum ActionType {
   PurchasePending = "PurchasePending",
   PurchaseNotPending = "PurchaseNotPending",
 
-  CreditCardSubmit = "CreditCardSubmit"
+  CreditCardSubmit = "CreditCardSubmit",
+  FreePurchaseSubmit = "FreePurchaseSubmit"
 }
 
 export type TicketCounts = {[ticketId: string]: number};
@@ -256,3 +257,6 @@ export const removeTicket = (dispatch: Dispatch<Action>) => (
 
 export const onCreditCardSubmit = (dispatch: Dispatch<Action>) => () =>
   dispatch({type: ActionType.CreditCardSubmit});
+
+export const onFreePurchaseSubmit = (dispatch: Dispatch<Action>) => () =>
+  dispatch({type: ActionType.FreePurchaseSubmit});
