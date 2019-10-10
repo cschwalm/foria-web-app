@@ -717,7 +717,6 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderPaymentDelegateView = () => {
-    // If we support more than one payment method, render a view to choose a payment method first
     let {stripe, canMakePayment, paymentRequest, byLayout} = this.props;
     return (
       <>
