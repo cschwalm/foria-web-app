@@ -749,7 +749,7 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
-  renderDesktopChooseCheckoutStep = () => {
+  renderDesktopCheckoutStep = () => {
     let {event, toPreviousView, byLayout} = this.props;
     return (
       <>
@@ -900,7 +900,7 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
-  renderMobileChooseCheckoutStep = () => {
+  renderMobileCheckoutStep = () => {
     return (
       <>
         <div style={sharedStyles.mobileTicketHeader}>Checkout</div>
@@ -1063,8 +1063,8 @@ export class Home extends React.Component<AppPropsT> {
       case View.Tickets:
         modalView = this.renderMobileTicketsStep();
         break;
-      case View.ChooseCheckout:
-        modalView = this.renderMobileChooseCheckoutStep();
+      case View.Checkout:
+        modalView = this.renderMobileCheckoutStep();
         break;
       case View.Complete:
         modalView = this.renderMobileCompleteStep();
@@ -1114,8 +1114,8 @@ export class Home extends React.Component<AppPropsT> {
       case View.Tickets:
         modalView = this.renderDesktopTicketsStep();
         break;
-      case View.ChooseCheckout:
-        modalView = this.renderDesktopChooseCheckoutStep();
+      case View.Checkout:
+        modalView = this.renderDesktopCheckoutStep();
         break;
       case View.Complete:
         modalView = this.renderDesktopCompleteStep();
@@ -1295,7 +1295,7 @@ export class Home extends React.Component<AppPropsT> {
           </div>
         );
         break;
-      case View.ChooseCheckout:
+      case View.Checkout:
         leftIcon = (
           <div className="column">
             <BackIconMobile />

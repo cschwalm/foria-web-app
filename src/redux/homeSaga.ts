@@ -78,7 +78,7 @@ function* toCheckoutView() {
       take(StripeActionType.CanMakePaymentError)
     ]);
 
-    yield put({type: HomeActionType.SelectView, data: View.ChooseCheckout});
+    yield put({type: HomeActionType.SelectView, data: View.Checkout});
   }
 
   yield put({type: HomeActionType.ToCheckoutPending});
@@ -96,7 +96,7 @@ function* handleToPreviousView() {
     // Don't allow a previous view on complete step
     case View.Complete:
       return;
-    case View.ChooseCheckout:
+    case View.Checkout:
       yield put({type: HomeActionType.SelectView, data: View.Tickets});
       return;
     default:
@@ -111,11 +111,11 @@ function* handleToNextView() {
     // No next view
     case View.Complete:
       return;
-    case View.ChooseCheckout:
+    case View.Checkout:
       yield put({type: HomeActionType.SelectView, data: View.Complete});
       return;
     case View.Tickets:
-      // Defer to a method, login user then proceed to ChooseCheckout
+      // Defer to a method, login user then proceed to Checkout
       yield call(toCheckoutView);
       break;
     default:
