@@ -23,7 +23,7 @@ function* toCheckoutView() {
   // Pull out the actual body of the method into a separate function, so that we can put an action before and after it
   function* _toCheckoutView() {
     let ticketsForPurchase = yield select(getTicketsForPurchase);
-    let someSelected = yield call(someTicketsSelected, ticketsForPurchase);
+    let someSelected = someTicketsSelected(ticketsForPurchase);
     if (!someSelected) {
       // Only navigate to checkout if some tickets have been selected
       return;
