@@ -10,7 +10,9 @@ import {
   injectStripe,
   ReactStripeElements
 } from "react-stripe-elements";
+import memoizeOne from "memoize-one";
 
+import {isFreePurchase} from "./redux/selectors";
 import {
   vividRaspberry,
   red,
@@ -41,6 +43,7 @@ import {
   toPreviousView as toPreviousViewAction,
   toNextView as toNextViewAction,
   onCreditCardSubmit as onCreditCardSubmitAction,
+  onFreePurchaseSubmit as onFreePurchaseSubmitAction,
   resetError as resetErrorAction,
   someTicketsSelected,
   totalTicketsSelected,
@@ -67,6 +70,7 @@ import {
   twoDecimalFormatter,
   twoDecimalNoCurrencyFormatter
 } from "./formatCurrency";
+import {FREE_TICKET_PRICE} from "./redux/reducers/root";
 import minMax from "./minMax";
 
 const ticketOverlayWidth = 385;
@@ -86,6 +90,7 @@ interface AppPropsT {
   onTokenCreate: (result: stripe.TokenResponse) => void;
   onTokenCreateError: (err: string) => void;
   onCreditCardSubmit: () => void;
+  onFreePurchaseSubmit: () => void;
   selectView: (view: View) => void;
   toPreviousView: () => void;
   toNextView: () => void;
@@ -95,6 +100,7 @@ interface AppPropsT {
   canMakePayment: boolean;
   checkoutPending: boolean;
   purchasePending: boolean;
+  isFree: boolean;
   ticketsForPurchase: TicketCounts;
   profile?: auth0.Auth0UserProfile;
   event?: Event;
@@ -540,6 +546,24 @@ export class Home extends React.Component<AppPropsT> {
 
   renderTicketPriceColumn = (ticketType: TicketTypeConfig) => {
     let soldOut = ticketType.amount_remaining === 0;
+    let isFree = ticketType.price === FREE_TICKET_PRICE;
+    let ticketFeeElem;
+    if (!isFree) {
+      let ticketFee = feeFormatter(
+        Number(ticketType.calculated_fee),
+        ticketType.currency
+      );
+      ticketFeeElem = (
+        <div
+          style={{
+            ...sharedStyles.ticketPriceFee,
+            ...(soldOut ? {color: lavenderGray} : {}),
+            marginBottom: "0.1em"
+          }}>
+          {`+${ticketFee} fee`}
+        </div>
+      );
+    }
     return (
       <div className="column">
         <div
@@ -548,18 +572,11 @@ export class Home extends React.Component<AppPropsT> {
             ...(soldOut ? {color: lavenderGray} : {}),
             marginBottom: "0.1em"
           }}>
-          {feeFormatter(Number(ticketType.price), ticketType.currency)}
+          {isFree
+            ? "Free"
+            : feeFormatter(Number(ticketType.price), ticketType.currency)}
         </div>
-        <div
-          style={{
-            ...sharedStyles.ticketPriceFee,
-            ...(soldOut ? {color: lavenderGray} : {}),
-            marginBottom: "0.1em"
-          }}>
-          +
-          {feeFormatter(Number(ticketType.calculated_fee), ticketType.currency)}{" "}
-          fee
-        </div>
+        {ticketFeeElem}
       </div>
     );
   };
@@ -717,8 +734,29 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderPaymentDelegateView = () => {
-    // If we support more than one payment method, render a view to choose a payment method first
-    let {stripe, canMakePayment, paymentRequest, byLayout} = this.props;
+    let {
+      stripe,
+      canMakePayment,
+      paymentRequest,
+      byLayout,
+      isFree,
+      purchasePending,
+      onFreePurchaseSubmit
+    } = this.props;
+    if (isFree) {
+      return (
+        <div className="column">
+          <button
+            onClick={onFreePurchaseSubmit}
+            type="button"
+            className="row"
+            style={sharedStyles.payWithCardButton}>
+            Purchase
+            {purchasePending ? <Ellipsis style={{fontWeight: 700}} /> : null}
+          </button>
+        </div>
+      );
+    }
     return (
       <>
         {stripe && canMakePayment ? (
@@ -750,7 +788,7 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
-  renderDesktopChooseCheckoutStep = () => {
+  renderDesktopCheckoutStep = () => {
     let {event, toPreviousView, byLayout} = this.props;
     return (
       <>
@@ -901,7 +939,7 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
-  renderMobileChooseCheckoutStep = () => {
+  renderMobileCheckoutStep = () => {
     return (
       <>
         <div style={sharedStyles.mobileTicketHeader}>Checkout</div>
@@ -1064,8 +1102,8 @@ export class Home extends React.Component<AppPropsT> {
       case View.Tickets:
         modalView = this.renderMobileTicketsStep();
         break;
-      case View.ChooseCheckout:
-        modalView = this.renderMobileChooseCheckoutStep();
+      case View.Checkout:
+        modalView = this.renderMobileCheckoutStep();
         break;
       case View.Complete:
         modalView = this.renderMobileCompleteStep();
@@ -1115,8 +1153,8 @@ export class Home extends React.Component<AppPropsT> {
       case View.Tickets:
         modalView = this.renderDesktopTicketsStep();
         break;
-      case View.ChooseCheckout:
-        modalView = this.renderDesktopChooseCheckoutStep();
+      case View.Checkout:
+        modalView = this.renderDesktopCheckoutStep();
         break;
       case View.Complete:
         modalView = this.renderDesktopCompleteStep();
@@ -1296,7 +1334,7 @@ export class Home extends React.Component<AppPropsT> {
           </div>
         );
         break;
-      case View.ChooseCheckout:
+      case View.Checkout:
         leftIcon = (
           <div className="column">
             <BackIconMobile />
@@ -1851,27 +1889,33 @@ export class Home extends React.Component<AppPropsT> {
   }
 }
 
+let memoizedIsFreePurchase = memoizeOne(isFreePurchase);
+
 export default connect(
-  ({root, home}: AppState) => ({
-    byLayout: byLayoutWrapper(root.layout),
-    profile: root.profile,
-    stripe: root.stripe,
-    paymentRequest: home.paymentRequest,
-    canMakePayment: home.canMakePayment,
-    event: root.event,
-    authenticationStatus: root.authenticationStatus,
-    pullUpMenuCollapsed: home.pullUpMenuCollapsed,
-    ticketsForPurchase: home.ticketsForPurchase,
-    view: home.view,
-    orderNumber: home.orderNumber,
-    orderSubTotal: home.orderSubTotal,
-    orderFees: home.orderFees,
-    orderGrandTotal: home.orderGrandTotal,
-    orderCurrency: home.orderCurrency,
-    error: home.error,
-    checkoutPending: home.checkoutPending,
-    purchasePending: home.purchasePending
-  }),
+  (state: AppState) => {
+    let {root, home} = state;
+    return {
+      byLayout: byLayoutWrapper(root.layout),
+      profile: root.profile,
+      stripe: root.stripe,
+      paymentRequest: home.paymentRequest,
+      canMakePayment: home.canMakePayment,
+      event: root.event,
+      authenticationStatus: root.authenticationStatus,
+      pullUpMenuCollapsed: home.pullUpMenuCollapsed,
+      ticketsForPurchase: home.ticketsForPurchase,
+      view: home.view,
+      orderNumber: home.orderNumber,
+      orderSubTotal: home.orderSubTotal,
+      orderFees: home.orderFees,
+      orderGrandTotal: home.orderGrandTotal,
+      orderCurrency: home.orderCurrency,
+      error: home.error,
+      checkoutPending: home.checkoutPending,
+      purchasePending: home.purchasePending,
+      isFree: memoizedIsFreePurchase(state)
+    };
+  },
   dispatch => ({
     initiateLogin: initiateLoginAction(dispatch),
     initiateLogout: initiateLogoutAction(dispatch),
@@ -1885,6 +1929,7 @@ export default connect(
     onTokenCreate: onTokenCreateAction(dispatch),
     onTokenCreateError: onTokenCreateErrorAction(dispatch),
     onCreditCardSubmit: onCreditCardSubmitAction(dispatch),
+    onFreePurchaseSubmit: onFreePurchaseSubmitAction(dispatch),
     resetError: resetErrorAction(dispatch)
   })
 )(Home);

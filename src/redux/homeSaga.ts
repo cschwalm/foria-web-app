@@ -8,7 +8,7 @@ import {
   takeEvery
 } from "redux-saga/effects";
 
-import {getView, getTicketsForPurchase} from "./selectors";
+import {getView, getTicketsForPurchase, isFreePurchase} from "./selectors";
 import {
   View,
   ActionType as HomeActionType,
@@ -23,7 +23,7 @@ function* toCheckoutView() {
   // Pull out the actual body of the method into a separate function, so that we can put an action before and after it
   function* _toCheckoutView() {
     let ticketsForPurchase = yield select(getTicketsForPurchase);
-    let someSelected = yield call(someTicketsSelected, ticketsForPurchase);
+    let someSelected = someTicketsSelected(ticketsForPurchase);
     if (!someSelected) {
       // Only navigate to checkout if some tickets have been selected
       return;
@@ -66,19 +66,20 @@ function* toCheckoutView() {
       return;
     }
 
-    // Create a payment request with the result of the calculate order total result
-    yield put({
-      type: StripeActionType.CreatePaymentRequest,
-      data: calculateSuccess.data
-    });
+    let isFree = yield select(isFreePurchase);
+    if (!isFree) {
+      // Create a payment request with the result of the calculate order total result
+      yield put({
+        type: StripeActionType.CreatePaymentRequest,
+        data: calculateSuccess.data
+      });
+      yield race([
+        take(StripeActionType.CanMakePaymentSuccess),
+        take(StripeActionType.CanMakePaymentError)
+      ]);
+    }
 
-    // Use `all` to wait for the failure or success of each in parallel
-    yield race([
-      take(StripeActionType.CanMakePaymentSuccess),
-      take(StripeActionType.CanMakePaymentError)
-    ]);
-
-    yield put({type: HomeActionType.SelectView, data: View.ChooseCheckout});
+    yield put({type: HomeActionType.SelectView, data: View.Checkout});
   }
 
   yield put({type: HomeActionType.ToCheckoutPending});
@@ -96,7 +97,7 @@ function* handleToPreviousView() {
     // Don't allow a previous view on complete step
     case View.Complete:
       return;
-    case View.ChooseCheckout:
+    case View.Checkout:
       yield put({type: HomeActionType.SelectView, data: View.Tickets});
       return;
     default:
@@ -111,11 +112,11 @@ function* handleToNextView() {
     // No next view
     case View.Complete:
       return;
-    case View.ChooseCheckout:
+    case View.Checkout:
       yield put({type: HomeActionType.SelectView, data: View.Complete});
       return;
     case View.Tickets:
-      // Defer to a method, login user then proceed to ChooseCheckout
+      // Defer to a method, login user then proceed to Checkout
       yield call(toCheckoutView);
       break;
     default:
@@ -128,6 +129,7 @@ function* trackPurchase() {
   // Map these events to a purchase pending event
   yield takeEvery(
     [
+      HomeActionType.FreePurchaseSubmit,
       HomeActionType.CreditCardSubmit,
       StripeActionType.StripeCreateTokenSuccess
     ],
