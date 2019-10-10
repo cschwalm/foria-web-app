@@ -41,10 +41,10 @@ function* toCheckoutView() {
       // We attempt to login the user, if we run into any errors we do not let
       // user proceed to checkout view
       yield put({type: Auth0ActionType.InitiateLogin});
-      let [success /*noSession, error*/] = yield race([
+      let [success, canceled, unrecoverable] = yield race([
         take(Auth0ActionType.AuthenticationSuccess),
-        take(Auth0ActionType.NoExistingSession),
-        take(Auth0ActionType.AuthenticationError)
+        take(Auth0ActionType.AuthenticationCancelled),
+        take(Auth0ActionType.UnrecoverableError)
       ]);
       if (!success) {
         return;
