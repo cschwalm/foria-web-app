@@ -70,6 +70,7 @@ import {
   twoDecimalFormatter,
   twoDecimalNoCurrencyFormatter
 } from "./formatCurrency";
+import {FREE_TICKET_PRICE} from "./redux/reducers/root";
 import minMax from "./minMax";
 
 const ticketOverlayWidth = 385;
@@ -545,6 +546,24 @@ export class Home extends React.Component<AppPropsT> {
 
   renderTicketPriceColumn = (ticketType: TicketTypeConfig) => {
     let soldOut = ticketType.amount_remaining === 0;
+    let isFree = ticketType.price === FREE_TICKET_PRICE;
+    let ticketFeeElem;
+    if (!isFree) {
+      let ticketFee = feeFormatter(
+        Number(ticketType.calculated_fee),
+        ticketType.currency
+      );
+      ticketFeeElem = (
+        <div
+          style={{
+            ...sharedStyles.ticketPriceFee,
+            ...(soldOut ? {color: lavenderGray} : {}),
+            marginBottom: "0.1em"
+          }}>
+          {`+${ticketFee} fee`}
+        </div>
+      );
+    }
     return (
       <div className="column">
         <div
@@ -553,18 +572,11 @@ export class Home extends React.Component<AppPropsT> {
             ...(soldOut ? {color: lavenderGray} : {}),
             marginBottom: "0.1em"
           }}>
-          {feeFormatter(Number(ticketType.price), ticketType.currency)}
+          {isFree
+            ? "Free"
+            : feeFormatter(Number(ticketType.price), ticketType.currency)}
         </div>
-        <div
-          style={{
-            ...sharedStyles.ticketPriceFee,
-            ...(soldOut ? {color: lavenderGray} : {}),
-            marginBottom: "0.1em"
-          }}>
-          +
-          {feeFormatter(Number(ticketType.calculated_fee), ticketType.currency)}{" "}
-          fee
-        </div>
+        {ticketFeeElem}
       </div>
     );
   };
