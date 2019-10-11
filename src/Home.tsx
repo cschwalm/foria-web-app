@@ -3,57 +3,39 @@ import moment from "moment";
 import {connect} from "react-redux";
 import Skeleton from "react-loading-skeleton";
 import {
-  StripeProvider,
-  CardElement,
-  PaymentRequestButtonElement,
-  Elements,
-  injectStripe,
-  ReactStripeElements
+    CardElement,
+    Elements,
+    injectStripe,
+    PaymentRequestButtonElement,
+    ReactStripeElements,
+    StripeProvider
 } from "react-stripe-elements";
 import memoizeOne from "memoize-one";
 
 import {isFreePurchase} from "./redux/selectors";
-import {
-  vividRaspberry,
-  red,
-  white,
-  black,
-  lavenderGray,
-  trolleyGray,
-  antiFlashWhite
-} from "./colors";
+import {antiFlashWhite, black, lavenderGray, red, trolleyGray, vividRaspberry, white} from "./colors";
 import appleStoreBadge from "./appleStoreBadge.svg";
 import googlePlayBadge from "./googlePlayBadge.png";
 import {AppState} from "./redux/store";
+import {AuthenticationStatus, Event, FREE_TICKET_PRICE, TicketTypeConfig} from "./redux/reducers/root";
+import {onTokenCreate as onTokenCreateAction, onTokenCreateError as onTokenCreateErrorAction} from "./redux/stripeSaga";
 import {
-  AuthenticationStatus,
-  Event,
-  TicketTypeConfig
-} from "./redux/reducers/root";
-import {
-  onTokenCreate as onTokenCreateAction,
-  onTokenCreateError as onTokenCreateErrorAction
-} from "./redux/stripeSaga";
-import {
-  addTicket as addTicketAction,
-  removeTicket as removeTicketAction,
-  resetPullUpMenu as resetPullUpMenuAction,
-  showPullUpMenu as showPullUpMenuAction,
-  selectView as selectViewAction,
-  toPreviousView as toPreviousViewAction,
-  toNextView as toNextViewAction,
-  onCreditCardSubmit as onCreditCardSubmitAction,
-  onFreePurchaseSubmit as onFreePurchaseSubmitAction,
-  resetError as resetErrorAction,
-  someTicketsSelected,
-  totalTicketsSelected,
-  View,
-  TicketCounts
+    addTicket as addTicketAction,
+    onCreditCardSubmit as onCreditCardSubmitAction,
+    onFreePurchaseSubmit as onFreePurchaseSubmitAction,
+    removeTicket as removeTicketAction,
+    resetError as resetErrorAction,
+    resetPullUpMenu as resetPullUpMenuAction,
+    selectView as selectViewAction,
+    showPullUpMenu as showPullUpMenuAction,
+    someTicketsSelected,
+    TicketCounts,
+    toNextView as toNextViewAction,
+    toPreviousView as toPreviousViewAction,
+    totalTicketsSelected,
+    View
 } from "./redux/reducers/home";
-import {
-  initiateLogin as initiateLoginAction,
-  initiateLogout as initiateLogoutAction
-} from "./redux/auth0Saga";
+import {initiateLogin as initiateLoginAction, initiateLogout as initiateLogoutAction} from "./redux/auth0Saga";
 import {byLayout as byLayoutWrapper} from "./layout";
 import foriaLogo from "./foria_logo.png";
 import calendarIcon from "./calendar_icon.png";
@@ -65,12 +47,11 @@ import BackIconMobile from "./backIconMobile";
 import LeftChevron from "./leftChevron";
 import UpwardChevron from "./upwardChevron";
 import {
-  pricePreviewFormatter,
-  feeFormatter,
-  twoDecimalFormatter,
-  twoDecimalNoCurrencyFormatter
+    feeFormatter,
+    pricePreviewFormatter,
+    twoDecimalFormatter,
+    twoDecimalNoCurrencyFormatter
 } from "./formatCurrency";
-import {FREE_TICKET_PRICE} from "./redux/reducers/root";
 import minMax from "./minMax";
 
 const ticketOverlayWidth = 385;
@@ -1482,9 +1463,7 @@ export class Home extends React.Component<AppPropsT> {
     if (!event) {
       return "";
     }
-    let query = `${event.address.venue_name}, ${
-      event.address.street_address
-    }, ${event.address.city}, ${event.address.state} ${event.address.zip}`;
+    let query = `${event.address.street_address} ${event.address.city}, ${event.address.state} ${event.address.zip}`;
     query = encodeURIComponent(query);
     return `https://www.google.com/maps/search/?api=1&query=${query}`;
   };
