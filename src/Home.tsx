@@ -978,6 +978,18 @@ export class Home extends React.Component<AppPropsT> {
   renderCompleteStepBody = () => {
     let {orderNumber} = this.props;
     let badgeHeight = "42.77px";
+
+    let styles = {
+      badgeAnchor: {
+        position: "absolute" as "absolute",
+        width: "100%",
+        height: "100%",
+        top: 0,
+        left: 0,
+        textDecoration: "none"
+      },
+      badgeImg: {display: "block", overflow: "hidden", height: badgeHeight}
+    };
     return (
       <>
         <p style={sharedStyles.eventBody}>Thank you for your purchase!</p>
@@ -1010,22 +1022,12 @@ export class Home extends React.Component<AppPropsT> {
           }}>
           <div style={{position: "relative"}}>
             <img
+              alt="Apple App Store download badge"
               src={appleStoreBadge}
-              style={{
-                display: "block",
-                overflow: "hidden",
-                height: badgeHeight
-              }}
+              style={styles.badgeImg}
             />
             <a
-              style={{
-                position: "absolute",
-                width: "100%",
-                height: "100%",
-                top: 0,
-                left: 0,
-                textDecoration: "none"
-              }}
+              style={styles.badgeAnchor}
               href="https://apps.apple.com/us/app/foria/id1475421513"
               target="_blank"
               rel="noopener noreferrer">
@@ -1037,22 +1039,12 @@ export class Home extends React.Component<AppPropsT> {
           </div>
           <div style={{marginLeft: `${1.5 * font3}px`, position: "relative"}}>
             <img
+              alt="Google Play Store download badge"
               src={googlePlayBadge}
-              style={{
-                display: "block",
-                overflow: "hidden",
-                height: badgeHeight
-              }}
+              style={styles.badgeImg}
             />
             <a
-              style={{
-                position: "absolute",
-                width: "100%",
-                height: "100%",
-                top: 0,
-                left: 0,
-                textDecoration: "none"
-              }}
+              style={styles.badgeAnchor}
               href="https://play.google.com/store/apps/details?id=com.foriatickets.foria"
               target="_blank"
               rel="noopener noreferrer">
