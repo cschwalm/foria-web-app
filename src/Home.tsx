@@ -958,6 +958,7 @@ export class Home extends React.Component<AppPropsT> {
 
   renderCompleteStepBody = () => {
     let {orderNumber} = this.props;
+    let badgeHeight = "42.77px";
     return (
       <>
         <p style={sharedStyles.eventBody}>Thank you for your purchase!</p>
@@ -984,47 +985,64 @@ export class Home extends React.Component<AppPropsT> {
         </p>
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(auto-fill, ${3.375 * 2.5 * font3}px)`,
-            gridAutoRows: `minmax(0, ${2.5 * font3}px)`,
-            gridColumnGap: "0.6em",
-            gridRowGap: "0.6em",
-            alignItems: "center"
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "center"
           }}>
-          <a
-            style={{
-              background: `url('${appleStoreBadge}') no-repeat`,
-              backgroundSize: "contain",
-              display: "inline-block",
-              overflow: "hidden",
-              textDecoration: "none",
-              width: "100%",
-              height: "100%"
-            }}
-            href="https://apps.apple.com/us/app/foria/id1475421513"
-            target="_blank"
-            rel="noopener noreferrer">
-            <span style={sharedStyles.visuallyHiddenButScreenReaderAccessible}>
-              Download the Foria iOS app
-            </span>
-          </a>
-          <a
-            style={{
-              background: `url('${googlePlayBadge}') no-repeat`,
-              backgroundSize: "contain",
-              display: "inline-block",
-              overflow: "hidden",
-              textDecoration: "none",
-              width: "100%",
-              height: "100%"
-            }}
-            href="https://play.google.com/store/apps/details?id=com.foriatickets.foria"
-            target="_blank"
-            rel="noopener noreferrer">
-            <span style={sharedStyles.visuallyHiddenButScreenReaderAccessible}>
-              Download the Foria Android app
-            </span>
-          </a>
+          <div style={{position: "relative"}}>
+            <img
+              src={appleStoreBadge}
+              style={{
+                display: "block",
+                overflow: "hidden",
+                height: badgeHeight
+              }}
+            />
+            <a
+              style={{
+                position: "absolute",
+                width: "100%",
+                height: "100%",
+                top: 0,
+                left: 0,
+                textDecoration: "none"
+              }}
+              href="https://apps.apple.com/us/app/foria/id1475421513"
+              target="_blank"
+              rel="noopener noreferrer">
+              <span
+                style={sharedStyles.visuallyHiddenButScreenReaderAccessible}>
+                Download the Foria iOS app
+              </span>
+            </a>
+          </div>
+          <div style={{marginLeft: `${1.5 * font3}px`, position: "relative"}}>
+            <img
+              src={googlePlayBadge}
+              style={{
+                display: "block",
+                overflow: "hidden",
+                height: badgeHeight
+              }}
+            />
+            <a
+              style={{
+                position: "absolute",
+                width: "100%",
+                height: "100%",
+                top: 0,
+                left: 0,
+                textDecoration: "none"
+              }}
+              href="https://play.google.com/store/apps/details?id=com.foriatickets.foria"
+              target="_blank"
+              rel="noopener noreferrer">
+              <span
+                style={sharedStyles.visuallyHiddenButScreenReaderAccessible}>
+                Download the Foria Android app
+              </span>
+            </a>
+          </div>
         </div>
       </>
     );
