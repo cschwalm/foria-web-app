@@ -11,6 +11,7 @@ import {
     StripeProvider
 } from "react-stripe-elements";
 import memoizeOne from "memoize-one";
+import ReactMarkdown from "react-markdown";
 
 import {isFreePurchase} from "./redux/selectors";
 import {antiFlashWhite, black, lavenderGray, red, trolleyGray, vividRaspberry, white} from "./colors";
@@ -1662,9 +1663,7 @@ export class Home extends React.Component<AppPropsT> {
         {!event ? (
           <Skeleton height={100} />
         ) : (
-          event.description
-            .split("\n")
-            .map((paragraph, index) => <p key={index}>{paragraph}</p>)
+          <ReactMarkdown skipHtml={true} source={event.description} />
         )}
       </div>
     );
