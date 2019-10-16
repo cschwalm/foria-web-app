@@ -1268,7 +1268,7 @@ export class Home extends React.Component<AppPropsT> {
             }}>
             <a
               style={sharedStyles.helpAnchor}
-              href="https://foriatickets.zendesk.com/hc/en-us">
+              href="https://foriatickets.com/contact-us.html">
               Help
             </a>
             {this.renderLoginToggle()}
