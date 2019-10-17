@@ -1,6 +1,7 @@
 import React from "react";
-import Enzyme, {shallow} from "enzyme";
+import Enzyme, {shallow, mount} from "enzyme";
 import Adapter from "enzyme-adapter-react-16";
+import ReactMarkdown from "react-markdown";
 
 import {Home} from "./Home";
 import {AuthenticationStatus} from "./redux/reducers/root";
@@ -8,7 +9,6 @@ import {View} from "./redux/reducers/home";
 
 Enzyme.configure({adapter: new Adapter()});
 it("renders an event", () => {
-  const div = document.createElement("div");
   const props = {
     byLayout: (a, b) => a,
     authenticationStatus: AuthenticationStatus.NoAuth,
@@ -28,7 +28,7 @@ it("renders an event", () => {
         }
       ],
       ticket_type_config: [],
-      description: "first paragraph\nsecond paragraph",
+      description: "",
       image_url:
         "https://musicoomph.com/wp-content/uploads/2018/03/benefits-of-going-to-live-music-concerts.jpg",
       start_time: "2019-06-19T20:07:09-07:00",
@@ -47,6 +47,60 @@ it("renders an event", () => {
     true
   );
   expect(wrapper.contains("12345 Fake Ln, Fake City, MO 55555")).toEqual(true);
-  expect(wrapper.contains(<p>first paragraph</p>)).toEqual(true);
-  expect(wrapper.contains(<p>second paragraph</p>)).toEqual(true);
+});
+
+it("renders markdown in the event description", () => {
+  const props = {
+    byLayout: (a, b) => a,
+    authenticationStatus: AuthenticationStatus.NoAuth,
+    view: View.Tickets,
+    togglePullUpMenu: () => {},
+    pullUpMenuCollapsed: true,
+    initiateLogin: () => {},
+    initiateLogout: () => {},
+    event: {
+      ticket_type_config: [],
+      ticket_type_config: [],
+      description: "first paragraph\n\nsecond paragraph",
+      address: {
+        street_address: "12345 Fake Ln",
+        city: "Fake City",
+        state: "MO",
+        zip: "55555",
+        country: "USA"
+      }
+    }
+  };
+  const wrapper = mount(<Home {...props} />);
+  let eventDescription = wrapper.find(ReactMarkdown);
+  expect(eventDescription.html()).toEqual(
+    "<p>first paragraph</p><p>second paragraph</p>"
+  );
+});
+
+it("strips html from the markdown", () => {
+  const props = {
+    byLayout: (a, b) => a,
+    authenticationStatus: AuthenticationStatus.NoAuth,
+    view: View.Tickets,
+    togglePullUpMenu: () => {},
+    pullUpMenuCollapsed: true,
+    initiateLogin: () => {},
+    initiateLogout: () => {},
+    event: {
+      ticket_type_config: [],
+      ticket_type_config: [],
+      description: "<script>oh no!</script>",
+      address: {
+        street_address: "12345 Fake Ln",
+        city: "Fake City",
+        state: "MO",
+        zip: "55555",
+        country: "USA"
+      }
+    }
+  };
+  const wrapper = mount(<Home {...props} />);
+  let eventDescription = wrapper.find(ReactMarkdown);
+  expect(eventDescription.html()).toEqual("");
 });
