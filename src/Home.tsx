@@ -3,39 +3,58 @@ import moment from "moment";
 import {connect} from "react-redux";
 import Skeleton from "react-loading-skeleton";
 import {
-    CardElement,
-    Elements,
-    injectStripe,
-    PaymentRequestButtonElement,
-    ReactStripeElements,
-    StripeProvider
+  CardElement,
+  Elements,
+  injectStripe,
+  PaymentRequestButtonElement,
+  ReactStripeElements,
+  StripeProvider
 } from "react-stripe-elements";
 import memoizeOne from "memoize-one";
 
 import {isFreePurchase} from "./redux/selectors";
-import {antiFlashWhite, black, lavenderGray, red, trolleyGray, vividRaspberry, white} from "./colors";
+import {
+  antiFlashWhite,
+  black,
+  lavenderGray,
+  red,
+  trolleyGray,
+  vividRaspberry,
+  white
+} from "./colors";
 import appleStoreBadge from "./appleStoreBadge.svg";
 import googlePlayBadge from "./googlePlayBadge.png";
 import {AppState} from "./redux/store";
-import {AuthenticationStatus, Event, FREE_TICKET_PRICE, TicketTypeConfig} from "./redux/reducers/root";
-import {onTokenCreate as onTokenCreateAction, onTokenCreateError as onTokenCreateErrorAction} from "./redux/stripeSaga";
 import {
-    addTicket as addTicketAction,
-    onCreditCardSubmit as onCreditCardSubmitAction,
-    onFreePurchaseSubmit as onFreePurchaseSubmitAction,
-    removeTicket as removeTicketAction,
-    resetError as resetErrorAction,
-    resetPullUpMenu as resetPullUpMenuAction,
-    selectView as selectViewAction,
-    showPullUpMenu as showPullUpMenuAction,
-    someTicketsSelected,
-    TicketCounts,
-    toNextView as toNextViewAction,
-    toPreviousView as toPreviousViewAction,
-    totalTicketsSelected,
-    View
+  AuthenticationStatus,
+  Event,
+  FREE_TICKET_PRICE,
+  TicketTypeConfig
+} from "./redux/reducers/root";
+import {
+  onTokenCreate as onTokenCreateAction,
+  onTokenCreateError as onTokenCreateErrorAction
+} from "./redux/stripeSaga";
+import {
+  addTicket as addTicketAction,
+  onCreditCardSubmit as onCreditCardSubmitAction,
+  onFreePurchaseSubmit as onFreePurchaseSubmitAction,
+  removeTicket as removeTicketAction,
+  resetError as resetErrorAction,
+  resetPullUpMenu as resetPullUpMenuAction,
+  selectView as selectViewAction,
+  showPullUpMenu as showPullUpMenuAction,
+  someTicketsSelected,
+  TicketCounts,
+  toNextView as toNextViewAction,
+  toPreviousView as toPreviousViewAction,
+  totalTicketsSelected,
+  View
 } from "./redux/reducers/home";
-import {initiateLogin as initiateLoginAction, initiateLogout as initiateLogoutAction} from "./redux/auth0Saga";
+import {
+  initiateLogin as initiateLoginAction,
+  initiateLogout as initiateLogoutAction
+} from "./redux/auth0Saga";
 import {byLayout as byLayoutWrapper} from "./layout";
 import foriaLogo from "./foria_logo.png";
 import calendarIcon from "./calendar_icon.png";
@@ -47,10 +66,10 @@ import BackIconMobile from "./backIconMobile";
 import LeftChevron from "./leftChevron";
 import UpwardChevron from "./upwardChevron";
 import {
-    feeFormatter,
-    pricePreviewFormatter,
-    twoDecimalFormatter,
-    twoDecimalNoCurrencyFormatter
+  feeFormatter,
+  pricePreviewFormatter,
+  twoDecimalFormatter,
+  twoDecimalNoCurrencyFormatter
 } from "./formatCurrency";
 import minMax from "./minMax";
 
@@ -958,6 +977,19 @@ export class Home extends React.Component<AppPropsT> {
 
   renderCompleteStepBody = () => {
     let {orderNumber} = this.props;
+    let badgeHeight = "42.77px";
+
+    let styles = {
+      badgeAnchor: {
+        position: "absolute" as "absolute",
+        width: "100%",
+        height: "100%",
+        top: 0,
+        left: 0,
+        textDecoration: "none"
+      },
+      badgeImg: {display: "block", overflow: "hidden", height: badgeHeight}
+    };
     return (
       <>
         <p style={sharedStyles.eventBody}>Thank you for your purchase!</p>
@@ -984,47 +1016,44 @@ export class Home extends React.Component<AppPropsT> {
         </p>
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(auto-fill, ${3.375 * 2.5 * font3}px)`,
-            gridAutoRows: `minmax(0, ${2.5 * font3}px)`,
-            gridColumnGap: "0.6em",
-            gridRowGap: "0.6em",
-            alignItems: "center"
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "center"
           }}>
-          <a
-            style={{
-              background: `url('${appleStoreBadge}') no-repeat`,
-              backgroundSize: "contain",
-              display: "inline-block",
-              overflow: "hidden",
-              textDecoration: "none",
-              width: "100%",
-              height: "100%"
-            }}
-            href="https://apps.apple.com/us/app/foria/id1475421513"
-            target="_blank"
-            rel="noopener noreferrer">
-            <span style={sharedStyles.visuallyHiddenButScreenReaderAccessible}>
-              Download the Foria iOS app
-            </span>
-          </a>
-          <a
-            style={{
-              background: `url('${googlePlayBadge}') no-repeat`,
-              backgroundSize: "contain",
-              display: "inline-block",
-              overflow: "hidden",
-              textDecoration: "none",
-              width: "100%",
-              height: "100%"
-            }}
-            href="https://play.google.com/store/apps/details?id=com.foriatickets.foria"
-            target="_blank"
-            rel="noopener noreferrer">
-            <span style={sharedStyles.visuallyHiddenButScreenReaderAccessible}>
-              Download the Foria Android app
-            </span>
-          </a>
+          <div style={{position: "relative"}}>
+            <img
+              alt="Apple App Store download badge"
+              src={appleStoreBadge}
+              style={styles.badgeImg}
+            />
+            <a
+              style={styles.badgeAnchor}
+              href="https://apps.apple.com/us/app/foria/id1475421513"
+              target="_blank"
+              rel="noopener noreferrer">
+              <span
+                style={sharedStyles.visuallyHiddenButScreenReaderAccessible}>
+                Download the Foria iOS app
+              </span>
+            </a>
+          </div>
+          <div style={{marginLeft: `${1.5 * font3}px`, position: "relative"}}>
+            <img
+              alt="Google Play Store download badge"
+              src={googlePlayBadge}
+              style={styles.badgeImg}
+            />
+            <a
+              style={styles.badgeAnchor}
+              href="https://play.google.com/store/apps/details?id=com.foriatickets.foria"
+              target="_blank"
+              rel="noopener noreferrer">
+              <span
+                style={sharedStyles.visuallyHiddenButScreenReaderAccessible}>
+                Download the Foria Android app
+              </span>
+            </a>
+          </div>
         </div>
       </>
     );
@@ -1463,7 +1492,9 @@ export class Home extends React.Component<AppPropsT> {
     if (!event) {
       return "";
     }
-    let query = `${event.address.street_address} ${event.address.city}, ${event.address.state} ${event.address.zip}`;
+    let query = `${event.address.street_address} ${event.address.city}, ${
+      event.address.state
+    } ${event.address.zip}`;
     query = encodeURIComponent(query);
     return `https://www.google.com/maps/search/?api=1&query=${query}`;
   };
