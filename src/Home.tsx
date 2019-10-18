@@ -1541,7 +1541,12 @@ export class Home extends React.Component<AppPropsT> {
             padding: byLayout("1em", "2em 1.5em"),
             alignItems: "flex-start"
           }}>
-          <div className="column" style={{flex: 1}}>
+          <div
+            className="column"
+            style={{
+              overflowX: "hidden",
+              flex: 1
+            }}>
             <div style={{marginBottom: byLayout("1.5em", "2em")}}>
               <div
                 style={{
@@ -1690,7 +1695,13 @@ export class Home extends React.Component<AppPropsT> {
   renderEventBodyText = () => {
     let {event} = this.props;
     return (
-      <div style={sharedStyles.eventBody}>
+      <div
+        id="eventMarkdown"
+        style={{
+          ...sharedStyles.eventBody,
+          // Force text like (long urls) to break only when a natural break doesn't exist
+          overflowWrap: "break-word"
+        }}>
         {!event ? (
           <Skeleton height={100} />
         ) : (
