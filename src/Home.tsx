@@ -12,6 +12,7 @@ import {
 } from "react-stripe-elements";
 import memoizeOne from "memoize-one";
 import ReactMarkdown from "react-markdown";
+import InputMask from "react-input-mask";
 
 import {isFreePurchase} from "./redux/selectors";
 import {
@@ -40,6 +41,8 @@ import {
   addTicket as addTicketAction,
   onCreditCardSubmit as onCreditCardSubmitAction,
   onFreePurchaseSubmit as onFreePurchaseSubmitAction,
+  onSendMeApp as onSendMeAppAction,
+  onBranchPhoneNumberChange as onBranchPhoneNumberChangeAction,
   removeTicket as removeTicketAction,
   resetError as resetErrorAction,
   resetPullUpMenu as resetPullUpMenuAction,
@@ -64,6 +67,7 @@ import DecrementIcon from "./decrementIcon";
 import IncrementIcon from "./incrementIcon";
 import CloseIconMobile from "./closeIconMobile";
 import BackIconMobile from "./backIconMobile";
+import SendIcon from "./sendIcon";
 import LeftChevron from "./leftChevron";
 import UpwardChevron from "./upwardChevron";
 import {
@@ -92,6 +96,8 @@ interface AppPropsT {
   onTokenCreateError: (err: string) => void;
   onCreditCardSubmit: () => void;
   onFreePurchaseSubmit: () => void;
+  onSendMeApp: () => void;
+  onBranchPhoneNumberChange: (phoneNumber: string) => void;
   selectView: (view: View) => void;
   toPreviousView: () => void;
   toNextView: () => void;
@@ -101,6 +107,7 @@ interface AppPropsT {
   canMakePayment: boolean;
   checkoutPending: boolean;
   purchasePending: boolean;
+  branchSMSPending: boolean;
   isFree: boolean;
   ticketsForPurchase: TicketCounts;
   profile?: auth0.Auth0UserProfile;
@@ -111,14 +118,17 @@ interface AppPropsT {
   orderGrandTotal?: number;
   orderCurrency?: string;
   error?: any;
+  branchPhoneNumber?: string;
+  branchLinkSent: boolean;
 }
 
-const checkoutButtonHeight = "2.5em";
-const font5 = 36;
+const font6 = 36;
+const font5 = 20;
 const font4 = 18;
 const font3 = 16;
 const font2 = 14;
 const font1 = 12;
+const checkoutButtonHeight = `${2.5 * font3}px`;
 
 const sharedStyles = {
   dashedLine: {borderBottom: "dashed 4px", color: antiFlashWhite},
@@ -176,7 +186,8 @@ const sharedStyles = {
     fontFamily: "Roboto",
     boxSizing: "border-box" as "border-box",
     /* Provide exact height to line up the menu bottom border with the hero bottom border */
-    height: "3.2em"
+    height: `${3.2 * font3}px`,
+    fontSize: `${font5}px`
   },
   eventSubTitle: {
     fontWeight: 500,
@@ -187,7 +198,7 @@ const sharedStyles = {
   eventTitle: {
     fontFamily: "Rubik",
     fontWeight: 700,
-    fontSize: `${font5}px`,
+    fontSize: `${font6}px`,
     position: "relative" as "relative",
     lineHeight: "1em",
     left: "-2px"
@@ -700,9 +711,7 @@ export class Home extends React.Component<AppPropsT> {
     let someSelected = someTicketsSelected(ticketsForPurchase);
     return (
       <>
-        <div style={sharedStyles.ticketsTitle}>
-          <span style={event ? {} : {opacity: 0}}>Foria Passes</span>
-        </div>
+        {this.renderDesktopHeader()}
         <div
           style={{
             margin: byLayout("1em", "1.5em 1em")
@@ -790,34 +799,10 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderDesktopCheckoutStep = () => {
-    let {event, toPreviousView, byLayout} = this.props;
+    let {byLayout} = this.props;
     return (
       <>
-        <div style={{...sharedStyles.ticketsTitle, position: "relative"}}>
-          <div
-            style={{
-              position: "absolute",
-              display: "flex",
-              alignItems: "center",
-              top: "1em",
-              bottom: "1em",
-              left: "1em"
-            }}>
-            <LeftChevron />
-          </div>
-          <div
-            style={{
-              position: "absolute",
-              top: "0em",
-              bottom: "0em",
-              left: "0em",
-              width: "3em",
-              cursor: "pointer"
-            }}
-            onClick={toPreviousView}
-          />
-          <span style={event ? {} : {opacity: 0}}>Checkout</span>
-        </div>
+        {this.renderDesktopHeader()}
         <div style={{margin: byLayout("1em", "1.5em 1em")}}>
           {this.renderCheckoutSummary()}
           <div style={{margin: "0 0em 1.5em 0em"}}>
@@ -959,13 +944,58 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
+  renderDesktopHeader = () => {
+    let {view, event, toPreviousView} = this.props;
+    switch (view) {
+      case View.Tickets:
+        return (
+          <div style={sharedStyles.ticketsTitle}>
+            <span style={event ? {} : {opacity: 0}}>Foria Passes</span>
+          </div>
+        );
+      case View.Checkout:
+        return (
+          <div style={{...sharedStyles.ticketsTitle, position: "relative"}}>
+            <div
+              style={{
+                position: "absolute",
+                display: "flex",
+                alignItems: "center",
+                top: `${font3}px`,
+                bottom: `${font3}px`,
+                left: `${font3}px`
+              }}>
+              <LeftChevron />
+            </div>
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                bottom: 0,
+                left: 0,
+                width: `${3 * font3}px`,
+                cursor: "pointer"
+              }}
+              onClick={toPreviousView}
+            />
+            <span style={event ? {} : {opacity: 0}}>Checkout</span>
+          </div>
+        );
+      default:
+        // case View.Complete:
+        return (
+          <div style={sharedStyles.ticketsTitle}>
+            <span style={event ? {} : {opacity: 0}}>Checkout</span>
+          </div>
+        );
+    }
+  };
+
   renderDesktopCompleteStep = () => {
-    let {event, byLayout} = this.props;
+    let {byLayout} = this.props;
     return (
       <>
-        <div style={sharedStyles.ticketsTitle}>
-          <span style={event ? {} : {opacity: 0}}>Checkout</span>
-        </div>
+        {this.renderDesktopHeader()}
         <div
           style={{
             margin: byLayout("1em", "1.5em 1em")
@@ -976,10 +1006,27 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
-  renderCompleteStepBody = () => {
-    let {orderNumber} = this.props;
-    let badgeHeight = "42.77px";
+  onBranchPhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let {onBranchPhoneNumberChange} = this.props;
+    let cleaned = e.target.value;
+    if (cleaned) {
+      // Remove any non-digits from the number
+      cleaned = cleaned.replace(/[^\d]+/g, "");
+    }
+    onBranchPhoneNumberChange(cleaned);
+  };
 
+  renderCompleteStepBody = () => {
+    let {
+      byLayout,
+      orderNumber,
+      onSendMeApp,
+      branchPhoneNumber,
+      branchSMSPending,
+      branchLinkSent
+    } = this.props;
+
+    let badgeHeight = "42.77px";
     let styles = {
       badgeAnchor: {
         position: "absolute" as "absolute",
@@ -994,19 +1041,25 @@ export class Home extends React.Component<AppPropsT> {
     return (
       <>
         <p style={sharedStyles.eventBody}>Thank you for your purchase!</p>
-        <p style={sharedStyles.eventBody}>
-          Your order number is #{orderNumber as string}
-        </p>
-        <p style={sharedStyles.getTicketsFromForiaApp}>
-          <a
-            style={sharedStyles.getTicketsFromForiaApp}
-            href="https://foria.app.link/9UDqrSsTi0"
-            target="_blank"
-            rel="noopener noreferrer">
-            Access your tickets in the Foria app
-          </a>
-        </p>
-        <p style={{...sharedStyles.eventBody, marginBottom: "1.5em"}}>
+        {byLayout(
+          <>
+            <p style={sharedStyles.eventBody}>
+              Your order number is #{orderNumber as string}
+            </p>
+            <p style={sharedStyles.getTicketsFromForiaApp}>
+              <a
+                style={sharedStyles.getTicketsFromForiaApp}
+                href="https://foria.app.link/9UDqrSsTi0"
+                target="_blank"
+                rel="noopener noreferrer">
+                Access your tickets in the Foria app
+              </a>
+            </p>
+          </>,
+          <p style={{fontSize: font5}}>Your tickets are in the Foria app</p>
+        )}
+        <p
+          style={{...sharedStyles.eventBody, marginBottom: `${1.5 * font3}px`}}>
           To ensure authenticity, your tickets are only available in the Foria
           app. You will not receive tickets via email. We recommend that you
           locate your tickets in-app before the event. Once located, the tickets
@@ -1015,6 +1068,83 @@ export class Home extends React.Component<AppPropsT> {
           then you must have a government ID that shows the name on your Foria
           account.
         </p>
+        {byLayout(
+          null,
+          <>
+            <p
+              style={{
+                ...sharedStyles.eventBody,
+                marginBottom: `${0.5 * font3}px`
+              }}>
+              Recieve a one-time SMS to download the app:
+            </p>
+            <InputMask
+              placeholder="Enter phone number"
+              mask="+1 (999) 999-9999"
+              value={branchPhoneNumber || ""}
+              onChange={this.onBranchPhoneNumberChange}>
+              {(inputProps: any) => (
+                <input
+                  {...inputProps}
+                  type="text"
+                  autoComplete="tel"
+                  className={byLayout("mobile", "desktop")}
+                  style={{
+                    /* Remove the default input shadow */
+                    WebkitAppearance: "none",
+                    MozAppearance: "none",
+                    appearance: "none",
+                    border: `solid 1.75px ${lavenderGray}`,
+                    width: "100%",
+                    marginBottom: `${0.5 * font3}px`,
+                    borderRadius: "5px",
+                    fontSize: `${font3}px`,
+                    padding: byLayout("7px", "9px"),
+                    boxSizing: "border-box"
+                  }}
+                />
+              )}
+            </InputMask>
+            <div
+              className="row"
+              style={{
+                ...sharedStyles.checkoutButton,
+                position: "relative",
+                marginBottom: `${0.5 * font3}px`,
+                fontSize: `${font4}px`
+              }}
+              onClick={onSendMeApp}>
+              {branchLinkSent ? "A link was sent" : "Send me the app"}
+              {branchSMSPending ? <Ellipsis style={{fontWeight: 700}} /> : null}
+              <div
+                style={{
+                  position: "absolute",
+                  boxSizing: "border-box",
+                  /* This padding ultimately determines the height of the svg
+                   * in its container, this value was chosen so that the
+                   * button text "Send me the app" would have a similar weight
+                   * as the stroke of the svg SendIcon*/
+                  padding: "11px",
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  height: "100%",
+                  display: "flex",
+                  alignItems: "center"
+                }}>
+                <SendIcon />
+              </div>
+            </div>
+            <p
+              style={{
+                ...sharedStyles.eventBody,
+                marginBottom: `${1.5 * font3}px`,
+                textAlign: "center"
+              }}>
+              Standard messaging rates may apply
+            </p>
+          </>
+        )}
         <div
           style={{
             display: "flex",
@@ -1933,7 +2063,10 @@ export default connect(
       error: home.error,
       checkoutPending: home.checkoutPending,
       purchasePending: home.purchasePending,
-      isFree: memoizedIsFreePurchase(state)
+      branchSMSPending: home.branchSMSPending,
+      isFree: memoizedIsFreePurchase(state),
+      branchPhoneNumber: home.branchPhoneNumber,
+      branchLinkSent: home.branchLinkSent
     };
   },
   dispatch => ({
@@ -1950,6 +2083,8 @@ export default connect(
     onTokenCreateError: onTokenCreateErrorAction(dispatch),
     onCreditCardSubmit: onCreditCardSubmitAction(dispatch),
     onFreePurchaseSubmit: onFreePurchaseSubmitAction(dispatch),
+    onSendMeApp: onSendMeAppAction(dispatch),
+    onBranchPhoneNumberChange: onBranchPhoneNumberChangeAction(dispatch),
     resetError: resetErrorAction(dispatch)
   })
 )(Home);

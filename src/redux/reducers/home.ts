@@ -7,6 +7,7 @@ import {TicketTypeConfig} from "./root";
 import {ActionType as StripeActionType} from "../stripeSaga";
 import {ActionType as ApiActionType} from "../apiSaga";
 import {ActionType as Auth0ActionType} from "../auth0Saga";
+import {ActionType as BranchActionType} from "../branchSaga";
 
 export enum View {
   Tickets,
@@ -34,7 +35,10 @@ export enum ActionType {
   PurchaseNotPending = "PurchaseNotPending",
 
   CreditCardSubmit = "CreditCardSubmit",
-  FreePurchaseSubmit = "FreePurchaseSubmit"
+  FreePurchaseSubmit = "FreePurchaseSubmit",
+
+  SendMeAppSubmit = "SendMeAppSubmit",
+  BranchPhoneNumberChange = "BranchPhoneNumberChange"
 }
 
 export type TicketCounts = {[ticketId: string]: number};
@@ -53,14 +57,19 @@ export interface State {
   orderGrandTotal?: number;
   orderCurrency?: string;
   error?: any;
+  branchPhoneNumber?: string;
+  branchSMSPending: boolean;
+  branchLinkSent: boolean;
 }
 export const initialState: State = {
   pullUpMenuCollapsed: true,
-  view: View.Tickets,
+  view: View.Complete,
   paymentRequest: null,
   canMakePayment: false,
   checkoutPending: false,
   purchasePending: false,
+  branchSMSPending: false,
+  branchLinkSent: false,
   ticketsForPurchase: {}
 };
 
@@ -201,6 +210,28 @@ export const reducer = (state = initialState, action: Action) => {
         // is created, we reset canMakePayment
         canMakePayment: false
       };
+    case ActionType.SendMeAppSubmit:
+      return {
+        ...state,
+        branchSMSPending: true
+      };
+    case BranchActionType.SendMeAppSuccess:
+      return {
+        ...state,
+        branchSMSPending: false,
+        branchLinkSent: true
+      };
+    case ActionType.BranchPhoneNumberChange:
+      return {
+        ...state,
+        branchPhoneNumber: action.data
+      };
+    case BranchActionType.SendMeAppError:
+      return {
+        ...state,
+        branchSMSPending: false,
+        error: action.data
+      };
     // This is a class of user-errors that are handled by auth0
     // See: https://auth0.com/docs/libraries/error-messages
     //
@@ -260,3 +291,10 @@ export const onCreditCardSubmit = (dispatch: Dispatch<Action>) => () =>
 
 export const onFreePurchaseSubmit = (dispatch: Dispatch<Action>) => () =>
   dispatch({type: ActionType.FreePurchaseSubmit});
+
+export const onSendMeApp = (dispatch: Dispatch<Action>) => () =>
+  dispatch({type: ActionType.SendMeAppSubmit});
+
+export const onBranchPhoneNumberChange = (dispatch: Dispatch<Action>) => (
+  phoneNumber: string
+) => dispatch({type: ActionType.BranchPhoneNumberChange, data: phoneNumber});
