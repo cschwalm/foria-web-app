@@ -1677,11 +1677,12 @@ export class Home extends React.Component<AppPropsT> {
               overflowX: "hidden",
               flex: 1
             }}>
-            <div style={{marginBottom: byLayout("1.5em", "2em")}}>
+            <div style={{padding: "0 4px", marginBottom: byLayout("1.5em", "2em")}}>
               <div
                 style={{
                   ...sharedStyles.eventTitle,
-                  marginBottom: `${0.5 * font3}px`
+                  marginBottom: `${0.5 * font3}px`,
+                  overflowWrap: "break-word"
                 }}>
                 {(event && event.name) || <Skeleton />}
               </div>
@@ -1782,7 +1783,7 @@ export class Home extends React.Component<AppPropsT> {
           position: "relative",
           margin: "0 auto"
         }}>
-        <div className="column" style={{margin: byLayout("1em", "2em 1.5em")}}>
+        <div className="column" style={{padding: "0 4px", margin: byLayout("1em", "2em 1.5em")}}>
           <div className="row" style={{marginBottom: "0.6em"}}>
             <a
               href="https://foriatickets.com/privacy-policy.html"
@@ -1830,7 +1831,8 @@ export class Home extends React.Component<AppPropsT> {
         style={{
           ...sharedStyles.eventBody,
           // Force text like (long urls) to break only when a natural break doesn't exist
-          overflowWrap: "break-word"
+          overflowWrap: "break-word",
+          padding: "0 4px",
         }}>
         {!event ? (
           <Skeleton height={100} />
