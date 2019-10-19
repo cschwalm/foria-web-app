@@ -1049,7 +1049,7 @@ export class Home extends React.Component<AppPropsT> {
             <p style={sharedStyles.getTicketsFromForiaApp}>
               <a
                 style={sharedStyles.getTicketsFromForiaApp}
-                href="https://foria.app.link/9UDqrSsTi0"
+                href={process.env.REACT_APP_BRANCH_LINK}
                 target="_blank"
                 rel="noopener noreferrer">
                 Access your tickets in the Foria app
