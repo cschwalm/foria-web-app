@@ -1,7 +1,7 @@
 import {call, select, put, takeEvery, actionChannel} from "redux-saga/effects";
 
 import Action from "./Action";
-import {getBranchPhoneNumber} from "./selectors";
+import {getBranchPhoneNumber, getEventId, getOrderNumber} from "./selectors";
 import {ActionType as HomeActionType} from "./reducers/home";
 
 export enum ActionType {
@@ -23,10 +23,16 @@ type Branch = {sendSMS: any};
 
 function* sendSMS() {
   let phone = yield select(getBranchPhoneNumber);
+  let eventId = yield select(getEventId);
+  let orderNumber = yield select(getOrderNumber);
   let linkData = {
     tags: [],
-    channel: "Web",
-    feature: "TextMeTheApp"
+    channel: "web",
+    feature: "order_confirmation",
+    data: {
+      'event_id': eventId,
+      'order_id': orderNumber
+    }
   };
   let options = {};
 
