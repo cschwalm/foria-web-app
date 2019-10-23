@@ -3,6 +3,7 @@ import {call, put, take, fork} from "redux-saga/effects";
 import {throttle} from "lodash";
 import {ActionType as RootActionType} from "./reducers/root";
 import auth0Saga from "./auth0Saga";
+import branchSaga from "./branchSaga";
 import apiSaga from "./apiSaga";
 import stripeSaga from "./stripeSaga";
 import homeSaga from "./homeSaga";
@@ -29,6 +30,7 @@ function* handleResizeSaga() {
 function* saga() {
   yield fork(apiSaga);
   yield fork(stripeSaga);
+  yield fork(branchSaga);
   yield fork(handleResizeSaga);
   yield fork(auth0Saga);
   yield fork(homeSaga);
