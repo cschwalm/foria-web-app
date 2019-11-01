@@ -1,4 +1,5 @@
 import React from "react";
+import {Helmet} from "react-helmet";
 import moment from "moment";
 import {connect} from "react-redux";
 import Skeleton from "react-loading-skeleton";
@@ -1390,6 +1391,33 @@ export class Home extends React.Component<AppPropsT> {
     }
   };
 
+  renderMetadata = () => {
+
+      let {event} = this.props;
+      if (event == null) {
+          return;
+      }
+
+      let eventName : String = event.name ? event.name : 'Fora Event Page';
+      let description : String = event.name ? "Buy your tickets today for " + eventName : 'Buy your tickets today.';
+
+      return (
+          <div className="application">
+              <Helmet
+                  title={eventName.toString()}
+                  meta={[
+                      {"property": "og:type", "content": "website"},
+                      {"property": "og:image", "content": event.image_url.toString()},
+                      {"property": "og:title", "content": eventName.toString()},
+                      {"property": "og:url", "content": window.location.href},
+                      {"property": "og:description", "content": description.toString()},
+                      {"property": "og:site_name", "content": 'Foria'}
+                  ]}
+              />
+          </div>
+      );
+  };
+
   renderHeader = () => {
     let {byLayout} = this.props;
     let styles = {
@@ -2024,8 +2052,9 @@ export class Home extends React.Component<AppPropsT> {
           position: "relative",
           ...(error ? byLayout(iosErrorStyles, {}) : {})
         }}>
-        {pullUpMenuCollapsed ? (
-          <>
+          {this.renderMetadata()}
+          {pullUpMenuCollapsed ? (
+            <>
             {this.renderHeader()}
             {this.renderHero()}
             {this.renderBody()}

@@ -23,6 +23,7 @@
     "src"
   ],
   "types": [
-    "react-stripe-elements"
+    "react-stripe-elements",
+    "react-helmet"
   ]
 }
