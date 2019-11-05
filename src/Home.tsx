@@ -1411,7 +1411,8 @@ export class Home extends React.Component<AppPropsT> {
                       {"property": "og:title", "content": eventName.toString()},
                       {"property": "og:url", "content": window.location.href},
                       {"property": "og:description", "content": description.toString()},
-                      {"property": "og:site_name", "content": 'Foria'}
+                      {"property": "og:site_name", "content": 'Foria'},
+                      {"property": "fb:app_id", "content": '695063607637402'}
                   ]}
               />
           </div>
