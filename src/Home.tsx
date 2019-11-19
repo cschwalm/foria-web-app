@@ -1400,6 +1400,7 @@ export class Home extends React.Component<AppPropsT> {
 
       let eventName : String = event.name ? event.name : 'Fora Event Page';
       let description : String = event.name ? "Buy your tickets today for " + eventName : 'Buy your tickets today.';
+      let imageUrl : String = event.image_url ? event.image_url : '';
 
       return (
           <div className="application">
@@ -1407,7 +1408,7 @@ export class Home extends React.Component<AppPropsT> {
                   title={eventName.toString()}
                   meta={[
                       {"property": "og:type", "content": "website"},
-                      {"property": "og:image", "content": event.image_url.toString()},
+                      {"property": "og:image", "content": imageUrl.toString()},
                       {"property": "og:title", "content": eventName.toString()},
                       {"property": "og:url", "content": window.location.href},
                       {"property": "og:description", "content": description.toString()},
@@ -1610,22 +1611,6 @@ export class Home extends React.Component<AppPropsT> {
       </div>
     );
   };
-
-  formatCheckoutEventDate(start: string, end: string) {
-    let startMoment = moment(start);
-    let endMoment = moment(end);
-    if (
-      startMoment.month() === endMoment.month() &&
-      startMoment.day() === endMoment.day()
-    ) {
-      return (
-        startMoment.format("MMMM Do, h:mmA") +
-        " to " +
-        endMoment.format("h:mmA")
-      );
-    }
-    return startMoment.format("MMM Do") + " - " + endMoment.format("MMM Do");
-  }
 
   formatEventDate(start: string, end: string) {
     let startMoment = moment(start);

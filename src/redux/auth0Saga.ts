@@ -22,8 +22,7 @@ export enum ActionType {
 
   // Login success refers to our ability to get back a profile
   LoginSuccess = "LoginSuccess",
-  LoginError = "LoginError",
-  Logout = "Logout"
+  LoginError = "LoginError"
 }
 
 export const initiateLogin = (dispatch: Dispatch<Action>) => () =>
@@ -47,7 +46,8 @@ function createLock() {
       auth: {
         responseType: "token",
         audience: process.env.REACT_APP_AUTH0_AUDIENCE as string,
-        redirect: false
+        redirectUrl: window.location.href as string,
+        redirect: true
       },
       initialScreen: "signUp",
       additionalSignUpFields: [
