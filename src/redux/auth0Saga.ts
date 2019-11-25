@@ -46,8 +46,7 @@ function createLock() {
       auth: {
         responseType: "token",
         audience: process.env.REACT_APP_AUTH0_AUDIENCE as string,
-        redirectUrl: window.location.href as string,
-        redirect: true
+        redirect: false
       },
       initialScreen: "signUp",
       additionalSignUpFields: [
@@ -65,8 +64,8 @@ function createLock() {
       languageDictionary: {
         emailInputPlaceholder: "john@foriatickets.com",
         passwordInputPlaceholder: "password",
-        title: "",
-        signUpTitle: "",
+        title: "Login | New Customers",
+        signUpTitle: "Signup | Existing Customers",
         signUpTerms:
           'By signing up, you agree to our <a href="https://foriatickets.com/terms-of-use.html" target="_blank">terms of service</a> and <a href="https://foriatickets.com/privacy-policy.html" target="_blank">privacy policy</a>.'
       },
