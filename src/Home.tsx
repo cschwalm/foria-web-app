@@ -198,6 +198,12 @@ const sharedStyles = {
     lineHeight: "1.4em",
     color: trolleyGray
   },
+  promoButtonText: {
+    fontSize: `${font3}px`,
+    fontWeight: 500,
+    lineHeight: "1.2em",
+    color: trolleyGray
+  },
   ticketsTitle: {
     display: "flex",
     justifyContent: "center",
@@ -208,7 +214,7 @@ const sharedStyles = {
     fontFamily: "Roboto",
     boxSizing: "border-box" as "border-box",
     /* Provide exact height to line up the menu bottom border with the hero bottom border */
-    height: `${3.2 * font3}px`,
+    height: `${2.2 * font3}px`,
     fontSize: `${font5}px`
   },
   eventSubTitle: {
@@ -1094,7 +1100,10 @@ export class Home extends React.Component<AppPropsT> {
                   type="text"
                   autoComplete="tel"
                   className={byLayout("mobile", "desktop")}
-                  style={byLayout(sharedStyles.mobileInput, sharedStyles.desktopInput)}
+                  style={byLayout(
+                    sharedStyles.mobileInput,
+                    sharedStyles.desktopInput
+                  )}
                 />
               )}
             </InputMask>
@@ -1212,6 +1221,53 @@ export class Home extends React.Component<AppPropsT> {
     return `${minAmountStr} - ${maxAmountStr}`;
   };
 
+  renderPromoCode = () => {
+    let {event, byLayout} = this.props;
+    return (
+      <div>
+        <span style={{position: "relative"}}>
+          <input
+            placeholder="Enter promo code"
+            type="text"
+            className={byLayout("mobile", "desktop")}
+            style={byLayout(
+              sharedStyles.mobileInput,
+              sharedStyles.desktopInput
+            )}
+          />
+          <div
+            style={{
+              top: 0,
+              right: 0,
+              height: "100%",
+              // backgroundColor: "green",
+              position: "absolute",
+              display: "flex"
+            }}>
+            <span
+              style={{
+                width: "2px",
+                height: "100%",
+                backgroundColor: lavenderGray,
+                display: "inline-block"
+              }}
+            />
+            <span
+              style={{
+                ...sharedStyles.promoButtonText,
+                width: "40px",
+                padding: "0em 1em",
+                height: "100%",
+                display: "inline-block"
+              }}>
+              Apply
+            </span>
+          </div>
+        </span>
+      </div>
+    );
+  };
+
   renderTicketStepBody = () => {
     let {event, byLayout} = this.props;
     let tiersExist = event?.ticket_type_config.length;
@@ -1222,7 +1278,7 @@ export class Home extends React.Component<AppPropsT> {
             {event ? "A maximum of 10 tickets can be purchased" : <Skeleton />}
           </div>
         </div>
-        <div style={{margin: "0em 0em 2em 0em"}}>
+        <div style={{margin: "0em 0em 1.5em 0em"}}>
           {event ? (
             tiersExist ? (
               this.renderTicketsGrid()
@@ -1235,14 +1291,8 @@ export class Home extends React.Component<AppPropsT> {
           ) : (
             <Skeleton />
           )}
-          <div>
-            <input
-              type="text"
-              className={byLayout("mobile", "desktop")}
-              style={byLayout(sharedStyles.mobileInput, sharedStyles.desktopInput)}
-            />
-          </div>
         </div>
+        <div style={{margin: "0em 0em 2em 0em"}}>{this.renderPromoCode()}</div>
       </>
     );
   };
