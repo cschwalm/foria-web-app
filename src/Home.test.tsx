@@ -21,12 +21,6 @@ it("renders an event", () => {
       id: "a42205c9-f7fc-4371-80e4-99b73385f462",
       name: "Test Event",
       tag_line: "For The Fans",
-      ticket_type_config: [
-        {
-          price: "1.00",
-          currency: "USD"
-        }
-      ],
       ticket_type_config: [],
       description: "",
       image_url:
@@ -60,7 +54,6 @@ it("renders markdown in the event description", () => {
     initiateLogout: () => {},
     event: {
       ticket_type_config: [],
-      ticket_type_config: [],
       description: "first paragraph\n\nsecond paragraph",
       address: {
         street_address: "12345 Fake Ln",
@@ -88,7 +81,6 @@ it("strips html from the markdown", () => {
     initiateLogin: () => {},
     initiateLogout: () => {},
     event: {
-      ticket_type_config: [],
       ticket_type_config: [],
       description: "<script>oh no!</script>",
       address: {
