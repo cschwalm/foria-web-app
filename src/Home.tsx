@@ -138,7 +138,7 @@ const baseInputStyle = {
   appearance: "none" as "none",
   border: `solid 1.75px ${lavenderGray}`,
   width: "100%",
-  marginBottom: `${0.5 * font3}px`,
+  marginBottom: `${font3}px`,
   borderRadius: "5px",
   fontSize: `${font3}px`,
   boxSizing: "border-box" as "border-box"
@@ -781,7 +781,7 @@ export class Home extends React.Component<AppPropsT> {
     return (
       <>
         {stripe && canMakePayment ? (
-          <>
+          <div style={{margin: "0em 0em 1.5em 0em"}}>
             <div style={{margin: "0em 0em 1em 0em"}}>
               <StripeProvider stripe={stripe}>
                 <Elements
@@ -802,7 +802,7 @@ export class Home extends React.Component<AppPropsT> {
               style={{...sharedStyles.paymentOrSeparator, marginBottom: "1em"}}>
               Or enter card details
             </div>
-          </>
+          </div>
         ) : null}
         {this.renderCreditCardForm()}
       </>
