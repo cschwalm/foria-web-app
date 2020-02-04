@@ -131,7 +131,28 @@ const font2 = 14;
 const font1 = 12;
 const checkoutButtonHeight = `${2.5 * font3}px`;
 
+const baseInputStyle = {
+  /* Remove the default input shadow */
+  WebkitAppearance: "none" as "none",
+  MozAppearance: "none" as "none",
+  appearance: "none" as "none",
+  border: `solid 1.75px ${lavenderGray}`,
+  width: "100%",
+  marginBottom: `${0.5 * font3}px`,
+  borderRadius: "5px",
+  fontSize: `${font3}px`,
+  boxSizing: "border-box" as "border-box"
+};
+
 const sharedStyles = {
+  mobileInput: {
+    ...baseInputStyle,
+    padding: "7px"
+  },
+  desktopInput: {
+    ...baseInputStyle,
+    padding: "8px"
+  },
   dashedLine: {borderBottom: "dashed 4px", color: antiFlashWhite},
   helpAnchor: {
     color: trolleyGray,
@@ -456,18 +477,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
           onChange={this.onChange}
           placeholder="Name as it appears on card"
           className={byLayout("mobile", "desktop")}
-          style={{
-            /* Remove the default input shadow */
-            WebkitAppearance: "none",
-            MozAppearance: "none",
-            appearance: "none",
-            border: `solid 1.75px ${lavenderGray}`,
-            marginBottom: "1em",
-            borderRadius: "5px",
-            fontSize: `${font3}px`,
-            padding: byLayout("7px", "9px"),
-            boxSizing: "border-box"
-          }}
+          style={byLayout(sharedStyles.mobileInput, sharedStyles.desktopInput)}
         />
         <div
           style={{
@@ -1084,19 +1094,7 @@ export class Home extends React.Component<AppPropsT> {
                   type="text"
                   autoComplete="tel"
                   className={byLayout("mobile", "desktop")}
-                  style={{
-                    /* Remove the default input shadow */
-                    WebkitAppearance: "none",
-                    MozAppearance: "none",
-                    appearance: "none",
-                    border: `solid 1.75px ${lavenderGray}`,
-                    width: "100%",
-                    marginBottom: `${0.5 * font3}px`,
-                    borderRadius: "5px",
-                    fontSize: `${font3}px`,
-                    padding: byLayout("7px", "9px"),
-                    boxSizing: "border-box"
-                  }}
+                  style={byLayout(sharedStyles.mobileInput, sharedStyles.desktopInput)}
                 />
               )}
             </InputMask>
@@ -1215,7 +1213,7 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderTicketStepBody = () => {
-    let event = this.props.event!;
+    let {event, byLayout} = this.props;
     let tiersExist = event?.ticket_type_config.length;
     return (
       <>
@@ -1237,6 +1235,13 @@ export class Home extends React.Component<AppPropsT> {
           ) : (
             <Skeleton />
           )}
+          <div>
+            <input
+              type="text"
+              className={byLayout("mobile", "desktop")}
+              style={byLayout(sharedStyles.mobileInput, sharedStyles.desktopInput)}
+            />
+          </div>
         </div>
       </>
     );
