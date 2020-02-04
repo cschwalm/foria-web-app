@@ -473,7 +473,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
               lineHeight: "1.2em",
               color: red
             }}>
-            * {showErrors && !cardholderName ? "This field is required" : ""}
+            {showErrors && !cardholderName ? "* This field is required" : ""}
           </span>
         </div>
         <input
@@ -505,7 +505,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
               lineHeight: "1.2em",
               color: red
             }}>
-            * {showErrors && cardElemEmpty ? "This field is required" : ""}
+            {showErrors && cardElemEmpty ? "* This field is required" : ""}
           </span>
         </div>
         <div
