@@ -272,6 +272,12 @@ const sharedStyles = {
     flex: 1,
     color: lavenderGray
   },
+  ticketSalesNotStarted: {
+    fontSize: `${font3}px`,
+    fontWeight: 500,
+    lineHeight: "1.2em",
+    color: trolleyGray
+  },
   ticketTitle: {
     fontSize: `${font3}px`,
     overflow: "hidden",
@@ -703,7 +709,6 @@ export class Home extends React.Component<AppPropsT> {
 
   renderDesktopTicketsStep = () => {
     let {
-      event,
       toNextView,
       ticketsForPurchase,
       checkoutPending,
@@ -717,18 +722,7 @@ export class Home extends React.Component<AppPropsT> {
           style={{
             margin: byLayout("1em", "1.5em 1em")
           }}>
-          <div style={{margin: "0em 0em 1.5em 0em"}}>
-            <div style={sharedStyles.ticketsRestriction}>
-              {event ? (
-                "A maximum of 10 tickets can be purchased"
-              ) : (
-                <Skeleton />
-              )}
-            </div>
-          </div>
-          <div style={{margin: "0em 0em 1.5em 0em"}}>
-            {this.renderTicketsGrid()}
-          </div>
+          {this.renderTicketStepBody()}
           <div
             className="row"
             style={{
@@ -1220,18 +1214,39 @@ export class Home extends React.Component<AppPropsT> {
     return `${minAmountStr} - ${maxAmountStr}`;
   };
 
+  renderTicketStepBody = () => {
+    let event = this.props.event!;
+    let tiersExist = event?.ticket_type_config.length;
+    return (
+      <>
+        <div style={{margin: "0em 0em 1.5em 0em"}}>
+          <div style={sharedStyles.ticketsRestriction}>
+            {event ? "A maximum of 10 tickets can be purchased" : <Skeleton />}
+          </div>
+        </div>
+        <div style={{margin: "0em 0em 2em 0em"}}>
+          {event ? (
+            tiersExist ? (
+              this.renderTicketsGrid()
+            ) : (
+              <span style={sharedStyles.ticketSalesNotStarted}>
+                Public ticket sales have not started yet. If you have a promo
+                code, enter it below to access tickets.
+              </span>
+            )
+          ) : (
+            <Skeleton />
+          )}
+        </div>
+      </>
+    );
+  };
+
   renderMobileTicketsStep = () => {
     return (
       <>
         <div style={sharedStyles.mobileTicketHeader}>Tickets</div>
-        <div style={{margin: "0em 0em 1.5em 0em"}}>
-          <div style={sharedStyles.ticketsRestriction}>
-            A maximum of 10 tickets can be purchased
-          </div>
-        </div>
-        <div style={{margin: "0em 0em 2em 0em"}}>
-          {this.renderTicketsGrid()}
-        </div>
+        {this.renderTicketStepBody()}
       </>
     );
   };
@@ -1392,32 +1407,33 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderMetadata = () => {
+    let {event} = this.props;
+    if (event == null) {
+      return;
+    }
 
-      let {event} = this.props;
-      if (event == null) {
-          return;
-      }
+    let eventName: String = event.name ? event.name : "Fora Event Page";
+    let description: String = event.name
+      ? "Buy your tickets today for " + eventName
+      : "Buy your tickets today.";
+    let imageUrl: String = event.image_url ? event.image_url : "";
 
-      let eventName : String = event.name ? event.name : 'Fora Event Page';
-      let description : String = event.name ? "Buy your tickets today for " + eventName : 'Buy your tickets today.';
-      let imageUrl : String = event.image_url ? event.image_url : '';
-
-      return (
-          <div className="application">
-              <Helmet
-                  title={eventName.toString()}
-                  meta={[
-                      {"property": "og:type", "content": "website"},
-                      {"property": "og:image", "content": imageUrl.toString()},
-                      {"property": "og:title", "content": eventName.toString()},
-                      {"property": "og:url", "content": window.location.href},
-                      {"property": "og:description", "content": description.toString()},
-                      {"property": "og:site_name", "content": 'Foria'},
-                      {"property": "fb:app_id", "content": '695063607637402'}
-                  ]}
-              />
-          </div>
-      );
+    return (
+      <div className="application">
+        <Helmet
+          title={eventName.toString()}
+          meta={[
+            {property: "og:type", content: "website"},
+            {property: "og:image", content: imageUrl.toString()},
+            {property: "og:title", content: eventName.toString()},
+            {property: "og:url", content: window.location.href},
+            {property: "og:description", content: description.toString()},
+            {property: "og:site_name", content: "Foria"},
+            {property: "fb:app_id", content: "695063607637402"}
+          ]}
+        />
+      </div>
+    );
   };
 
   renderHeader = () => {
@@ -1637,9 +1653,7 @@ export class Home extends React.Component<AppPropsT> {
     if (!event) {
       return "";
     }
-    let query = `${event.address.street_address} ${event.address.city}, ${
-      event.address.state
-    } ${event.address.zip}`;
+    let query = `${event.address.street_address} ${event.address.city}, ${event.address.state} ${event.address.zip}`;
     query = encodeURIComponent(query);
     return `https://www.google.com/maps/search/?api=1&query=${query}`;
   };
@@ -1691,7 +1705,11 @@ export class Home extends React.Component<AppPropsT> {
               overflowX: "hidden",
               flex: 1
             }}>
-            <div style={{padding: "0 4px", marginBottom: byLayout("1.5em", "2em")}}>
+            <div
+              style={{
+                padding: "0 4px",
+                marginBottom: byLayout("1.5em", "2em")
+              }}>
               <div
                 style={{
                   ...sharedStyles.eventTitle,
@@ -1767,9 +1785,7 @@ export class Home extends React.Component<AppPropsT> {
                       {event.address.venue_name}
                     </div>
                     <div style={styles.eventDetailSubtitle}>
-                      {`${event.address.street_address}, ${
-                        event.address.city
-                      }, ${event.address.state} ${event.address.zip}`}
+                      {`${event.address.street_address}, ${event.address.city}, ${event.address.state} ${event.address.zip}`}
                     </div>
                   </div>
                 </>
@@ -1797,7 +1813,9 @@ export class Home extends React.Component<AppPropsT> {
           position: "relative",
           margin: "0 auto"
         }}>
-        <div className="column" style={{padding: "0 4px", margin: byLayout("1em", "2em 1.5em")}}>
+        <div
+          className="column"
+          style={{padding: "0 4px", margin: byLayout("1em", "2em 1.5em")}}>
           <div className="row" style={{marginBottom: "0.6em"}}>
             <a
               href="https://foriatickets.com/privacy-policy.html"
@@ -1846,7 +1864,7 @@ export class Home extends React.Component<AppPropsT> {
           ...sharedStyles.eventBody,
           // Force text like (long urls) to break only when a natural break doesn't exist
           overflowWrap: "break-word",
-          padding: "0 4px",
+          padding: "0 4px"
         }}>
         {!event ? (
           <Skeleton height={100} />
@@ -2038,9 +2056,9 @@ export class Home extends React.Component<AppPropsT> {
           position: "relative",
           ...(error ? byLayout(iosErrorStyles, {}) : {})
         }}>
-          {this.renderMetadata()}
-          {pullUpMenuCollapsed ? (
-            <>
+        {this.renderMetadata()}
+        {pullUpMenuCollapsed ? (
+          <>
             {this.renderHeader()}
             {this.renderHero()}
             {this.renderBody()}
