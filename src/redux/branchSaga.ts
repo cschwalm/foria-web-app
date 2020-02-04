@@ -30,8 +30,8 @@ function* sendSMS() {
     channel: "web",
     feature: "order_confirmation",
     data: {
-      'event_id': eventId,
-      'order_id': orderNumber
+      event_id: eventId,
+      order_id: orderNumber
     }
   };
   let options = {};

@@ -221,6 +221,7 @@ function* saga() {
     return;
   }
 
+  event.ticket_type_config = [];
   yield put({
     type: ActionType.EventFetchSuccess,
     data: event

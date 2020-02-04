@@ -8,8 +8,7 @@ export const getTicketsForPurchase = (state: AppState) =>
 export const getAccessToken = (state: AppState) => state.root.accessToken;
 export const getBranchPhoneNumber = (state: AppState) =>
   state.home.branchPhoneNumber;
-export const getOrderNumber = (state: AppState) =>
-  state.home.orderNumber;
+export const getOrderNumber = (state: AppState) => state.home.orderNumber;
 
 export const isFreePurchase = (state: AppState) => {
   let ticketTypes: TicketTypeConfig[] =
