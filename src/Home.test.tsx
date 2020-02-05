@@ -3,6 +3,7 @@ import Enzyme, {shallow, mount} from "enzyme";
 import Adapter from "enzyme-adapter-react-16";
 import ReactMarkdown from "react-markdown";
 
+import {Layout} from "./layout"
 import {Home} from "./Home";
 import {AuthenticationStatus} from "./redux/reducers/root";
 import {View} from "./redux/reducers/home";
@@ -10,7 +11,9 @@ import {View} from "./redux/reducers/home";
 Enzyme.configure({adapter: new Adapter()});
 it("renders an event", () => {
   const props = {
+    layout: Layout.Desktop,
     byLayout: (a, b) => a,
+    promoTicketTypeConfigs: [],
     authenticationStatus: AuthenticationStatus.NoAuth,
     view: View.Tickets,
     togglePullUpMenu: () => {},
@@ -45,7 +48,9 @@ it("renders an event", () => {
 
 it("renders markdown in the event description", () => {
   const props = {
+    layout: Layout.Desktop,
     byLayout: (a, b) => a,
+    promoTicketTypeConfigs: [],
     authenticationStatus: AuthenticationStatus.NoAuth,
     view: View.Tickets,
     togglePullUpMenu: () => {},
@@ -73,6 +78,8 @@ it("renders markdown in the event description", () => {
 
 it("strips html from the markdown", () => {
   const props = {
+    layout: Layout.Desktop,
+    promoTicketTypeConfigs: [],
     byLayout: (a, b) => a,
     authenticationStatus: AuthenticationStatus.NoAuth,
     view: View.Tickets,
