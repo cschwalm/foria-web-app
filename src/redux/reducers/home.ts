@@ -95,8 +95,10 @@ export const someTicketsSelected = (ticketsForPurchase: TicketCounts) =>
 export const totalTicketsSelected = (ticketsForPurchase: TicketCounts) =>
   values(ticketsForPurchase).reduce((a, b) => a + b, 0);
 
-export const reducer = (state = initialState, action: Action) => {
-  // Special case those errors we wish to report to Sentry
+export const sentryCaptureErrorReducer = (
+  state = initialState,
+  action: Action
+) => {
   switch (action.type) {
     case StripeActionType.PaymentRequestCreationError:
     case StripeActionType.CanMakePaymentError:
@@ -123,7 +125,36 @@ export const reducer = (state = initialState, action: Action) => {
       });
       break;
   }
+  return state;
+};
 
+export const errorModalReducer = (state = initialState, action: Action) => {
+  switch (action.type) {
+    /* This error is shown inline
+    case ApiActionType.ApplyPromoError:
+   */
+    case StripeActionType.PaymentRequestCreationError:
+    case StripeActionType.CanMakePaymentError:
+    case StripeActionType.StripeScriptLoadingError:
+    case StripeActionType.StripeCreateTokenError:
+    case Auth0ActionType.UnrecoverableError:
+    case Auth0ActionType.LoginError:
+    case ApiActionType.EventFetchError:
+    case ApiActionType.CheckoutError:
+    case ApiActionType.CalculateOrderTotalError:
+    case ApiActionType.EventFetchCriticalError:
+    case ApiActionType.CheckoutCriticalError:
+    case BranchActionType.SendMeAppError:
+    case ApiActionType.CalculateOrderTotalCriticalError:
+      return {
+        ...state,
+        error: action.data
+      };
+  }
+  return state;
+};
+
+export const mainReducer = (state = initialState, action: Action) => {
   switch (action.type) {
     // Due to mobile space constraints, there is no back button to undo
     // selected tickets, as a substitute, the user can close the menu, and
@@ -229,33 +260,21 @@ export const reducer = (state = initialState, action: Action) => {
     case BranchActionType.SendMeAppError:
       return {
         ...state,
-        branchSMSPending: false,
-        error: action.data
+        branchSMSPending: false
       };
-    // This is a class of user-errors that are handled by auth0
-    // See: https://auth0.com/docs/libraries/error-messages
-    //
-    // case Auth0ActionType.AuthenticationError:
-    case StripeActionType.PaymentRequestCreationError:
-    case StripeActionType.CanMakePaymentError:
-    case StripeActionType.StripeScriptLoadingError:
-    case StripeActionType.StripeCreateTokenError:
-    case Auth0ActionType.UnrecoverableError:
-    case Auth0ActionType.LoginError:
-    case ApiActionType.EventFetchError:
-    case ApiActionType.CheckoutError:
-    case ApiActionType.CalculateOrderTotalError:
-    case ApiActionType.EventFetchCriticalError:
-    case ApiActionType.CheckoutCriticalError:
-    case ApiActionType.CalculateOrderTotalCriticalError:
-      return {
-        ...state,
-        error: action.data
-      };
-    default:
-      return state;
   }
+  return state;
 };
+
+// chainReducers connects the state from one reducer to the next.
+const chainReducers = (...reducers: any[]) => (state: any, action: any) =>
+  reducers.reduce((acc, next) => next(acc, action), state);
+
+export const reducer = chainReducers(
+  errorModalReducer,
+  sentryCaptureErrorReducer,
+  mainReducer
+);
 
 export const resetPullUpMenu = (dispatch: Dispatch<Action>) => () =>
   dispatch({type: ActionType.ResetPullUpMenu});
