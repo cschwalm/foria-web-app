@@ -38,7 +38,9 @@ export enum ActionType {
   FreePurchaseSubmit = "FreePurchaseSubmit",
 
   SendMeAppSubmit = "SendMeAppSubmit",
-  BranchPhoneNumberChange = "BranchPhoneNumberChange"
+  BranchPhoneNumberChange = "BranchPhoneNumberChange",
+
+  ApplyPromoCode = "ApplyPromoCode"
 }
 
 export type TicketCounts = {[ticketId: string]: number};
@@ -60,6 +62,10 @@ export interface State {
   branchPhoneNumber?: string;
   branchSMSPending: boolean;
   branchLinkSent: boolean;
+  promoTicketTypeConfigs: TicketTypeConfig[];
+  applyPromoPending: boolean;
+  applyPromoError?: string;
+  appliedPromoCode?: string;
 }
 export const initialState: State = {
   pullUpMenuCollapsed: true,
@@ -70,7 +76,9 @@ export const initialState: State = {
   purchasePending: false,
   branchSMSPending: false,
   branchLinkSent: false,
-  ticketsForPurchase: {}
+  ticketsForPurchase: {},
+  applyPromoPending: false,
+  promoTicketTypeConfigs: []
 };
 
 function updateTicketsQuantityHelper(
@@ -106,6 +114,7 @@ export const sentryCaptureErrorReducer = (
     case StripeActionType.StripeCreateTokenError:
     case Auth0ActionType.UnrecoverableError:
     case Auth0ActionType.LoginError:
+    case ApiActionType.ApplyPromoCriticalError:
     case ApiActionType.EventFetchCriticalError:
     case ApiActionType.CheckoutCriticalError:
     case ApiActionType.CalculateOrderTotalCriticalError:
@@ -174,6 +183,37 @@ export const mainReducer = (state = initialState, action: Action) => {
       return {
         ...state,
         view: action.data
+      };
+    case ActionType.ApplyPromoCode:
+      return {
+        ...state,
+        applyPromoPending: true
+      };
+    case ApiActionType.ApplyPromoError:
+    case ApiActionType.ApplyPromoCriticalError:
+      return {
+        ...state,
+        applyPromoError:
+          action.type === ApiActionType.ApplyPromoCriticalError
+            ? "An internal error occurred"
+            : action.data.status === 401
+            ? "Please login first"
+            : "Invalid promo code",
+        applyPromoPending: false
+      };
+    case ApiActionType.ApplyPromoCancelledNoLogin:
+      return {
+        ...state,
+        applyPromoPending: false,
+        applyPromoError: "Login required"
+      };
+    case ApiActionType.ApplyPromoSuccess:
+      return {
+        ...state,
+        promoTicketTypeConfigs: action.data.promoTicketTypeConfigs,
+        appliedPromoCode: action.data.promoCode,
+        applyPromoPending: false,
+        applyPromoError: ""
       };
     case ApiActionType.CalculateOrderTotalSuccess:
       return {
@@ -310,6 +350,10 @@ export const onCreditCardSubmit = (dispatch: Dispatch<Action>) => () =>
 
 export const onFreePurchaseSubmit = (dispatch: Dispatch<Action>) => () =>
   dispatch({type: ActionType.FreePurchaseSubmit});
+
+export const onApplyPromoCode = (dispatch: Dispatch<Action>) => (
+  promoCode: string
+) => dispatch({type: ActionType.ApplyPromoCode, data: promoCode});
 
 export const onSendMeApp = (dispatch: Dispatch<Action>) => () =>
   dispatch({type: ActionType.SendMeAppSubmit});

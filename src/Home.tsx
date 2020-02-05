@@ -20,7 +20,9 @@ import {isFreePurchase} from "./redux/selectors";
 import {
   antiFlashWhite,
   black,
+  budGreen,
   lavenderGray,
+  neonCarrot,
   red,
   trolleyGray,
   vividRaspberry,
@@ -43,6 +45,7 @@ import {
   addTicket as addTicketAction,
   onCreditCardSubmit as onCreditCardSubmitAction,
   onFreePurchaseSubmit as onFreePurchaseSubmitAction,
+  onApplyPromoCode as onApplyPromoCodeAction,
   onSendMeApp as onSendMeAppAction,
   onBranchPhoneNumberChange as onBranchPhoneNumberChangeAction,
   removeTicket as removeTicketAction,
@@ -99,6 +102,7 @@ interface AppPropsT {
   onTokenCreateError: (err: string) => void;
   onCreditCardSubmit: () => void;
   onFreePurchaseSubmit: () => void;
+  onApplyPromoCode: (promoCode: string) => void;
   onSendMeApp: () => void;
   onBranchPhoneNumberChange: (phoneNumber: string) => void;
   selectView: (view: View) => void;
@@ -123,6 +127,9 @@ interface AppPropsT {
   error?: any;
   branchPhoneNumber?: string;
   branchLinkSent: boolean;
+  promoTicketTypeConfigs: TicketTypeConfig[];
+  applyPromoPending: boolean;
+  applyPromoError?: string;
 }
 
 const font6 = 36;
@@ -203,8 +210,7 @@ const sharedStyles = {
   promoButtonText: {
     fontSize: `${font3}px`,
     fontWeight: 500,
-    lineHeight: "1.2em",
-    color: trolleyGray
+    lineHeight: "1.2em"
   },
   ticketsTitle: {
     display: "flex",
@@ -558,6 +564,10 @@ const Ellipsis = ({style = {}}: {style?: React.CSSProperties}) => (
 );
 
 export class Home extends React.Component<AppPropsT> {
+  state = {
+    // Storing this value in local state, to lower input latency
+    promoCode: ""
+  };
   renderTicketDescriptionColumn = (ticketType: TicketTypeConfig) => {
     let soldOut = ticketType.amount_remaining === 0;
     return (
@@ -705,7 +715,16 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderTicketsGrid = () => {
-    let {event} = this.props;
+    let {event, promoTicketTypeConfigs} = this.props;
+
+    let ticketConfigs: TicketTypeConfig[] = [];
+    let body: any = <Skeleton />;
+    if (event) {
+      ticketConfigs = promoTicketTypeConfigs.length
+        ? promoTicketTypeConfigs
+        : event.ticket_type_config;
+      body = ticketConfigs.map(item => this.renderTicketGridRow(item));
+    }
 
     return (
       <div
@@ -716,11 +735,7 @@ export class Home extends React.Component<AppPropsT> {
           gridRowGap: "1em",
           alignItems: "center"
         }}>
-        {event ? (
-          event.ticket_type_config.map(item => this.renderTicketGridRow(item))
-        ) : (
-          <Skeleton />
-        )}
+        {body}
       </div>
     );
   };
@@ -1224,54 +1239,118 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderPromoCode = () => {
-    let {event, byLayout} = this.props;
+    let {
+      byLayout,
+      onApplyPromoCode,
+      applyPromoPending,
+      promoTicketTypeConfigs,
+      applyPromoError: promoCodeError
+    } = this.props;
+    let {promoCode} = this.state;
+
+    let promoCodeTickets = promoTicketTypeConfigs;
+    let canSubmitPromoCode = !applyPromoPending;
+    let applyButtonStyles = {
+      ...sharedStyles.promoButtonText,
+      color:
+        promoCodeError || promoCodeTickets.length || !promoCode
+          ? trolleyGray
+          : vividRaspberry,
+      padding: "0em 1em",
+      display: "flex",
+      /* Provide a stable width, so that the narrow loading symbol doesn't
+       * cause to much visual disruption */
+      minWidth: "40px",
+      alignItems: "center",
+      justifyContent: "center",
+      cursor: canSubmitPromoCode ? "pointer" : "not-allowed"
+    };
+    let promoInputStyles = {
+      ...byLayout(sharedStyles.mobileInput, sharedStyles.desktopInput),
+      border: `solid 1.75px ${
+        promoCodeError
+          ? neonCarrot
+          : promoCodeTickets.length
+          ? budGreen
+          : lavenderGray
+      }`,
+      margin: 0
+    };
+
     return (
       <div>
-        <span style={{position: "relative"}}>
-          <input
-            placeholder="Enter promo code"
-            type="text"
-            className={byLayout("mobile", "desktop")}
-            style={byLayout(
-              sharedStyles.mobileInput,
-              sharedStyles.desktopInput
-            )}
-          />
-          <div
-            style={{
-              top: 0,
-              right: 0,
-              height: "100%",
-              // backgroundColor: "green",
-              position: "absolute",
-              display: "flex"
-            }}>
-            <span
-              style={{
-                width: "2px",
-                height: "100%",
-                backgroundColor: lavenderGray,
-                display: "inline-block"
-              }}
-            />
-            <span
-              style={{
-                ...sharedStyles.promoButtonText,
-                width: "40px",
-                padding: "0em 1em",
-                height: "100%",
-                display: "inline-block"
-              }}>
-              Apply
-            </span>
+        <div style={{position: "relative"}}>
+          {promoCodeTickets.length ? (
+            <div style={{color: budGreen, margin: "8px"}}>
+              Promo code applied{" "}
+              <span style={{fontWeight: "bold"}}>{promoCode}</span>
+            </div>
+          ) : (
+            <>
+              <input
+                onKeyDown={(
+                  event: React.KeyboardEvent<HTMLDivElement>
+                ): void => {
+                  if (!canSubmitPromoCode || event.key !== "Enter") {
+                    return;
+                  }
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onApplyPromoCode(promoCode);
+                }}
+                value={promoCode}
+                onChange={e => this.setState({promoCode: e.target.value})}
+                placeholder="Enter promo code"
+                type="text"
+                className={byLayout("mobile", "desktop")}
+                style={promoInputStyles}
+              />
+              <div
+                style={{
+                  top: 0,
+                  right: 0,
+                  height: "100%",
+                  position: "absolute",
+                  display: "flex"
+                }}>
+                <div
+                  style={{display: "flex", flexDirection: "column", flex: 1}}>
+                  <span
+                    style={{
+                      flex: 1,
+                      margin: "8px 0px",
+                      width: "2px",
+                      backgroundColor: lavenderGray,
+                      display: "inline-block"
+                    }}
+                  />
+                </div>
+                <div
+                  style={applyButtonStyles}
+                  onClick={() =>
+                    canSubmitPromoCode && onApplyPromoCode(promoCode)
+                  }>
+                  {applyPromoPending ? (
+                    <Ellipsis style={{fontWeight: 700}} />
+                  ) : (
+                    "Apply"
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+        {promoCodeError ? (
+          <div style={{color: neonCarrot, margin: "8px 0px 0px 8px"}}>
+            {promoCodeError}
           </div>
-        </span>
+        ) : null}
       </div>
     );
   };
 
   renderTicketStepBody = () => {
-    let {event, byLayout} = this.props;
+    let {event} = this.props;
     let tiersExist = event?.ticket_type_config.length;
     return (
       <>
@@ -1294,7 +1373,9 @@ export class Home extends React.Component<AppPropsT> {
             <Skeleton />
           )}
         </div>
-        <div style={{margin: "0em 0em 2em 0em"}}>{this.renderPromoCode()}</div>
+        <div style={{margin: "0em 0em 1.5em 0em"}}>
+          {this.renderPromoCode()}
+        </div>
       </>
     );
   };
@@ -2172,7 +2253,10 @@ export default connect(
       branchSMSPending: home.branchSMSPending,
       isFree: memoizedIsFreePurchase(state),
       branchPhoneNumber: home.branchPhoneNumber,
-      branchLinkSent: home.branchLinkSent
+      branchLinkSent: home.branchLinkSent,
+      promoTicketTypeConfigs: home.promoTicketTypeConfigs,
+      applyPromoPending: home.applyPromoPending,
+      applyPromoError: home.applyPromoError
     };
   },
   dispatch => ({
@@ -2189,6 +2273,7 @@ export default connect(
     onTokenCreateError: onTokenCreateErrorAction(dispatch),
     onCreditCardSubmit: onCreditCardSubmitAction(dispatch),
     onFreePurchaseSubmit: onFreePurchaseSubmitAction(dispatch),
+    onApplyPromoCode: onApplyPromoCodeAction(dispatch),
     onSendMeApp: onSendMeAppAction(dispatch),
     onBranchPhoneNumberChange: onBranchPhoneNumberChangeAction(dispatch),
     resetError: resetErrorAction(dispatch)
