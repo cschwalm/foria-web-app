@@ -15,6 +15,7 @@ import memoizeOne from "memoize-one";
 import ReactMarkdown from "react-markdown";
 import InputMask from "react-input-mask";
 
+import {Layout} from "./layout";
 import {isFreePurchase} from "./redux/selectors";
 import {
   antiFlashWhite,
@@ -83,6 +84,7 @@ const ticketOverlayWidth = 385;
 const bodyWidth = 960;
 
 interface AppPropsT {
+  layout: Layout;
   byLayout: <A, B>(a: A, b: B) => A | B;
   pullUpMenuCollapsed: boolean;
   authenticationStatus: AuthenticationStatus;
@@ -2079,7 +2081,7 @@ export class Home extends React.Component<AppPropsT> {
   }
 
   render() {
-    let {error, byLayout, pullUpMenuCollapsed} = this.props;
+    let {layout, error, byLayout, pullUpMenuCollapsed} = this.props;
 
     let backgroundColor = byLayout(
       // On mobile, we render a white bg behind the pull up menu
@@ -2093,6 +2095,30 @@ export class Home extends React.Component<AppPropsT> {
       position: "fixed",
       width: "100%"
     };
+
+    let body = null;
+    if (layout === Layout.Desktop) {
+      body = (
+        <>
+          {this.renderHeader()}
+          {this.renderHero()}
+          {this.renderBody()}
+          {this.renderFooter()}
+        </>
+      );
+    } else if (layout === Layout.Mobile && pullUpMenuCollapsed) {
+      body = (
+        <>
+          {this.renderHeader()}
+          {this.renderHero()}
+          {this.renderBody()}
+          {this.renderFooter()}
+          {this.renderPullUpFooter()}
+        </>
+      );
+    } else if (layout === Layout.Mobile) {
+      body = this.renderTicketsPullUp();
+    }
 
     return (
       <div
@@ -2112,18 +2138,7 @@ export class Home extends React.Component<AppPropsT> {
           ...(error ? byLayout(iosErrorStyles, {}) : {})
         }}>
         {this.renderMetadata()}
-        {pullUpMenuCollapsed ? (
-          <>
-            {this.renderHeader()}
-            {this.renderHero()}
-            {this.renderBody()}
-            {this.renderFooter()}
-            {byLayout(this.renderPullUpFooter(), null)}
-          </>
-        ) : (
-          byLayout(this.renderTicketsPullUp(), null)
-        )}
-        {this.renderErrorOverlay()}
+        {body}
       </div>
     );
   }
@@ -2135,6 +2150,7 @@ export default connect(
   (state: AppState) => {
     let {root, home} = state;
     return {
+      layout: root.layout,
       byLayout: byLayoutWrapper(root.layout),
       profile: root.profile,
       stripe: root.stripe,
