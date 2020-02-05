@@ -1244,22 +1244,21 @@ export class Home extends React.Component<AppPropsT> {
       onApplyPromoCode,
       applyPromoPending,
       promoTicketTypeConfigs,
-      applyPromoError: promoCodeError
+      applyPromoError
     } = this.props;
     let {promoCode} = this.state;
 
-    let promoCodeTickets = promoTicketTypeConfigs;
     let canSubmitPromoCode = !applyPromoPending;
     let applyButtonStyles = {
       ...sharedStyles.promoButtonText,
       color:
-        promoCodeError || promoCodeTickets.length || !promoCode
+        applyPromoError || promoTicketTypeConfigs.length || !promoCode
           ? trolleyGray
           : vividRaspberry,
       padding: "0em 1em",
       display: "flex",
       /* Provide a stable width, so that the narrow loading symbol doesn't
-       * cause to much visual disruption */
+       * cause too much visual disruption */
       minWidth: "40px",
       alignItems: "center",
       justifyContent: "center",
@@ -1268,9 +1267,9 @@ export class Home extends React.Component<AppPropsT> {
     let promoInputStyles = {
       ...byLayout(sharedStyles.mobileInput, sharedStyles.desktopInput),
       border: `solid 1.75px ${
-        promoCodeError
+        applyPromoError
           ? neonCarrot
-          : promoCodeTickets.length
+          : promoTicketTypeConfigs.length
           ? budGreen
           : lavenderGray
       }`,
@@ -1280,7 +1279,7 @@ export class Home extends React.Component<AppPropsT> {
     return (
       <div>
         <div style={{position: "relative"}}>
-          {promoCodeTickets.length ? (
+          {promoTicketTypeConfigs.length ? (
             <div style={{color: budGreen, margin: "8px"}}>
               Promo code applied{" "}
               <span style={{fontWeight: "bold"}}>{promoCode}</span>
@@ -1340,9 +1339,9 @@ export class Home extends React.Component<AppPropsT> {
             </>
           )}
         </div>
-        {promoCodeError ? (
+        {applyPromoError ? (
           <div style={{color: neonCarrot, margin: "8px 0px 0px 8px"}}>
-            {promoCodeError}
+            {applyPromoError}
           </div>
         ) : null}
       </div>
