@@ -15,9 +15,7 @@ import {
   someTicketsSelected
 } from "./reducers/home";
 import {ActionType as StripeActionType} from "./stripeSaga";
-import {
-  initiateLoginIfNotLoggedInSaga
-} from "./auth0Saga";
+import {initiateLoginIfNotLoggedInSaga} from "./auth0Saga";
 import {ActionType as ApiActionType} from "./apiSaga";
 
 // Login a user then navigate to payment options

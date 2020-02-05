@@ -1428,7 +1428,7 @@ export class Home extends React.Component<AppPropsT> {
               display: "flex",
               backgroundColor: white,
               minHeight: `${4.75 * font3}px`,
-              padding: "1.5em 1em 1em 1em",
+              padding: "1.5em 1em 0em 1em",
               position: "relative"
             }}
             className="column">
@@ -1719,48 +1719,57 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
-  renderFixedCheckoutButton = () => {
+  // If isVisualPlaceholder is true, we render a dummy version of the element
+  // which is transparent but occupies the same vertical space as the
+  // non-dummy version
+  renderCheckoutButton = ({
+    isVisualPlaceholder
+  }: {
+    isVisualPlaceholder: boolean;
+  }) => {
     let {toNextView, ticketsForPurchase, checkoutPending} = this.props;
     let someSelected = someTicketsSelected(ticketsForPurchase);
     return (
-      <div>
+      <div
+        style={{
+          opacity: isVisualPlaceholder ? 0 : 1,
+          boxSizing: "border-box",
+          boxShadow: "rgba(0, 0, 0, 0.21) 0 -2px 8px 2px",
+          display: "flex",
+          backgroundColor: white,
+          minHeight: `${4.75 * font3}px`,
+          height: "100%",
+          padding: "1em",
+          position: "relative"
+        }}
+        className="column">
         <div
+          className="row"
           style={{
-            // Create an empty rectangle so that content doesn't flow behind this fixed button
-            height: `${3 * font3}px`
+            ...sharedStyles.checkoutButton,
+            ...(!someSelected ? sharedStyles.disabledMobileCheckoutButton : {})
           }}
-        />
+          onClick={isVisualPlaceholder ? () => {} : toNextView}>
+          Checkout
+          {checkoutPending ? <Ellipsis style={{fontWeight: 700}} /> : null}
+        </div>
+      </div>
+    );
+  };
+
+  renderFixedCheckoutButton = () => {
+    return (
+      <div>
+        {/* Create an empty rectangle so that content doesn't flow behind
+         * this fixed button */
+        this.renderCheckoutButton({isVisualPlaceholder: true})}
         <div
           style={{
             position: "fixed",
             bottom: "0",
             width: "100%"
           }}>
-          <div
-            style={{
-              boxSizing: "border-box",
-              boxShadow: "rgba(0, 0, 0, 0.21) 0 -2px 8px 2px",
-              display: "flex",
-              backgroundColor: white,
-              minHeight: `${4.75 * font3}px`,
-              height: "100%",
-              padding: "1em",
-              position: "relative"
-            }}
-            className="column">
-            <div
-              className="row"
-              style={{
-                ...sharedStyles.checkoutButton,
-                ...(!someSelected
-                  ? sharedStyles.disabledMobileCheckoutButton
-                  : {})
-              }}
-              onClick={toNextView}>
-              Checkout
-              {checkoutPending ? <Ellipsis style={{fontWeight: 700}} /> : null}
-            </div>
-          </div>
+          {this.renderCheckoutButton({isVisualPlaceholder: false})}
         </div>
       </div>
     );
