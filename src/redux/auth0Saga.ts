@@ -1,6 +1,6 @@
 import Auth0Lock from "auth0-lock";
 import {eventChannel} from "redux-saga";
-import {call, put, take, takeEvery} from "redux-saga/effects";
+import {call, put, fork, take, takeEvery, race} from "redux-saga/effects";
 import {Dispatch} from "redux";
 
 import Action from "./Action";
@@ -30,6 +30,30 @@ export const initiateLogin = (dispatch: Dispatch<Action>) => () =>
 
 export const initiateLogout = (dispatch: Dispatch<Action>) => () =>
   dispatch({type: ActionType.InitiateLogout});
+
+export function* initiateLoginIfNotLoggedInSaga() {
+  // Initiate a login if they are not logged in
+  yield put({type: ActionType.CheckLogin});
+  let [success, noSession /*,error*/] = yield race([
+    take(ActionType.AuthenticationSuccess),
+    take(ActionType.NoExistingSession),
+    take(ActionType.AuthenticationError)
+  ]);
+
+  if (noSession) {
+    // We attempt to login the user
+    yield put({type: ActionType.InitiateLogin});
+    [success /*,canceled,unrecoverable*/] = yield race([
+      take(ActionType.AuthenticationSuccess),
+      take(ActionType.AuthenticationCancelled),
+      take(ActionType.UnrecoverableError)
+    ]);
+  }
+
+  if (!success) {
+    throw new Error("Login failed");
+  }
+}
 
 function createLock() {
   return new Auth0Lock(
