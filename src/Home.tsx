@@ -15,11 +15,14 @@ import memoizeOne from "memoize-one";
 import ReactMarkdown from "react-markdown";
 import InputMask from "react-input-mask";
 
+import {Layout} from "./layout";
 import {isFreePurchase} from "./redux/selectors";
 import {
   antiFlashWhite,
   black,
+  budGreen,
   lavenderGray,
+  neonCarrot,
   red,
   trolleyGray,
   vividRaspberry,
@@ -42,6 +45,8 @@ import {
   addTicket as addTicketAction,
   onCreditCardSubmit as onCreditCardSubmitAction,
   onFreePurchaseSubmit as onFreePurchaseSubmitAction,
+  onApplyPromoCode as onApplyPromoCodeAction,
+  resetPromoError as resetPromoErrorAction,
   onSendMeApp as onSendMeAppAction,
   onBranchPhoneNumberChange as onBranchPhoneNumberChangeAction,
   removeTicket as removeTicketAction,
@@ -83,6 +88,7 @@ const ticketOverlayWidth = 385;
 const bodyWidth = 960;
 
 interface AppPropsT {
+  layout: Layout;
   byLayout: <A, B>(a: A, b: B) => A | B;
   pullUpMenuCollapsed: boolean;
   authenticationStatus: AuthenticationStatus;
@@ -97,6 +103,8 @@ interface AppPropsT {
   onTokenCreateError: (err: string) => void;
   onCreditCardSubmit: () => void;
   onFreePurchaseSubmit: () => void;
+  onApplyPromoCode: (promoCode: string) => void;
+  resetPromoError: () => void;
   onSendMeApp: () => void;
   onBranchPhoneNumberChange: (phoneNumber: string) => void;
   selectView: (view: View) => void;
@@ -121,6 +129,9 @@ interface AppPropsT {
   error?: any;
   branchPhoneNumber?: string;
   branchLinkSent: boolean;
+  promoTicketTypeConfigs: TicketTypeConfig[];
+  applyPromoPending: boolean;
+  applyPromoError?: string;
 }
 
 const font6 = 36;
@@ -131,7 +142,28 @@ const font2 = 14;
 const font1 = 12;
 const checkoutButtonHeight = `${2.5 * font3}px`;
 
+const baseInputStyle = {
+  /* Remove the default input shadow */
+  WebkitAppearance: "none" as "none",
+  MozAppearance: "none" as "none",
+  appearance: "none" as "none",
+  border: `solid 1.75px ${lavenderGray}`,
+  width: "100%",
+  marginBottom: `${font3}px`,
+  borderRadius: "5px",
+  fontSize: `${font3}px`,
+  boxSizing: "border-box" as "border-box"
+};
+
 const sharedStyles = {
+  mobileInput: {
+    ...baseInputStyle,
+    padding: "7px"
+  },
+  desktopInput: {
+    ...baseInputStyle,
+    padding: "8px"
+  },
   dashedLine: {borderBottom: "dashed 4px", color: antiFlashWhite},
   helpAnchor: {
     color: trolleyGray,
@@ -177,6 +209,11 @@ const sharedStyles = {
     lineHeight: "1.4em",
     color: trolleyGray
   },
+  promoButtonText: {
+    fontSize: `${font3}px`,
+    fontWeight: 500,
+    lineHeight: "1.2em"
+  },
   ticketsTitle: {
     display: "flex",
     justifyContent: "center",
@@ -187,7 +224,7 @@ const sharedStyles = {
     fontFamily: "Roboto",
     boxSizing: "border-box" as "border-box",
     /* Provide exact height to line up the menu bottom border with the hero bottom border */
-    height: `${3.2 * font3}px`,
+    height: `${2.2 * font3}px`,
     fontSize: `${font5}px`
   },
   eventSubTitle: {
@@ -271,6 +308,12 @@ const sharedStyles = {
     fontWeight: 500,
     flex: 1,
     color: lavenderGray
+  },
+  ticketSalesNotStarted: {
+    fontSize: `${font3}px`,
+    fontWeight: 500,
+    lineHeight: "1.2em",
+    color: trolleyGray
   },
   ticketTitle: {
     fontSize: `${font3}px`,
@@ -440,7 +483,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
               lineHeight: "1.2em",
               color: red
             }}>
-            * {showErrors && !cardholderName ? "This field is required" : ""}
+            {showErrors && !cardholderName ? "* This field is required" : ""}
           </span>
         </div>
         <input
@@ -450,18 +493,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
           onChange={this.onChange}
           placeholder="Name as it appears on card"
           className={byLayout("mobile", "desktop")}
-          style={{
-            /* Remove the default input shadow */
-            WebkitAppearance: "none",
-            MozAppearance: "none",
-            appearance: "none",
-            border: `solid 1.75px ${lavenderGray}`,
-            marginBottom: "1em",
-            borderRadius: "5px",
-            fontSize: `${font3}px`,
-            padding: byLayout("7px", "9px"),
-            boxSizing: "border-box"
-          }}
+          style={byLayout(sharedStyles.mobileInput, sharedStyles.desktopInput)}
         />
         <div
           style={{
@@ -483,7 +515,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
               lineHeight: "1.2em",
               color: red
             }}>
-            * {showErrors && cardElemEmpty ? "This field is required" : ""}
+            {showErrors && cardElemEmpty ? "* This field is required" : ""}
           </span>
         </div>
         <div
@@ -534,6 +566,10 @@ const Ellipsis = ({style = {}}: {style?: React.CSSProperties}) => (
 );
 
 export class Home extends React.Component<AppPropsT> {
+  state = {
+    // Storing this value in local state, to lower input latency
+    promoCode: ""
+  };
   renderTicketDescriptionColumn = (ticketType: TicketTypeConfig) => {
     let soldOut = ticketType.amount_remaining === 0;
     return (
@@ -680,9 +716,7 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
-  renderTicketsGrid = () => {
-    let {event} = this.props;
-
+  renderTicketsGrid = (ticketConfigs: TicketTypeConfig[]) => {
     return (
       <div
         style={{
@@ -692,18 +726,13 @@ export class Home extends React.Component<AppPropsT> {
           gridRowGap: "1em",
           alignItems: "center"
         }}>
-        {event ? (
-          event.ticket_type_config.map(item => this.renderTicketGridRow(item))
-        ) : (
-          <Skeleton />
-        )}
+        {ticketConfigs.map(item => this.renderTicketGridRow(item))}
       </div>
     );
   };
 
   renderDesktopTicketsStep = () => {
     let {
-      event,
       toNextView,
       ticketsForPurchase,
       checkoutPending,
@@ -717,18 +746,7 @@ export class Home extends React.Component<AppPropsT> {
           style={{
             margin: byLayout("1em", "1.5em 1em")
           }}>
-          <div style={{margin: "0em 0em 1.5em 0em"}}>
-            <div style={sharedStyles.ticketsRestriction}>
-              {event ? (
-                "A maximum of 10 tickets can be purchased"
-              ) : (
-                <Skeleton />
-              )}
-            </div>
-          </div>
-          <div style={{margin: "0em 0em 1.5em 0em"}}>
-            {this.renderTicketsGrid()}
-          </div>
+          {this.renderTicketStepBody()}
           <div
             className="row"
             style={{
@@ -771,7 +789,7 @@ export class Home extends React.Component<AppPropsT> {
     return (
       <>
         {stripe && canMakePayment ? (
-          <>
+          <div style={{margin: "0em 0em 1.5em 0em"}}>
             <div style={{margin: "0em 0em 1em 0em"}}>
               <StripeProvider stripe={stripe}>
                 <Elements
@@ -792,7 +810,7 @@ export class Home extends React.Component<AppPropsT> {
               style={{...sharedStyles.paymentOrSeparator, marginBottom: "1em"}}>
               Or enter card details
             </div>
-          </>
+          </div>
         ) : null}
         {this.renderCreditCardForm()}
       </>
@@ -1090,19 +1108,10 @@ export class Home extends React.Component<AppPropsT> {
                   type="text"
                   autoComplete="tel"
                   className={byLayout("mobile", "desktop")}
-                  style={{
-                    /* Remove the default input shadow */
-                    WebkitAppearance: "none",
-                    MozAppearance: "none",
-                    appearance: "none",
-                    border: `solid 1.75px ${lavenderGray}`,
-                    width: "100%",
-                    marginBottom: `${0.5 * font3}px`,
-                    borderRadius: "5px",
-                    fontSize: `${font3}px`,
-                    padding: byLayout("7px", "9px"),
-                    boxSizing: "border-box"
-                  }}
+                  style={byLayout(
+                    sharedStyles.mobileInput,
+                    sharedStyles.desktopInput
+                  )}
                 />
               )}
             </InputMask>
@@ -1220,18 +1229,168 @@ export class Home extends React.Component<AppPropsT> {
     return `${minAmountStr} - ${maxAmountStr}`;
   };
 
+  renderPromoCode = () => {
+    let {
+      byLayout,
+      onApplyPromoCode,
+      applyPromoPending,
+      promoTicketTypeConfigs,
+      applyPromoError,
+      resetPromoError
+    } = this.props;
+    let {promoCode} = this.state;
+
+    let canSubmitPromoCode = !applyPromoPending;
+    let applyButtonStyles = {
+      ...sharedStyles.promoButtonText,
+      color:
+        applyPromoError || promoTicketTypeConfigs.length || !promoCode
+          ? trolleyGray
+          : vividRaspberry,
+      padding: "0em 1em",
+      display: "flex",
+      /* Provide a stable width, so that the narrow loading symbol doesn't
+       * cause too much visual disruption */
+      minWidth: "40px",
+      alignItems: "center",
+      justifyContent: "center",
+      cursor: canSubmitPromoCode ? "pointer" : "not-allowed"
+    };
+    let promoInputStyles = {
+      ...byLayout(sharedStyles.mobileInput, sharedStyles.desktopInput),
+      border: `solid 1.75px ${
+        applyPromoError
+          ? neonCarrot
+          : promoTicketTypeConfigs.length
+          ? budGreen
+          : lavenderGray
+      }`,
+      margin: 0
+    };
+
+    return (
+      <div>
+        <div style={{position: "relative"}}>
+          {promoTicketTypeConfigs.length ? (
+            <div style={{color: budGreen, margin: "8px"}}>
+              Promo code applied{" "}
+              <span style={{fontWeight: "bold"}}>{promoCode}</span>
+            </div>
+          ) : (
+            <>
+              <input
+                onKeyDown={(
+                  event: React.KeyboardEvent<HTMLDivElement>
+                ): void => {
+                  if (!canSubmitPromoCode || event.key !== "Enter") {
+                    return;
+                  }
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onApplyPromoCode(promoCode);
+                }}
+                value={promoCode}
+                onChange={e => {
+                  this.setState({
+                    promoCode: e.target.value.trim().toUpperCase()
+                  });
+                  if (applyPromoError) {
+                    resetPromoError();
+                  }
+                }}
+                placeholder="Enter promo code"
+                type="text"
+                className={byLayout("mobile", "desktop")}
+                style={promoInputStyles}
+              />
+              <div
+                style={{
+                  top: 0,
+                  right: 0,
+                  height: "100%",
+                  position: "absolute",
+                  display: "flex"
+                }}>
+                <div
+                  style={{display: "flex", flexDirection: "column", flex: 1}}>
+                  <span
+                    style={{
+                      flex: 1,
+                      margin: "8px 0px",
+                      width: "2px",
+                      backgroundColor: lavenderGray,
+                      display: "inline-block"
+                    }}
+                  />
+                </div>
+                <div
+                  style={applyButtonStyles}
+                  onClick={() =>
+                    canSubmitPromoCode && onApplyPromoCode(promoCode)
+                  }>
+                  {applyPromoPending ? (
+                    <Ellipsis style={{fontWeight: 700}} />
+                  ) : (
+                    "Apply"
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+        {applyPromoError ? (
+          <div style={{color: neonCarrot, margin: "8px 0px 0px 8px"}}>
+            {applyPromoError}
+          </div>
+        ) : null}
+      </div>
+    );
+  };
+
+  renderTicketStepBody = () => {
+    let {event, promoTicketTypeConfigs} = this.props;
+
+    let ticketConfigs: TicketTypeConfig[] = [];
+    // Promo code tickets have precedence to the tickets on the event
+    if (promoTicketTypeConfigs.length) {
+      ticketConfigs = promoTicketTypeConfigs;
+    } else if (event?.ticket_type_config?.length) {
+      ticketConfigs = event.ticket_type_config;
+    }
+
+    return (
+      <>
+        <div style={{margin: "0em 0em 1.5em 0em"}}>
+          <div style={sharedStyles.ticketsRestriction}>
+            {event ? "A maximum of 10 tickets can be purchased" : <Skeleton />}
+          </div>
+        </div>
+        <div style={{margin: "0em 0em 1.5em 0em"}}>
+          {event ? (
+            ticketConfigs.length ? (
+              this.renderTicketsGrid(ticketConfigs)
+            ) : (
+              <span style={sharedStyles.ticketSalesNotStarted}>
+                Public ticket sales have not started yet. If you have a promo
+                code, enter it below to access tickets.
+              </span>
+            )
+          ) : (
+            <Skeleton />
+          )}
+        </div>
+        <div style={{margin: "0em 0em 1.5em 0em"}}>
+          {this.renderPromoCode()}
+        </div>
+      </>
+    );
+  };
+
   renderMobileTicketsStep = () => {
     return (
       <>
         <div style={sharedStyles.mobileTicketHeader}>Tickets</div>
-        <div style={{margin: "0em 0em 1.5em 0em"}}>
-          <div style={sharedStyles.ticketsRestriction}>
-            A maximum of 10 tickets can be purchased
-          </div>
-        </div>
-        <div style={{margin: "0em 0em 2em 0em"}}>
-          {this.renderTicketsGrid()}
-        </div>
+        {this.renderTicketStepBody()}
       </>
     );
   };
@@ -1275,7 +1434,7 @@ export class Home extends React.Component<AppPropsT> {
               display: "flex",
               backgroundColor: white,
               minHeight: `${4.75 * font3}px`,
-              padding: "1.5em 1em 1em 1em",
+              padding: "1.5em 1em 0em 1em",
               position: "relative"
             }}
             className="column">
@@ -1392,32 +1551,33 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderMetadata = () => {
+    let {event} = this.props;
+    if (event == null) {
+      return;
+    }
 
-      let {event} = this.props;
-      if (event == null) {
-          return;
-      }
+    let eventName: String = event.name ? event.name : "Fora Event Page";
+    let description: String = event.name
+      ? "Buy your tickets today for " + eventName
+      : "Buy your tickets today.";
+    let imageUrl: String = event.image_url ? event.image_url : "";
 
-      let eventName : String = event.name ? event.name : 'Fora Event Page';
-      let description : String = event.name ? "Buy your tickets today for " + eventName : 'Buy your tickets today.';
-      let imageUrl : String = event.image_url ? event.image_url : '';
-
-      return (
-          <div className="application">
-              <Helmet
-                  title={eventName.toString()}
-                  meta={[
-                      {"property": "og:type", "content": "website"},
-                      {"property": "og:image", "content": imageUrl.toString()},
-                      {"property": "og:title", "content": eventName.toString()},
-                      {"property": "og:url", "content": window.location.href},
-                      {"property": "og:description", "content": description.toString()},
-                      {"property": "og:site_name", "content": 'Foria'},
-                      {"property": "fb:app_id", "content": '695063607637402'}
-                  ]}
-              />
-          </div>
-      );
+    return (
+      <div className="application">
+        <Helmet
+          title={eventName.toString()}
+          meta={[
+            {property: "og:type", content: "website"},
+            {property: "og:image", content: imageUrl.toString()},
+            {property: "og:title", content: eventName.toString()},
+            {property: "og:url", content: window.location.href},
+            {property: "og:description", content: description.toString()},
+            {property: "og:site_name", content: "Foria"},
+            {property: "fb:app_id", content: "695063607637402"}
+          ]}
+        />
+      </div>
+    );
   };
 
   renderHeader = () => {
@@ -1565,48 +1725,57 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
-  renderFixedCheckoutButton = () => {
+  // If isVisualPlaceholder is true, we render a dummy version of the element
+  // which is transparent but occupies the same vertical space as the
+  // non-dummy version
+  renderCheckoutButton = ({
+    isVisualPlaceholder
+  }: {
+    isVisualPlaceholder: boolean;
+  }) => {
     let {toNextView, ticketsForPurchase, checkoutPending} = this.props;
     let someSelected = someTicketsSelected(ticketsForPurchase);
     return (
-      <div>
+      <div
+        style={{
+          opacity: isVisualPlaceholder ? 0 : 1,
+          boxSizing: "border-box",
+          boxShadow: "rgba(0, 0, 0, 0.21) 0 -2px 8px 2px",
+          display: "flex",
+          backgroundColor: white,
+          minHeight: `${4.75 * font3}px`,
+          height: "100%",
+          padding: "1em",
+          position: "relative"
+        }}
+        className="column">
         <div
+          className="row"
           style={{
-            // Create an empty rectangle so that content doesn't flow behind this fixed button
-            height: `${3 * font3}px`
+            ...sharedStyles.checkoutButton,
+            ...(!someSelected ? sharedStyles.disabledMobileCheckoutButton : {})
           }}
-        />
+          onClick={isVisualPlaceholder ? () => {} : toNextView}>
+          Checkout
+          {checkoutPending ? <Ellipsis style={{fontWeight: 700}} /> : null}
+        </div>
+      </div>
+    );
+  };
+
+  renderFixedCheckoutButton = () => {
+    return (
+      <div>
+        {/* Create an empty rectangle so that content doesn't flow behind
+         * this fixed button */
+        this.renderCheckoutButton({isVisualPlaceholder: true})}
         <div
           style={{
             position: "fixed",
             bottom: "0",
             width: "100%"
           }}>
-          <div
-            style={{
-              boxSizing: "border-box",
-              boxShadow: "rgba(0, 0, 0, 0.21) 0 -2px 8px 2px",
-              display: "flex",
-              backgroundColor: white,
-              minHeight: `${4.75 * font3}px`,
-              height: "100%",
-              padding: "1em",
-              position: "relative"
-            }}
-            className="column">
-            <div
-              className="row"
-              style={{
-                ...sharedStyles.checkoutButton,
-                ...(!someSelected
-                  ? sharedStyles.disabledMobileCheckoutButton
-                  : {})
-              }}
-              onClick={toNextView}>
-              Checkout
-              {checkoutPending ? <Ellipsis style={{fontWeight: 700}} /> : null}
-            </div>
-          </div>
+          {this.renderCheckoutButton({isVisualPlaceholder: false})}
         </div>
       </div>
     );
@@ -1637,9 +1806,7 @@ export class Home extends React.Component<AppPropsT> {
     if (!event) {
       return "";
     }
-    let query = `${event.address.street_address} ${event.address.city}, ${
-      event.address.state
-    } ${event.address.zip}`;
+    let query = `${event.address.street_address} ${event.address.city}, ${event.address.state} ${event.address.zip}`;
     query = encodeURIComponent(query);
     return `https://www.google.com/maps/search/?api=1&query=${query}`;
   };
@@ -1691,7 +1858,11 @@ export class Home extends React.Component<AppPropsT> {
               overflowX: "hidden",
               flex: 1
             }}>
-            <div style={{padding: "0 4px", marginBottom: byLayout("1.5em", "2em")}}>
+            <div
+              style={{
+                padding: "0 4px",
+                marginBottom: byLayout("1.5em", "2em")
+              }}>
               <div
                 style={{
                   ...sharedStyles.eventTitle,
@@ -1767,9 +1938,7 @@ export class Home extends React.Component<AppPropsT> {
                       {event.address.venue_name}
                     </div>
                     <div style={styles.eventDetailSubtitle}>
-                      {`${event.address.street_address}, ${
-                        event.address.city
-                      }, ${event.address.state} ${event.address.zip}`}
+                      {`${event.address.street_address}, ${event.address.city}, ${event.address.state} ${event.address.zip}`}
                     </div>
                   </div>
                 </>
@@ -1797,7 +1966,9 @@ export class Home extends React.Component<AppPropsT> {
           position: "relative",
           margin: "0 auto"
         }}>
-        <div className="column" style={{padding: "0 4px", margin: byLayout("1em", "2em 1.5em")}}>
+        <div
+          className="column"
+          style={{padding: "0 4px", margin: byLayout("1em", "2em 1.5em")}}>
           <div className="row" style={{marginBottom: "0.6em"}}>
             <a
               href="https://foriatickets.com/privacy-policy.html"
@@ -1846,7 +2017,7 @@ export class Home extends React.Component<AppPropsT> {
           ...sharedStyles.eventBody,
           // Force text like (long urls) to break only when a natural break doesn't exist
           overflowWrap: "break-word",
-          padding: "0 4px",
+          padding: "0 4px"
         }}>
         {!event ? (
           <Skeleton height={100} />
@@ -2006,7 +2177,7 @@ export class Home extends React.Component<AppPropsT> {
   }
 
   render() {
-    let {error, byLayout, pullUpMenuCollapsed} = this.props;
+    let {layout, error, byLayout, pullUpMenuCollapsed} = this.props;
 
     let backgroundColor = byLayout(
       // On mobile, we render a white bg behind the pull up menu
@@ -2020,6 +2191,30 @@ export class Home extends React.Component<AppPropsT> {
       position: "fixed",
       width: "100%"
     };
+
+    let body = null;
+    if (layout === Layout.Desktop) {
+      body = (
+        <>
+          {this.renderHeader()}
+          {this.renderHero()}
+          {this.renderBody()}
+          {this.renderFooter()}
+        </>
+      );
+    } else if (layout === Layout.Mobile && pullUpMenuCollapsed) {
+      body = (
+        <>
+          {this.renderHeader()}
+          {this.renderHero()}
+          {this.renderBody()}
+          {this.renderFooter()}
+          {this.renderPullUpFooter()}
+        </>
+      );
+    } else if (layout === Layout.Mobile) {
+      body = this.renderTicketsPullUp();
+    }
 
     return (
       <div
@@ -2038,19 +2233,8 @@ export class Home extends React.Component<AppPropsT> {
           position: "relative",
           ...(error ? byLayout(iosErrorStyles, {}) : {})
         }}>
-          {this.renderMetadata()}
-          {pullUpMenuCollapsed ? (
-            <>
-            {this.renderHeader()}
-            {this.renderHero()}
-            {this.renderBody()}
-            {this.renderFooter()}
-            {byLayout(this.renderPullUpFooter(), null)}
-          </>
-        ) : (
-          byLayout(this.renderTicketsPullUp(), null)
-        )}
-        {this.renderErrorOverlay()}
+        {this.renderMetadata()}
+        {body}
       </div>
     );
   }
@@ -2062,6 +2246,7 @@ export default connect(
   (state: AppState) => {
     let {root, home} = state;
     return {
+      layout: root.layout,
       byLayout: byLayoutWrapper(root.layout),
       profile: root.profile,
       stripe: root.stripe,
@@ -2083,7 +2268,10 @@ export default connect(
       branchSMSPending: home.branchSMSPending,
       isFree: memoizedIsFreePurchase(state),
       branchPhoneNumber: home.branchPhoneNumber,
-      branchLinkSent: home.branchLinkSent
+      branchLinkSent: home.branchLinkSent,
+      promoTicketTypeConfigs: home.promoTicketTypeConfigs,
+      applyPromoPending: home.applyPromoPending,
+      applyPromoError: home.applyPromoError
     };
   },
   dispatch => ({
@@ -2100,6 +2288,8 @@ export default connect(
     onTokenCreateError: onTokenCreateErrorAction(dispatch),
     onCreditCardSubmit: onCreditCardSubmitAction(dispatch),
     onFreePurchaseSubmit: onFreePurchaseSubmitAction(dispatch),
+    onApplyPromoCode: onApplyPromoCodeAction(dispatch),
+    resetPromoError: resetPromoErrorAction(dispatch),
     onSendMeApp: onSendMeAppAction(dispatch),
     onBranchPhoneNumberChange: onBranchPhoneNumberChangeAction(dispatch),
     resetError: resetErrorAction(dispatch)

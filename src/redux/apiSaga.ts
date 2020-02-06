@@ -2,8 +2,15 @@ import {call, select, put, takeEvery, actionChannel} from "redux-saga/effects";
 
 import Action from "./Action";
 import {ActionType as StripeActionType} from "./stripeSaga";
-import {getEventId, getTicketsForPurchase, getAccessToken} from "./selectors";
+import {
+  getEventId,
+  getTicketsForPurchase,
+  getAccessToken,
+  getAppliedPromoCode
+} from "./selectors";
 import {TicketCounts, ActionType as HomeActionType} from "./reducers/home";
+import {initiateLoginIfNotLoggedInSaga} from "./auth0Saga";
+import {atLeast} from "../delay";
 
 const foriaBackend = process.env.REACT_APP_FORIA_BACKEND_BASE_URL as "string";
 
@@ -17,7 +24,11 @@ export enum ActionType {
   InitiateCalculateOrder = "InitiateCalculateOrder",
   CalculateOrderTotalError = "CalculateOrderTotalError",
   CalculateOrderTotalCriticalError = "CalculateOrderTotalCriticalError",
-  CalculateOrderTotalSuccess = "CalculateOrderTotalSuccess"
+  CalculateOrderTotalSuccess = "CalculateOrderTotalSuccess",
+  ApplyPromoError = "ApplyPromoError",
+  ApplyPromoCriticalError = "ApplyPromoCriticalError",
+  ApplyPromoSuccess = "ApplyPromoSuccess",
+  ApplyPromoCancelledNoLogin = "ApplyPromoCancelledNoLogin"
 }
 
 const defaultHeaders = {
@@ -78,10 +89,14 @@ export interface OrderTotal {
   currency: string;
 }
 
+interface PromoPayload {
+  code: string;
+}
 interface OrderPayload {
   event_id: string;
   ticket_line_item_list: CheckoutTicket[];
   payment_token: string;
+  promotion_code?: string;
 }
 type OrderTotalPayload = Omit<OrderPayload, "payment_token"> & {
   payment_token?: string;
@@ -97,6 +112,20 @@ function completeCheckout(data: OrderPayload, accessToken: string) {
   );
 }
 
+function fetchPromoTicketTypes(
+  eventId: string,
+  data: PromoPayload,
+  accessToken: string
+) {
+  return tupleResponse(
+    fetch(`${foriaBackend}/v1/event/${eventId}/ticketTypeConfig/promo`, {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: {...defaultHeaders, ...authHeaders(accessToken)}
+    })
+  );
+}
+
 function* completePurchase(action: Action) {
   let stripeToken;
   if (action.type === StripeActionType.StripeCreateTokenSuccess) {
@@ -105,12 +134,14 @@ function* completePurchase(action: Action) {
 
   let eventId = yield select(getEventId);
   let accessToken = yield select(getAccessToken);
+  let promoCode = yield select(getAppliedPromoCode);
   let ticketsForPurchase = yield select(getTicketsForPurchase);
 
   let orderPayload: OrderPayload = {
     event_id: eventId,
     ticket_line_item_list: getTicketItemList(ticketsForPurchase),
-    payment_token: stripeToken || null
+    payment_token: stripeToken || null,
+    promotion_code: promoCode
   };
 
   let [checkoutResponse, error400, error500, connectionError] = yield call(
@@ -135,6 +166,59 @@ function* completePurchase(action: Action) {
   yield put({
     type: ActionType.CheckoutSuccess,
     data: checkoutResponse.id
+  });
+}
+
+function* applyPromoCode(action: Action) {
+  try {
+    // @ts-ignore
+    yield* initiateLoginIfNotLoggedInSaga();
+  } catch {
+    // Login did not succeed either by error or user cancel
+    yield put({
+      type: ActionType.ApplyPromoCancelledNoLogin
+    });
+    return;
+  }
+
+  let eventId = yield select(getEventId);
+  let accessToken = yield select(getAccessToken);
+  let promoCode = action.data;
+  let promoPayload: PromoPayload = {
+    code: promoCode
+  };
+
+  let [
+    promoTicketTypeConfigs,
+    error400,
+    error500,
+    connectionError
+  ] = yield call(
+    /* Wait 500ms before reporting error/success so loading animation gets a
+     * chance to register to the user without immediatley disappearing */
+    // @ts-ignore
+    (...args) => atLeast(500, fetchPromoTicketTypes(...args)),
+    eventId,
+    promoPayload,
+    accessToken
+  );
+  if (error400) {
+    yield put({
+      type: ActionType.ApplyPromoError,
+      data: error400
+    });
+    return;
+  } else if (error500 || connectionError) {
+    yield put({
+      type: ActionType.ApplyPromoCriticalError,
+      data: error500 || connectionError
+    });
+    return;
+  }
+
+  yield put({
+    type: ActionType.ApplyPromoSuccess,
+    data: {promoCode, promoTicketTypeConfigs}
   });
 }
 
@@ -201,6 +285,9 @@ function* saga() {
   let freePurchaseChannel = yield actionChannel(
     HomeActionType.FreePurchaseSubmit
   );
+  let applyPromoCodeChannel = yield actionChannel(
+    HomeActionType.ApplyPromoCode
+  );
 
   let eventId = yield select(getEventId);
   let [event, error400, error500, connectionError] = yield call(
@@ -221,12 +308,14 @@ function* saga() {
     return;
   }
 
+  // event.ticket_type_config = [];
   yield put({
     type: ActionType.EventFetchSuccess,
     data: event
   });
 
   yield takeEvery(freePurchaseChannel, completePurchase);
+  yield takeEvery(applyPromoCodeChannel, applyPromoCode);
   yield takeEvery(stripeTokenChannel, completePurchase);
   yield takeEvery(calculateOrderChannel, calculateOrderTotalSaga);
 }

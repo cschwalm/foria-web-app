@@ -15,7 +15,7 @@ import {
   someTicketsSelected
 } from "./reducers/home";
 import {ActionType as StripeActionType} from "./stripeSaga";
-import {ActionType as Auth0ActionType} from "./auth0Saga";
+import {initiateLoginIfNotLoggedInSaga} from "./auth0Saga";
 import {ActionType as ApiActionType} from "./apiSaga";
 
 // Login a user then navigate to payment options
@@ -29,27 +29,11 @@ function* toCheckoutView() {
       return;
     }
 
-    // Initiate a login if they are not logged in
-    yield put({type: Auth0ActionType.CheckLogin});
-    let [success, noSession /*error*/] = yield race([
-      take(Auth0ActionType.AuthenticationSuccess),
-      take(Auth0ActionType.NoExistingSession),
-      take(Auth0ActionType.AuthenticationError)
-    ]);
-
-    if (noSession) {
-      // We attempt to login the user, if we run into any errors we do not let
-      // user proceed to checkout view
-      yield put({type: Auth0ActionType.InitiateLogin});
-      let [success /*,canceled,unrecoverable*/] = yield race([
-        take(Auth0ActionType.AuthenticationSuccess),
-        take(Auth0ActionType.AuthenticationCancelled),
-        take(Auth0ActionType.UnrecoverableError)
-      ]);
-      if (!success) {
-        return;
-      }
-    } else if (!success) {
+    try {
+      // @ts-ignore
+      yield* initiateLoginIfNotLoggedInSaga();
+    } catch {
+      // Login did not succeed either by error or user cancel
       return;
     }
 
