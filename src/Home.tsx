@@ -46,6 +46,7 @@ import {
   onCreditCardSubmit as onCreditCardSubmitAction,
   onFreePurchaseSubmit as onFreePurchaseSubmitAction,
   onApplyPromoCode as onApplyPromoCodeAction,
+  resetPromoError as resetPromoErrorAction,
   onSendMeApp as onSendMeAppAction,
   onBranchPhoneNumberChange as onBranchPhoneNumberChangeAction,
   removeTicket as removeTicketAction,
@@ -103,6 +104,7 @@ interface AppPropsT {
   onCreditCardSubmit: () => void;
   onFreePurchaseSubmit: () => void;
   onApplyPromoCode: (promoCode: string) => void;
+  resetPromoError: () => void;
   onSendMeApp: () => void;
   onBranchPhoneNumberChange: (phoneNumber: string) => void;
   selectView: (view: View) => void;
@@ -1233,7 +1235,8 @@ export class Home extends React.Component<AppPropsT> {
       onApplyPromoCode,
       applyPromoPending,
       promoTicketTypeConfigs,
-      applyPromoError
+      applyPromoError,
+      resetPromoError
     } = this.props;
     let {promoCode} = this.state;
 
@@ -1287,11 +1290,14 @@ export class Home extends React.Component<AppPropsT> {
                   onApplyPromoCode(promoCode);
                 }}
                 value={promoCode}
-                onChange={e =>
+                onChange={e => {
                   this.setState({
                     promoCode: e.target.value.trim().toUpperCase()
-                  })
-                }
+                  });
+                  if (applyPromoError) {
+                    resetPromoError();
+                  }
+                }}
                 placeholder="Enter promo code"
                 type="text"
                 className={byLayout("mobile", "desktop")}
@@ -2283,6 +2289,7 @@ export default connect(
     onCreditCardSubmit: onCreditCardSubmitAction(dispatch),
     onFreePurchaseSubmit: onFreePurchaseSubmitAction(dispatch),
     onApplyPromoCode: onApplyPromoCodeAction(dispatch),
+    resetPromoError: resetPromoErrorAction(dispatch),
     onSendMeApp: onSendMeAppAction(dispatch),
     onBranchPhoneNumberChange: onBranchPhoneNumberChangeAction(dispatch),
     resetError: resetErrorAction(dispatch)

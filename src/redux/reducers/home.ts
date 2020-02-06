@@ -40,7 +40,8 @@ export enum ActionType {
   SendMeAppSubmit = "SendMeAppSubmit",
   BranchPhoneNumberChange = "BranchPhoneNumberChange",
 
-  ApplyPromoCode = "ApplyPromoCode"
+  ApplyPromoCode = "ApplyPromoCode",
+  ResetPromoError = "ResetPromoError"
 }
 
 export type TicketCounts = {[ticketId: string]: number};
@@ -207,6 +208,11 @@ export const mainReducer = (state = initialState, action: Action) => {
         applyPromoPending: false,
         applyPromoError: "Login required"
       };
+    case ActionType.ResetPromoError:
+      return {
+        ...state,
+        applyPromoError: ""
+      };
     case ApiActionType.ApplyPromoSuccess:
       return {
         ...state,
@@ -354,6 +360,9 @@ export const onFreePurchaseSubmit = (dispatch: Dispatch<Action>) => () =>
 export const onApplyPromoCode = (dispatch: Dispatch<Action>) => (
   promoCode: string
 ) => dispatch({type: ActionType.ApplyPromoCode, data: promoCode});
+
+export const resetPromoError = (dispatch: Dispatch<Action>) => () =>
+  dispatch({type: ActionType.ResetPromoError});
 
 export const onSendMeApp = (dispatch: Dispatch<Action>) => () =>
   dispatch({type: ActionType.SendMeAppSubmit});
