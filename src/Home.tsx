@@ -1287,7 +1287,11 @@ export class Home extends React.Component<AppPropsT> {
                   onApplyPromoCode(promoCode);
                 }}
                 value={promoCode}
-                onChange={e => this.setState({promoCode: e.target.value})}
+                onChange={e =>
+                  this.setState({
+                    promoCode: e.target.value.trim().toUpperCase()
+                  })
+                }
                 placeholder="Enter promo code"
                 type="text"
                 className={byLayout("mobile", "desktop")}
