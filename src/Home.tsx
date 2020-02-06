@@ -714,18 +714,7 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
-  renderTicketsGrid = () => {
-    let {event, promoTicketTypeConfigs} = this.props;
-
-    let ticketConfigs: TicketTypeConfig[] = [];
-    let body: any = <Skeleton />;
-    if (event) {
-      ticketConfigs = promoTicketTypeConfigs.length
-        ? promoTicketTypeConfigs
-        : event.ticket_type_config;
-      body = ticketConfigs.map(item => this.renderTicketGridRow(item));
-    }
-
+  renderTicketsGrid = (ticketConfigs: TicketTypeConfig[]) => {
     return (
       <div
         style={{
@@ -735,7 +724,7 @@ export class Home extends React.Component<AppPropsT> {
           gridRowGap: "1em",
           alignItems: "center"
         }}>
-        {body}
+        {ticketConfigs.map(item => this.renderTicketGridRow(item))}
       </div>
     );
   };
@@ -1349,8 +1338,16 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderTicketStepBody = () => {
-    let {event} = this.props;
-    let tiersExist = event?.ticket_type_config.length;
+    let {event, promoTicketTypeConfigs} = this.props;
+
+    let ticketConfigs: TicketTypeConfig[] = [];
+    // Promo code tickets have precedence to the tickets on the event
+    if (promoTicketTypeConfigs.length) {
+      ticketConfigs = promoTicketTypeConfigs;
+    } else if (event?.ticket_type_config?.length) {
+      ticketConfigs = event.ticket_type_config;
+    }
+
     return (
       <>
         <div style={{margin: "0em 0em 1.5em 0em"}}>
@@ -1360,8 +1357,8 @@ export class Home extends React.Component<AppPropsT> {
         </div>
         <div style={{margin: "0em 0em 1.5em 0em"}}>
           {event ? (
-            tiersExist ? (
-              this.renderTicketsGrid()
+            ticketConfigs.length ? (
+              this.renderTicketsGrid(ticketConfigs)
             ) : (
               <span style={sharedStyles.ticketSalesNotStarted}>
                 Public ticket sales have not started yet. If you have a promo
