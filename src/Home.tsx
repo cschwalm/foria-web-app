@@ -2114,7 +2114,7 @@ export class Home extends React.Component<AppPropsT> {
         bottom: 0,
         left: 0,
         right: 0,
-        zIndex: 1,
+        zIndex: 2,
         display: "flex",
         justifyContent: "center",
         alignItems: "center"
@@ -2234,6 +2234,7 @@ export class Home extends React.Component<AppPropsT> {
           ...(error ? byLayout(iosErrorStyles, {}) : {})
         }}>
         {this.renderMetadata()}
+        {this.renderErrorOverlay()}
         {body}
       </div>
     );
