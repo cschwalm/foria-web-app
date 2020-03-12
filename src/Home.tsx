@@ -46,7 +46,9 @@ import {
   onCreditCardSubmit as onCreditCardSubmitAction,
   onFreePurchaseSubmit as onFreePurchaseSubmitAction,
   onApplyPromoCode as onApplyPromoCodeAction,
+  onAddEmailToWaitList as onAddEmailToWaitListAction,
   resetPromoError as resetPromoErrorAction,
+  resetAddEmailToWaitListError as resetAddEmailToWaitListErrorAction,
   onSendMeApp as onSendMeAppAction,
   onBranchPhoneNumberChange as onBranchPhoneNumberChangeAction,
   removeTicket as removeTicketAction,
@@ -104,7 +106,9 @@ interface AppPropsT {
   onCreditCardSubmit: () => void;
   onFreePurchaseSubmit: () => void;
   onApplyPromoCode: (promoCode: string) => void;
+  onAddEmailToWaitList: (email: string) => void;
   resetPromoError: () => void;
+  resetAddEmailToWaitListError: () => void;
   onSendMeApp: () => void;
   onBranchPhoneNumberChange: (phoneNumber: string) => void;
   selectView: (view: View) => void;
@@ -131,7 +135,10 @@ interface AppPropsT {
   branchLinkSent: boolean;
   promoTicketTypeConfigs: TicketTypeConfig[];
   applyPromoPending: boolean;
+  addEmailToWaitListPending: boolean;
   applyPromoError?: string;
+  addEmailToWaitListError?: string;
+  emailAddedToWaitlist: boolean;
 }
 
 const font6 = 36;
@@ -209,10 +216,17 @@ const sharedStyles = {
     lineHeight: "1.4em",
     color: trolleyGray
   },
-  promoButtonText: {
+  buttonInInput: {
     fontSize: `${font3}px`,
     fontWeight: 500,
-    lineHeight: "1.2em"
+    lineHeight: "1.2em",
+    padding: "0em 1em",
+    display: "flex",
+    /* Provide a stable width, so that the narrow loading symbol doesn't
+     * cause too much visual disruption */
+    minWidth: "40px",
+    alignItems: "center",
+    justifyContent: "center"
   },
   ticketsTitle: {
     display: "flex",
@@ -309,7 +323,7 @@ const sharedStyles = {
     flex: 1,
     color: lavenderGray
   },
-  ticketSalesNotStarted: {
+  ticketStepBodyText: {
     fontSize: `${font3}px`,
     fontWeight: 500,
     lineHeight: "1.2em",
@@ -567,8 +581,9 @@ const Ellipsis = ({style = {}}: {style?: React.CSSProperties}) => (
 
 export class Home extends React.Component<AppPropsT> {
   state = {
-    // Storing this value in local state, to lower input latency
-    promoCode: ""
+    // Storing these values in local state, to lower input latency
+    promoCode: "",
+    waitListEmail: ""
   };
   renderTicketDescriptionColumn = (ticketType: TicketTypeConfig) => {
     let soldOut = ticketType.amount_remaining === 0;
@@ -1229,6 +1244,116 @@ export class Home extends React.Component<AppPropsT> {
     return `${minAmountStr} - ${maxAmountStr}`;
   };
 
+  renderAddEmailToWaitList = () => {
+    let {
+      byLayout,
+      onAddEmailToWaitList,
+      addEmailToWaitListPending,
+      emailAddedToWaitlist,
+      addEmailToWaitListError,
+      resetAddEmailToWaitListError
+    } = this.props;
+    let {waitListEmail} = this.state;
+
+    let canSubmit = !addEmailToWaitListPending;
+    let buttonInInputStyles = {
+      ...sharedStyles.buttonInInput,
+      color:
+        addEmailToWaitListError || !waitListEmail
+          ? trolleyGray
+          : vividRaspberry,
+      cursor: canSubmit ? "pointer" : "not-allowed"
+    };
+    let inputStyles = {
+      ...byLayout(sharedStyles.mobileInput, sharedStyles.desktopInput),
+      border: `solid 1.75px ${
+        addEmailToWaitListError
+          ? neonCarrot
+          : emailAddedToWaitlist
+          ? budGreen
+          : lavenderGray
+      }`,
+      margin: 0
+    };
+
+    return (
+      <div>
+        <div style={{position: "relative"}}>
+          {emailAddedToWaitlist ? (
+            <div style={{color: budGreen, margin: "8px"}}>Email added!</div>
+          ) : (
+            <>
+              <input
+                onKeyDown={(
+                  event: React.KeyboardEvent<HTMLDivElement>
+                ): void => {
+                  if (!canSubmit || event.key !== "Enter") {
+                    return;
+                  }
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onAddEmailToWaitList(waitListEmail);
+                }}
+                value={waitListEmail}
+                onChange={e => {
+                  this.setState({
+                    waitListEmail: e.target.value.trim()
+                  });
+                  if (addEmailToWaitListError) {
+                    resetAddEmailToWaitListError();
+                  }
+                }}
+                placeholder="user@email.com"
+                type="text"
+                className={byLayout("mobile", "desktop")}
+                style={inputStyles}
+              />
+              <div
+                style={{
+                  top: 0,
+                  right: 0,
+                  height: "100%",
+                  position: "absolute",
+                  display: "flex"
+                }}>
+                <div
+                  style={{display: "flex", flexDirection: "column", flex: 1}}>
+                  <span
+                    style={{
+                      flex: 1,
+                      margin: "8px 0px",
+                      width: "2px",
+                      backgroundColor: lavenderGray,
+                      display: "inline-block"
+                    }}
+                  />
+                </div>
+                <div
+                  style={buttonInInputStyles}
+                  onClick={() =>
+                    canSubmit && onAddEmailToWaitList(waitListEmail)
+                  }>
+                  {addEmailToWaitListPending ? (
+                    <Ellipsis style={{fontWeight: 700}} />
+                  ) : (
+                    "Send"
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+        {addEmailToWaitListError ? (
+          <div style={{color: neonCarrot, margin: "8px 0px 0px 8px"}}>
+            {addEmailToWaitListError}
+          </div>
+        ) : null}
+      </div>
+    );
+  };
+
+  // FUTURE TODO this code is nearly identical to the add email to wait list logic, a
+  // generic component could be made for an input with a button inside
   renderPromoCode = () => {
     let {
       byLayout,
@@ -1240,23 +1365,16 @@ export class Home extends React.Component<AppPropsT> {
     } = this.props;
     let {promoCode} = this.state;
 
-    let canSubmitPromoCode = !applyPromoPending;
-    let applyButtonStyles = {
-      ...sharedStyles.promoButtonText,
+    let canSubmit = !applyPromoPending;
+    let buttonInInputStyles = {
+      ...sharedStyles.buttonInInput,
       color:
         applyPromoError || promoTicketTypeConfigs.length || !promoCode
           ? trolleyGray
           : vividRaspberry,
-      padding: "0em 1em",
-      display: "flex",
-      /* Provide a stable width, so that the narrow loading symbol doesn't
-       * cause too much visual disruption */
-      minWidth: "40px",
-      alignItems: "center",
-      justifyContent: "center",
-      cursor: canSubmitPromoCode ? "pointer" : "not-allowed"
+      cursor: canSubmit ? "pointer" : "not-allowed"
     };
-    let promoInputStyles = {
+    let inputStyles = {
       ...byLayout(sharedStyles.mobileInput, sharedStyles.desktopInput),
       border: `solid 1.75px ${
         applyPromoError
@@ -1282,7 +1400,7 @@ export class Home extends React.Component<AppPropsT> {
                 onKeyDown={(
                   event: React.KeyboardEvent<HTMLDivElement>
                 ): void => {
-                  if (!canSubmitPromoCode || event.key !== "Enter") {
+                  if (!canSubmit || event.key !== "Enter") {
                     return;
                   }
                   event.preventDefault();
@@ -1301,7 +1419,7 @@ export class Home extends React.Component<AppPropsT> {
                 placeholder="Enter promo code"
                 type="text"
                 className={byLayout("mobile", "desktop")}
-                style={promoInputStyles}
+                style={inputStyles}
               />
               <div
                 style={{
@@ -1324,10 +1442,8 @@ export class Home extends React.Component<AppPropsT> {
                   />
                 </div>
                 <div
-                  style={applyButtonStyles}
-                  onClick={() =>
-                    canSubmitPromoCode && onApplyPromoCode(promoCode)
-                  }>
+                  style={buttonInInputStyles}
+                  onClick={() => canSubmit && onApplyPromoCode(promoCode)}>
                   {applyPromoPending ? (
                     <Ellipsis style={{fontWeight: 700}} />
                   ) : (
@@ -1350,6 +1466,10 @@ export class Home extends React.Component<AppPropsT> {
   renderTicketStepBody = () => {
     let {event, promoTicketTypeConfigs} = this.props;
 
+    let styles = {
+      section: {margin: "0em 0em 1.5em 0em"}
+    };
+
     let ticketConfigs: TicketTypeConfig[] = [];
     // Promo code tickets have precedence to the tickets on the event
     if (promoTicketTypeConfigs.length) {
@@ -1358,30 +1478,65 @@ export class Home extends React.Component<AppPropsT> {
       ticketConfigs = event.ticket_type_config;
     }
 
+    let allSoldOut =
+      // We assert that there are actually tickets
+      ticketConfigs.length &&
+      // and that every ticket has NONE remaining
+      ticketConfigs.every(t => t.amount_remaining === 0);
+
+    if (!event) {
+      return (
+        <>
+          <div style={styles.section}>
+            <div style={sharedStyles.ticketsRestriction}>
+              <Skeleton />
+            </div>
+          </div>
+          <div style={styles.section}>
+            <Skeleton />
+          </div>
+        </>
+      );
+    } else if (event.type === "RESELL" && allSoldOut) {
+      return (
+        <>
+          <div style={styles.section}>
+            <p style={sharedStyles.ticketStepBodyText}>
+              Unfortunately, no tickets are available.
+            </p>
+            <p style={sharedStyles.ticketStepBodyText}>
+              Drop your email here and we'll let you know when they're
+              available!
+            </p>
+          </div>
+          <div style={styles.section}>{this.renderAddEmailToWaitList()}</div>
+        </>
+      );
+    } else if (ticketConfigs.length) {
+      return (
+        <>
+          <div style={styles.section}>
+            <div style={sharedStyles.ticketsRestriction}>
+              A maximum of 10 tickets can be purchased
+            </div>
+          </div>
+          <div style={styles.section}>
+            {this.renderTicketsGrid(ticketConfigs)}
+          </div>
+          <div style={styles.section}>{this.renderPromoCode()}</div>
+        </>
+      );
+    }
+
     return (
       <>
-        <div style={{margin: "0em 0em 1.5em 0em"}}>
-          <div style={sharedStyles.ticketsRestriction}>
-            {event ? "A maximum of 10 tickets can be purchased" : <Skeleton />}
-          </div>
+        <div style={styles.section}>
+          <p style={sharedStyles.ticketStepBodyText}>
+            Public ticket sales have not started yet. If you have a promo code,
+            enter it below to access tickets.
+          </p>
         </div>
-        <div style={{margin: "0em 0em 1.5em 0em"}}>
-          {event ? (
-            ticketConfigs.length ? (
-              this.renderTicketsGrid(ticketConfigs)
-            ) : (
-              <span style={sharedStyles.ticketSalesNotStarted}>
-                Public ticket sales have not started yet. If you have a promo
-                code, enter it below to access tickets.
-              </span>
-            )
-          ) : (
-            <Skeleton />
-          )}
-        </div>
-        <div style={{margin: "0em 0em 1.5em 0em"}}>
-          {this.renderPromoCode()}
-        </div>
+        <div style={styles.section}>{this.renderPromoCode()}</div>
       </>
     );
   };
@@ -2272,7 +2427,10 @@ export default connect(
       branchLinkSent: home.branchLinkSent,
       promoTicketTypeConfigs: home.promoTicketTypeConfigs,
       applyPromoPending: home.applyPromoPending,
-      applyPromoError: home.applyPromoError
+      addEmailToWaitListPending: home.addEmailToWaitListPending,
+      applyPromoError: home.applyPromoError,
+      addEmailToWaitListError: home.addEmailToWaitListError,
+      emailAddedToWaitlist: home.emailAddedToWaitlist
     };
   },
   dispatch => ({
@@ -2290,7 +2448,9 @@ export default connect(
     onCreditCardSubmit: onCreditCardSubmitAction(dispatch),
     onFreePurchaseSubmit: onFreePurchaseSubmitAction(dispatch),
     onApplyPromoCode: onApplyPromoCodeAction(dispatch),
+    onAddEmailToWaitList: onAddEmailToWaitListAction(dispatch),
     resetPromoError: resetPromoErrorAction(dispatch),
+    resetAddEmailToWaitListError: resetAddEmailToWaitListErrorAction(dispatch),
     onSendMeApp: onSendMeAppAction(dispatch),
     onBranchPhoneNumberChange: onBranchPhoneNumberChangeAction(dispatch),
     resetError: resetErrorAction(dispatch)
