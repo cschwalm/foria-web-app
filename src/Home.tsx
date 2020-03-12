@@ -1097,11 +1097,11 @@ export class Home extends React.Component<AppPropsT> {
     return (
       <>
         <p style={sharedStyles.eventBody}>Thank you for your purchase!</p>
+        <p style={sharedStyles.eventBody}>
+          Your order number is #{orderNumber as string}
+        </p>
         {byLayout(
           <>
-            <p style={sharedStyles.eventBody}>
-              Your order number is #{orderNumber as string}
-            </p>
             <p style={sharedStyles.getTicketsFromForiaApp}>
               <a
                 style={sharedStyles.getTicketsFromForiaApp}
