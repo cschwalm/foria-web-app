@@ -40,6 +40,7 @@ export interface Event {
   end_time: string;
   tag_line: string;
   description: string;
+  type: string;
 }
 
 export interface State {
