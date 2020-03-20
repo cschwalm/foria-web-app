@@ -32,6 +32,7 @@ export interface TicketTypeConfig {
 }
 
 export interface Event {
+  id: string;
   name: string;
   address: Address;
   ticket_type_config: TicketTypeConfig[];

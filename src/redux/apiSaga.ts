@@ -28,10 +28,7 @@ export enum ActionType {
   ApplyPromoError = "ApplyPromoError",
   ApplyPromoCriticalError = "ApplyPromoCriticalError",
   ApplyPromoSuccess = "ApplyPromoSuccess",
-  ApplyPromoCancelledNoLogin = "ApplyPromoCancelledNoLogin",
-  AddEmailToWaitListSuccess = "AddEmailToWaitListSuccess",
-  AddEmailToWaitListError = "AddEmailToWaitListError",
-  AddEmailToWaitListCriticalError = "AddEmailToWaitListCriticalError"
+  ApplyPromoCancelledNoLogin = "ApplyPromoCancelledNoLogin"
 }
 
 const defaultHeaders = {
@@ -104,11 +101,6 @@ interface OrderPayload {
 type OrderTotalPayload = Omit<OrderPayload, "payment_token"> & {
   payment_token?: string;
 };
-
-function addEmailToWaitListMailChimp(email: string) {
-  // TODO implement fetch call
-  return [true, false, false, false];
-}
 
 function completeCheckout(data: OrderPayload, accessToken: string) {
   return tupleResponse(
@@ -230,44 +222,6 @@ function* applyPromoCode(action: Action) {
   });
 }
 
-function* addEmailToWaitList(action: Action) {
-  let email = action.data;
-
-  // Do the actual work in this helper method, so we can conveniently wrap it
-  // to know when the action is pending/complete
-  function* _addEmailToWaitList() {
-    let [success, error400, error500, connectionError] = yield call(
-      /* Wait 500ms before reporting error/success so loading animation gets a
-       * chance to register to the user without immediatley disappearing */
-      // @ts-ignore
-      (...args) => atLeast(500, addEmailToWaitListMailChimp(...args)),
-      email
-    );
-    if (success) {
-      yield put({
-        type: ActionType.AddEmailToWaitListSuccess
-      });
-    } else if (error400) {
-      yield put({
-        type: ActionType.AddEmailToWaitListError,
-        data: error400
-      });
-    } else {
-      yield put({
-        type: ActionType.AddEmailToWaitListCriticalError,
-        data: error500 || connectionError || "Unhandled error"
-      });
-    }
-  }
-
-  yield put({type: HomeActionType.AddEmailToWaitListPending});
-  try {
-    yield call(_addEmailToWaitList);
-  } finally {
-    yield put({type: HomeActionType.AddEmailToWaitListComplete});
-  }
-}
-
 const getTicketItemList = (ticketsForPurchase: TicketCounts) =>
   Object.keys(ticketsForPurchase).map(ticketId => ({
     ticket_type_id: ticketId,
@@ -334,9 +288,6 @@ function* saga() {
   let applyPromoCodeChannel = yield actionChannel(
     HomeActionType.ApplyPromoCode
   );
-  let addEmailToWaitListChannel = yield actionChannel(
-    HomeActionType.AddEmailToWaitList
-  );
 
   let eventId = yield select(getEventId);
   let [event, error400, error500, connectionError] = yield call(
@@ -365,7 +316,6 @@ function* saga() {
 
   yield takeEvery(freePurchaseChannel, completePurchase);
   yield takeEvery(applyPromoCodeChannel, applyPromoCode);
-  yield takeEvery(addEmailToWaitListChannel, addEmailToWaitList);
   yield takeEvery(stripeTokenChannel, completePurchase);
   yield takeEvery(calculateOrderChannel, calculateOrderTotalSaga);
 }

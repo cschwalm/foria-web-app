@@ -40,11 +40,6 @@ export enum ActionType {
   SendMeAppSubmit = "SendMeAppSubmit",
   BranchPhoneNumberChange = "BranchPhoneNumberChange",
 
-  AddEmailToWaitList = "AddEmailToWaitList",
-  AddEmailToWaitListPending = "AddEmailToWaitListPending",
-  AddEmailToWaitListComplete = "AddEmailToWaitListComplete",
-  ResetAddEmailWaitListError = "ResetAddEmailWaitListError",
-
   ApplyPromoCode = "ApplyPromoCode",
   ResetPromoError = "ResetPromoError"
 }
@@ -70,9 +65,6 @@ export interface State {
   branchLinkSent: boolean;
   promoTicketTypeConfigs: TicketTypeConfig[];
   applyPromoPending: boolean;
-  addEmailToWaitListPending: boolean;
-  emailAddedToWaitlist: boolean;
-  addEmailToWaitListError?: string;
   applyPromoError?: string;
   appliedPromoCode?: string;
 }
@@ -86,8 +78,6 @@ export const initialState: State = {
   branchSMSPending: false,
   branchLinkSent: false,
   ticketsForPurchase: {},
-  addEmailToWaitListPending: false,
-  emailAddedToWaitlist: false,
   applyPromoPending: false,
   promoTicketTypeConfigs: []
 };
@@ -194,30 +184,6 @@ export const mainReducer = (state = initialState, action: Action) => {
       return {
         ...state,
         view: action.data
-      };
-    case ActionType.AddEmailToWaitListPending:
-      return {
-        ...state,
-        addEmailToWaitListPending: true
-      };
-    case ApiActionType.AddEmailToWaitListSuccess:
-      return {
-        ...state,
-        emailAddedToWaitlist: true
-      };
-    case ApiActionType.AddEmailToWaitListError:
-    case ApiActionType.AddEmailToWaitListCriticalError:
-      return {
-        ...state,
-        addEmailToWaitListError:
-          action.data.message || "An unknown error occurred"
-      };
-    case ActionType.ResetAddEmailWaitListError:
-      return omit(state, "addEmailToWaitListError");
-    case ActionType.AddEmailToWaitListComplete:
-      return {
-        ...state,
-        addEmailToWaitListPending: false
       };
     case ActionType.ApplyPromoCode:
       return {
@@ -394,14 +360,6 @@ export const onFreePurchaseSubmit = (dispatch: Dispatch<Action>) => () =>
 export const onApplyPromoCode = (dispatch: Dispatch<Action>) => (
   promoCode: string
 ) => dispatch({type: ActionType.ApplyPromoCode, data: promoCode});
-
-export const onAddEmailToWaitList = (dispatch: Dispatch<Action>) => (
-  email: string
-) => dispatch({type: ActionType.AddEmailToWaitList, data: email});
-
-export const resetAddEmailToWaitListError = (
-  dispatch: Dispatch<Action>
-) => () => dispatch({type: ActionType.ResetAddEmailWaitListError});
 
 export const resetPromoError = (dispatch: Dispatch<Action>) => () =>
   dispatch({type: ActionType.ResetPromoError});

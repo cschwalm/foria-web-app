@@ -46,9 +46,7 @@ import {
   onCreditCardSubmit as onCreditCardSubmitAction,
   onFreePurchaseSubmit as onFreePurchaseSubmitAction,
   onApplyPromoCode as onApplyPromoCodeAction,
-  onAddEmailToWaitList as onAddEmailToWaitListAction,
   resetPromoError as resetPromoErrorAction,
-  resetAddEmailToWaitListError as resetAddEmailToWaitListErrorAction,
   onSendMeApp as onSendMeAppAction,
   onBranchPhoneNumberChange as onBranchPhoneNumberChangeAction,
   removeTicket as removeTicketAction,
@@ -106,9 +104,7 @@ interface AppPropsT {
   onCreditCardSubmit: () => void;
   onFreePurchaseSubmit: () => void;
   onApplyPromoCode: (promoCode: string) => void;
-  onAddEmailToWaitList: (email: string) => void;
   resetPromoError: () => void;
-  resetAddEmailToWaitListError: () => void;
   onSendMeApp: () => void;
   onBranchPhoneNumberChange: (phoneNumber: string) => void;
   selectView: (view: View) => void;
@@ -135,10 +131,7 @@ interface AppPropsT {
   branchLinkSent: boolean;
   promoTicketTypeConfigs: TicketTypeConfig[];
   applyPromoPending: boolean;
-  addEmailToWaitListPending: boolean;
   applyPromoError?: string;
-  addEmailToWaitListError?: string;
-  emailAddedToWaitlist: boolean;
 }
 
 const font6 = 36;
@@ -583,7 +576,9 @@ export class Home extends React.Component<AppPropsT> {
   state = {
     // Storing these values in local state, to lower input latency
     promoCode: "",
-    waitListEmail: ""
+    waitListEmail: "",
+
+    emailAddedToWaitlist: false
   };
   renderTicketDescriptionColumn = (ticketType: TicketTypeConfig) => {
     let soldOut = ticketType.amount_remaining === 0;
@@ -1267,109 +1262,134 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderAddEmailToWaitList = () => {
-    let {
-      byLayout,
-      onAddEmailToWaitList,
-      addEmailToWaitListPending,
-      emailAddedToWaitlist,
-      addEmailToWaitListError,
-      resetAddEmailToWaitListError
-    } = this.props;
-    let {waitListEmail} = this.state;
+    let {byLayout, profile} = this.props;
+    let {waitListEmail, emailAddedToWaitlist} = this.state;
+    let event = this.props.event as Event;
 
-    let canSubmit = !addEmailToWaitListPending;
+    let canSubmit = waitListEmail;
     let buttonInInputStyles = {
       ...sharedStyles.buttonInInput,
-      color:
-        addEmailToWaitListError || !waitListEmail
-          ? trolleyGray
-          : vividRaspberry,
+      color: !waitListEmail ? trolleyGray : vividRaspberry,
       cursor: canSubmit ? "pointer" : "not-allowed"
     };
     let inputStyles = {
       ...byLayout(sharedStyles.mobileInput, sharedStyles.desktopInput),
-      border: `solid 1.75px ${
-        addEmailToWaitListError
-          ? neonCarrot
-          : emailAddedToWaitlist
-          ? budGreen
-          : lavenderGray
-      }`,
+      border: `solid 1.75px ${emailAddedToWaitlist ? budGreen : lavenderGray}`,
       margin: 0
     };
 
     return (
       <div>
-        <div style={{position: "relative"}}>
-          {emailAddedToWaitlist ? (
-            <div style={{color: budGreen, margin: "8px"}}>Email added!</div>
-          ) : (
-            <>
-              <input
-                onKeyDown={(
-                  event: React.KeyboardEvent<HTMLDivElement>
-                ): void => {
-                  if (!canSubmit || event.key !== "Enter") {
-                    return;
-                  }
-                  event.preventDefault();
-                  event.stopPropagation();
-                  onAddEmailToWaitList(waitListEmail);
-                }}
-                value={waitListEmail}
-                onChange={e => {
-                  this.setState({
-                    waitListEmail: e.target.value.trim()
-                  });
-                  if (addEmailToWaitListError) {
-                    resetAddEmailToWaitListError();
-                  }
-                }}
-                placeholder="user@email.com"
-                type="text"
-                className={byLayout("mobile", "desktop")}
-                style={inputStyles}
-              />
-              <div
-                style={{
-                  top: 0,
-                  right: 0,
-                  height: "100%",
-                  position: "absolute",
-                  display: "flex"
-                }}>
+        <form
+          action="https://foriatickets.us20.list-manage.com/subscribe/post?u=a6b6143a04863843e2f9a34f3&amp;id=241779b337"
+          method="post"
+          target="_blank"
+          noValidate>
+          <div style={{position: "relative"}}>
+            {emailAddedToWaitlist ? (
+              <div style={{color: budGreen, margin: "8px"}}>Email added!</div>
+            ) : (
+              <>
+                <input
+                  name="EMAIL"
+                  type="email"
+                  value={waitListEmail}
+                  onChange={e => {
+                    this.setState({
+                      waitListEmail: e.target.value.trim()
+                    });
+                  }}
+                  placeholder="user@email.com"
+                  className={byLayout("mobile", "desktop")}
+                  style={inputStyles}
+                />
                 <div
-                  style={{display: "flex", flexDirection: "column", flex: 1}}>
-                  <span
+                  style={{
+                    top: 0,
+                    right: 0,
+                    height: "100%",
+                    position: "absolute",
+                    display: "flex"
+                  }}>
+                  <div
                     style={{
-                      flex: 1,
-                      margin: "8px 0px",
-                      width: "2px",
-                      backgroundColor: lavenderGray,
-                      display: "inline-block"
+                      display: "flex",
+                      flexDirection: "column",
+                      flex: 1
+                    }}>
+                    <span
+                      style={{
+                        flex: 1,
+                        margin: "8px 0px",
+                        width: "2px",
+                        backgroundColor: lavenderGray,
+                        display: "inline-block"
+                      }}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    style={{
+                      ...buttonInInputStyles,
+                      backgroundColor: "transparent",
+                      border: "0px",
+                      fontFamily: "Roboto"
                     }}
-                  />
+                    onClick={e => {
+                      // debugger;
+                      if (!canSubmit) {
+                        e.preventDefault();
+                        return;
+                      }
+
+                      // We must defer the setState call, we conditionally
+                      // render the inputs, calling setState as usual causes
+                      // form submit attempt to be made without inputs
+                      setTimeout(
+                        () => this.setState({emailAddedToWaitlist: true}),
+                        0
+                      );
+                    }}>
+                    <span style={{minWidth: "40px"}}>Send</span>
+                  </button>
                 </div>
-                <div
-                  style={buttonInInputStyles}
-                  onClick={() =>
-                    canSubmit && onAddEmailToWaitList(waitListEmail)
-                  }>
-                  {addEmailToWaitListPending ? (
-                    <Ellipsis style={{fontWeight: 700}} />
-                  ) : (
-                    "Send"
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-        {addEmailToWaitListError ? (
-          <div style={{color: neonCarrot, margin: "8px 0px 0px 8px"}}>
-            {addEmailToWaitListError}
+              </>
+            )}
           </div>
-        ) : null}
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              left: "-5000px"
+            }}>
+            <input
+              readOnly
+              type="text"
+              value={profile?.given_name || ""}
+              name="FNAME"
+              tabIndex={-1}
+            />
+            <input
+              readOnly
+              type="text"
+              value={profile?.family_name || ""}
+              name="LNAME"
+              tabIndex={-1}
+            />
+            <input
+              readOnly
+              type="text"
+              value={event.id}
+              name="EVENTID"
+              tabIndex={-1}
+            />
+            <input
+              type="text"
+              name="b_a6b6143a04863843e2f9a34f3_241779b337"
+              tabIndex={-1}
+            />
+          </div>
+        </form>
       </div>
     );
   };
@@ -2449,10 +2469,7 @@ export default connect(
       branchLinkSent: home.branchLinkSent,
       promoTicketTypeConfigs: home.promoTicketTypeConfigs,
       applyPromoPending: home.applyPromoPending,
-      addEmailToWaitListPending: home.addEmailToWaitListPending,
-      applyPromoError: home.applyPromoError,
-      addEmailToWaitListError: home.addEmailToWaitListError,
-      emailAddedToWaitlist: home.emailAddedToWaitlist
+      applyPromoError: home.applyPromoError
     };
   },
   dispatch => ({
@@ -2470,9 +2487,7 @@ export default connect(
     onCreditCardSubmit: onCreditCardSubmitAction(dispatch),
     onFreePurchaseSubmit: onFreePurchaseSubmitAction(dispatch),
     onApplyPromoCode: onApplyPromoCodeAction(dispatch),
-    onAddEmailToWaitList: onAddEmailToWaitListAction(dispatch),
     resetPromoError: resetPromoErrorAction(dispatch),
-    resetAddEmailToWaitListError: resetAddEmailToWaitListErrorAction(dispatch),
     onSendMeApp: onSendMeAppAction(dispatch),
     onBranchPhoneNumberChange: onBranchPhoneNumberChangeAction(dispatch),
     resetError: resetErrorAction(dispatch)
