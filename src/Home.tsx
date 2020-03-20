@@ -1753,7 +1753,7 @@ export class Home extends React.Component<AppPropsT> {
       return;
     }
 
-    let eventName: String = event.name ? event.name : "Fora Event Page";
+    let eventName: String = event.name ? event.name : "Foria Event Page";
     let description: String = event.name
       ? "Buy your tickets today for " + eventName
       : "Buy your tickets today.";
