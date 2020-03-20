@@ -832,23 +832,41 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
+  renderCheckoutStepBody = () => {
+    let event = this.props.event as Event;
+    let showDisclaimer = event.type !== "RESELL";
+    let styles = {
+      section: {
+        margin: "0 0 1.5em 0"
+      }
+    };
+
+    return (
+      <>
+        {this.renderCheckoutSummary()}
+        {showDisclaimer ? (
+          <>
+            <div style={styles.section}>
+              <div style={sharedStyles.dashedLine} />
+            </div>
+            <div style={styles.section}>{this.renderCheckoutDisclaimer()}</div>
+          </>
+        ) : null}
+        <div style={styles.section}>
+          <div style={sharedStyles.dashedLine} />
+        </div>
+        {this.renderPaymentDelegateView()}
+      </>
+    );
+  };
+
   renderDesktopCheckoutStep = () => {
     let {byLayout} = this.props;
     return (
       <>
         {this.renderDesktopHeader()}
         <div style={{margin: byLayout("1em", "1.5em 1em")}}>
-          {this.renderCheckoutSummary()}
-          <div style={{margin: "0 0em 1.5em 0em"}}>
-            <div style={sharedStyles.dashedLine} />
-          </div>
-          <div style={{margin: "0 0em 1.5em 0em"}}>
-            {this.renderCheckoutDisclaimer()}
-          </div>
-          <div style={{margin: "0 0em 1.5em 0em"}}>
-            <div style={sharedStyles.dashedLine} />
-          </div>
-          {this.renderPaymentDelegateView()}
+          {this.renderCheckoutStepBody()}
         </div>
       </>
     );
@@ -963,17 +981,7 @@ export class Home extends React.Component<AppPropsT> {
     return (
       <>
         <div style={sharedStyles.mobileTicketHeader}>Checkout</div>
-        {this.renderCheckoutSummary()}
-        <div style={{marginBottom: "1.5em"}}>
-          <div style={sharedStyles.dashedLine} />
-        </div>
-        <div style={{marginBottom: "1.5em"}}>
-          {this.renderCheckoutDisclaimer()}
-        </div>
-        <div style={{marginBottom: "1.5em"}}>
-          <div style={sharedStyles.dashedLine} />
-        </div>
-        {this.renderPaymentDelegateView()}
+        {this.renderCheckoutStepBody()}
       </>
     );
   };
@@ -1059,6 +1067,7 @@ export class Home extends React.Component<AppPropsT> {
       branchSMSPending,
       branchLinkSent
     } = this.props;
+    let event = this.props.event as Event;
 
     let badgeHeight = "42.77px";
     let styles = {
@@ -1072,14 +1081,27 @@ export class Home extends React.Component<AppPropsT> {
       },
       badgeImg: {display: "block", overflow: "hidden", height: badgeHeight}
     };
+
+    if (event.type === "RESELL") {
+      return (
+        <>
+          <p style={sharedStyles.eventBody}>Thank you for your purchase!</p>
+          <p style={sharedStyles.eventBody}>
+            Your tickets and receipt will be delivered via email.
+          </p>
+          <p style={sharedStyles.eventBody}>Have fun!</p>
+        </>
+      );
+    }
+
     return (
       <>
         <p style={sharedStyles.eventBody}>Thank you for your purchase!</p>
+        <p style={sharedStyles.eventBody}>
+          Your order number is #{orderNumber as string}
+        </p>
         {byLayout(
           <>
-            <p style={sharedStyles.eventBody}>
-              Your order number is #{orderNumber as string}
-            </p>
             <p style={sharedStyles.getTicketsFromForiaApp}>
               <a
                 style={sharedStyles.getTicketsFromForiaApp}
