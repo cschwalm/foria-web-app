@@ -7,16 +7,16 @@ pipelines:
           - node
         name: Test & Build
         script:
-          - npm install
-          - npm test
+          - yarn install
+          - yarn test
   tags:
     release-stage*:
       - step:
           name: Test, Build, and Deploy
           deployment: Staging
           script:
-            - npm install
-            - npm run build
+            - yarn install
+            - yarn run build
             - apt-get update
             - apt-get install python-pip -q -y
             - pip install awscli --upgrade --ignore-installed six
@@ -27,8 +27,8 @@ pipelines:
           name: Test, Build, and Deploy Prod
           deployment: Production
           script:
-            - npm install
-            - npm run build
+            - yarn install
+            - yarn run build
             - apt-get update
             - apt-get install python-pip -q -y
             - pip install awscli --upgrade --ignore-installed six
