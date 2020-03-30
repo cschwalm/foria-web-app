@@ -286,10 +286,8 @@ const sharedStyles = {
     alignItems: "center"
   },
   disabledCheckoutButton: {
-    cursor: "not-allowed"
-  },
-  disabledMobileCheckoutButton: {
-    backgroundColor: "#c3c3c3"
+    cursor: "not-allowed",
+    backgroundColor: lavenderGray
   },
   iconButton: {
     background: "none",
@@ -1950,7 +1948,7 @@ export class Home extends React.Component<AppPropsT> {
           className="row"
           style={{
             ...sharedStyles.checkoutButton,
-            ...(!someSelected ? sharedStyles.disabledMobileCheckoutButton : {})
+            ...(!someSelected ? sharedStyles.disabledCheckoutButton : {})
           }}
           onClick={isVisualPlaceholder ? () => {} : toNextView}>
           Checkout
