@@ -286,10 +286,8 @@ const sharedStyles = {
     alignItems: "center"
   },
   disabledCheckoutButton: {
-    cursor: "not-allowed"
-  },
-  disabledMobileCheckoutButton: {
-    backgroundColor: "#c3c3c3"
+    cursor: "not-allowed",
+    backgroundColor: lavenderGray
   },
   iconButton: {
     background: "none",
@@ -741,14 +739,26 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
+  renderConditionalCheckoutButton = () => {
+    let {toNextView, ticketsForPurchase, checkoutPending} = this.props;
+    let disabledCheckout =
+      !someTicketsSelected(ticketsForPurchase) || this.ticketSalesNotStarted();
+    return this.shouldRenderAddEmailToWaitList() ? null : (
+      <div
+        className="row"
+        style={{
+          ...sharedStyles.checkoutButton,
+          ...(disabledCheckout ? sharedStyles.disabledCheckoutButton : {})
+        }}
+        onClick={toNextView}>
+        Checkout
+        {checkoutPending ? <Ellipsis style={{fontWeight: 700}} /> : null}
+      </div>
+    );
+  };
+
   renderDesktopTicketsStep = () => {
-    let {
-      toNextView,
-      ticketsForPurchase,
-      checkoutPending,
-      byLayout
-    } = this.props;
-    let someSelected = someTicketsSelected(ticketsForPurchase);
+    let {byLayout} = this.props;
     return (
       <>
         {this.renderDesktopHeader()}
@@ -757,16 +767,7 @@ export class Home extends React.Component<AppPropsT> {
             margin: byLayout("1em", "1.5em 1em")
           }}>
           {this.renderTicketStepBody()}
-          <div
-            className="row"
-            style={{
-              ...sharedStyles.checkoutButton,
-              ...(!someSelected ? sharedStyles.disabledCheckoutButton : {})
-            }}
-            onClick={toNextView}>
-            Checkout
-            {checkoutPending ? <Ellipsis style={{fontWeight: 700}} /> : null}
-          </div>
+          {this.renderConditionalCheckoutButton()}
         </div>
       </>
     );
@@ -1505,26 +1506,44 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
-  renderTicketStepBody = () => {
-    let {event, promoTicketTypeConfigs} = this.props;
+  ticketSalesNotStarted = () => {
+    let ticketConfigs = this.getTicketConfigsFromPromo();
+    return !ticketConfigs.length;
+  };
 
-    let styles = {
-      section: {margin: "0em 0em 1.5em 0em"}
-    };
-
-    let ticketConfigs: TicketTypeConfig[] = [];
-    // Promo code tickets have precedence to the tickets on the event
-    if (promoTicketTypeConfigs.length) {
-      ticketConfigs = promoTicketTypeConfigs;
-    } else if (event?.ticket_type_config?.length) {
-      ticketConfigs = event.ticket_type_config;
-    }
-
+  shouldRenderAddEmailToWaitList = () => {
+    let {event} = this.props;
+    let ticketConfigs = this.getTicketConfigsFromPromo();
     let allSoldOut =
       // We assert that there are actually tickets
       ticketConfigs.length &&
       // and that every ticket has NONE remaining
       ticketConfigs.every(t => t.amount_remaining === 0);
+
+    return event?.type === "RESELL" && allSoldOut;
+  };
+
+  getTicketConfigsFromPromo = () => {
+    // Yield tickets giving precedence to promo code tickets over the tickets
+    // on the event
+    let {event, promoTicketTypeConfigs} = this.props;
+    let ticketConfigs: TicketTypeConfig[] = [];
+    if (promoTicketTypeConfigs.length) {
+      ticketConfigs = promoTicketTypeConfigs;
+    } else if (event?.ticket_type_config?.length) {
+      ticketConfigs = event.ticket_type_config;
+    }
+    return ticketConfigs;
+  };
+
+  renderTicketStepBody = () => {
+    let {event} = this.props;
+
+    let styles = {
+      section: {margin: "0em 0em 1.5em 0em"}
+    };
+
+    let ticketConfigs = this.getTicketConfigsFromPromo();
 
     if (!event) {
       return (
@@ -1539,7 +1558,7 @@ export class Home extends React.Component<AppPropsT> {
           </div>
         </>
       );
-    } else if (event.type === "RESELL" && allSoldOut) {
+    } else if (this.shouldRenderAddEmailToWaitList()) {
       return (
         <>
           <div style={styles.section}>
@@ -1554,16 +1573,14 @@ export class Home extends React.Component<AppPropsT> {
           <div style={styles.section}>{this.renderAddEmailToWaitList()}</div>
         </>
       );
-    } else if (ticketConfigs.length) {
+    } else if (this.ticketSalesNotStarted()) {
       return (
         <>
           <div style={styles.section}>
-            <div style={sharedStyles.ticketsRestriction}>
-              A maximum of 10 tickets can be purchased
-            </div>
-          </div>
-          <div style={styles.section}>
-            {this.renderTicketsGrid(ticketConfigs)}
+            <p style={sharedStyles.ticketStepBodyText}>
+              Public ticket sales have not started yet. If you have a promo
+              code, enter it below to access tickets.
+            </p>
           </div>
           <div style={styles.section}>{this.renderPromoCode()}</div>
         </>
@@ -1573,10 +1590,12 @@ export class Home extends React.Component<AppPropsT> {
     return (
       <>
         <div style={styles.section}>
-          <p style={sharedStyles.ticketStepBodyText}>
-            Public ticket sales have not started yet. If you have a promo code,
-            enter it below to access tickets.
-          </p>
+          <div style={sharedStyles.ticketsRestriction}>
+            A maximum of 10 tickets can be purchased
+          </div>
+        </div>
+        <div style={styles.section}>
+          {this.renderTicketsGrid(ticketConfigs)}
         </div>
         <div style={styles.section}>{this.renderPromoCode()}</div>
       </>
@@ -1609,6 +1628,7 @@ export class Home extends React.Component<AppPropsT> {
       default:
         throw new Error(`Unhandled view: ${view}`);
     }
+    let hideCheckoutButton = view !== View.Tickets;
 
     return (
       <div className="column" style={{height: "100%", position: "relative"}}>
@@ -1638,7 +1658,7 @@ export class Home extends React.Component<AppPropsT> {
             {modalView}
           </div>
         </div>
-        {view === View.Tickets ? this.renderFixedCheckoutButton() : null}
+        {hideCheckoutButton ? null : this.renderFixedCheckoutButton()}
       </div>
     );
   };
@@ -1950,7 +1970,7 @@ export class Home extends React.Component<AppPropsT> {
           className="row"
           style={{
             ...sharedStyles.checkoutButton,
-            ...(!someSelected ? sharedStyles.disabledMobileCheckoutButton : {})
+            ...(!someSelected ? sharedStyles.disabledCheckoutButton : {})
           }}
           onClick={isVisualPlaceholder ? () => {} : toNextView}>
           Checkout
