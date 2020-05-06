@@ -1578,9 +1578,11 @@ export class Home extends React.Component<AppPropsT> {
         <>
           <div style={styles.section}>
             <p style={sharedStyles.ticketStepBodyText}>
-              Public ticket sales have not started yet. If you have a promo
-              code, enter it below to access tickets.
+                Promotion tickets are available for select Foria fans. If you have a promo code, enter it below.
             </p>
+              <div style={sharedStyles.ticketsRestriction}>
+                  Not a Foria fan? Sign up! We curate the best events for you and give you access to exclusive promotions.
+              </div>
           </div>
           <div style={styles.section}>{this.renderPromoCode()}</div>
         </>
