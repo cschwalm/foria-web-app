@@ -1578,13 +1578,15 @@ export class Home extends React.Component<AppPropsT> {
         <>
           <div style={styles.section}>
             <p style={sharedStyles.ticketStepBodyText}>
-                Promotion tickets are available for select Foria fans. If you have a promo code, enter it below.
+                Promotion tickets are available for select Foria fans.
+                If you have a promo code, enter it below.
             </p>
-              <div style={sharedStyles.ticketsRestriction}>
-                  Not a Foria fan? Sign up! We curate the best events for you and give you access to exclusive promotions.
-              </div>
+              {this.renderPromoCode()}
           </div>
-          <div style={styles.section}>{this.renderPromoCode()}</div>
+          <p style={sharedStyles.ticketsRestriction}>
+              Not a Foria fan? Sign up! We curate the best events for
+              you and give you access to exclusive promotions.
+          </p>
         </>
       );
     }
@@ -2213,7 +2215,7 @@ export class Home extends React.Component<AppPropsT> {
             </a>
           </div>
           <div style={sharedStyles.copyright}>
-            &copy; 2019 Foria Technologies, Inc. All Rights Reserved.
+            &copy; 2020 Foria Technologies, Inc. All Rights Reserved.
           </div>
         </div>
         <div
