@@ -83,6 +83,7 @@ import {
   twoDecimalNoCurrencyFormatter
 } from "./formatCurrency";
 import minMax from "./minMax";
+import {MaxTickets} from "./utils/constants";
 
 const ticketOverlayWidth = 385;
 const bodyWidth = 960;
@@ -653,7 +654,7 @@ export class Home extends React.Component<AppPropsT> {
     let ticketCount = ticketsForPurchase[ticketType.id];
     let amountSelected = ticketCount || 0;
     let canIncrement =
-      amountSelected + 1 <= 10 &&
+      amountSelected + 1 <= MaxTickets &&
       amountSelected + 1 <= ticketType.amount_remaining;
     let canDecrement = amountSelected - 1 >= 0;
 
@@ -1544,6 +1545,11 @@ export class Home extends React.Component<AppPropsT> {
     };
 
     let ticketConfigs = this.getTicketConfigsFromPromo();
+    let availableTickets : number = 0;
+    for (const ticketTypeConfig of ticketConfigs) {
+        availableTickets += ticketTypeConfig.amount_remaining;
+    }
+    const maxTickets = Math.min(availableTickets, MaxTickets);
 
     if (!event) {
       return (
@@ -1595,7 +1601,7 @@ export class Home extends React.Component<AppPropsT> {
       <>
         <div style={styles.section}>
           <div style={sharedStyles.ticketsRestriction}>
-            A maximum of 10 tickets can be purchased
+            A maximum of {maxTickets} tickets can be purchased
           </div>
         </div>
         <div style={styles.section}>
@@ -2385,7 +2391,7 @@ export class Home extends React.Component<AppPropsT> {
       <div style={styles.container}>
         <div style={styles.innerContainer}>
           <div style={styles.headerStyle}>Oops!</div>
-          <p style={{...styles.body, maxHeight: "150px", overflowY: "auto"}}>
+          <p style={{...styles.body, maxHeight: "l0px", overflowY: "auto"}}>
             {errorMessage}
           </p>
           <p style={styles.body}>Please try again.</p>
