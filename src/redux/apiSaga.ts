@@ -9,7 +9,6 @@ import {
   getAppliedPromoCode
 } from "./selectors";
 import {TicketCounts, ActionType as HomeActionType} from "./reducers/home";
-import {initiateLoginIfNotLoggedInSaga} from "./auth0Saga";
 import {atLeast} from "../delay";
 
 const foriaBackend = process.env.REACT_APP_FORIA_BACKEND_BASE_URL as "string";
@@ -114,14 +113,13 @@ function completeCheckout(data: OrderPayload, accessToken: string) {
 
 function fetchPromoTicketTypes(
   eventId: string,
-  data: PromoPayload,
-  accessToken: string
+  data: PromoPayload
 ) {
   return tupleResponse(
     fetch(`${foriaBackend}/v1/event/${eventId}/ticketTypeConfig/promo`, {
       method: "POST",
       body: JSON.stringify(data),
-      headers: {...defaultHeaders, ...authHeaders(accessToken)}
+      headers: {...defaultHeaders}
     })
   );
 }
@@ -170,16 +168,6 @@ function* completePurchase(action: Action) {
 }
 
 function* applyPromoCode(action: Action) {
-  try {
-    // @ts-ignore
-    yield* initiateLoginIfNotLoggedInSaga();
-  } catch {
-    // Login did not succeed either by error or user cancel
-    yield put({
-      type: ActionType.ApplyPromoCancelledNoLogin
-    });
-    return;
-  }
 
   let eventId = yield select(getEventId);
   let accessToken = yield select(getAccessToken);
@@ -195,7 +183,7 @@ function* applyPromoCode(action: Action) {
     connectionError
   ] = yield call(
     /* Wait 500ms before reporting error/success so loading animation gets a
-     * chance to register to the user without immediatley disappearing */
+     * chance to register to the user without immediately disappearing */
     // @ts-ignore
     (...args) => atLeast(500, fetchPromoTicketTypes(...args)),
     eventId,
