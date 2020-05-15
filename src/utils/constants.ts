@@ -1,1 +1,1 @@
-export const MaxTickets : number = 10;
+export const MAX_TICKETS : number = 10;
