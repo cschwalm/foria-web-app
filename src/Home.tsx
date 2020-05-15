@@ -2391,7 +2391,7 @@ export class Home extends React.Component<AppPropsT> {
       <div style={styles.container}>
         <div style={styles.innerContainer}>
           <div style={styles.headerStyle}>Oops!</div>
-          <p style={{...styles.body, maxHeight: "l0px", overflowY: "auto"}}>
+          <p style={{...styles.body, maxHeight: "150px", overflowY: "auto"}}>
             {errorMessage}
           </p>
           <p style={styles.body}>Please try again.</p>
