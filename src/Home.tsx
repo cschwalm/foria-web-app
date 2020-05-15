@@ -83,6 +83,7 @@ import {
   twoDecimalNoCurrencyFormatter
 } from "./formatCurrency";
 import minMax from "./minMax";
+import {MAX_TICKETS} from "./utils/constants";
 
 const ticketOverlayWidth = 385;
 const bodyWidth = 960;
@@ -653,7 +654,7 @@ export class Home extends React.Component<AppPropsT> {
     let ticketCount = ticketsForPurchase[ticketType.id];
     let amountSelected = ticketCount || 0;
     let canIncrement =
-      amountSelected + 1 <= 10 &&
+      amountSelected + 1 <= MAX_TICKETS &&
       amountSelected + 1 <= ticketType.amount_remaining;
     let canDecrement = amountSelected - 1 >= 0;
 
@@ -1544,6 +1545,11 @@ export class Home extends React.Component<AppPropsT> {
     };
 
     let ticketConfigs = this.getTicketConfigsFromPromo();
+    let availableTickets : number = 0;
+    for (const ticketTypeConfig of ticketConfigs) {
+        availableTickets += ticketTypeConfig.amount_remaining;
+    }
+    const maxTickets = Math.min(availableTickets, MAX_TICKETS);
 
     if (!event) {
       return (
@@ -1595,7 +1601,7 @@ export class Home extends React.Component<AppPropsT> {
       <>
         <div style={styles.section}>
           <div style={sharedStyles.ticketsRestriction}>
-            A maximum of 10 tickets can be purchased
+            A maximum of {maxTickets} tickets can be purchased
           </div>
         </div>
         <div style={styles.section}>
