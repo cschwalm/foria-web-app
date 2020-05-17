@@ -7,3 +7,4 @@ export const lavenderGray = "#C7C7C7";
 export const neonCarrot = "#EF9C44";
 export const trolleyGray = "#7E7E7E";
 export const black = "#333333";
+export const spotifyGreen = '#1DB954';

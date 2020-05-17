@@ -68,9 +68,19 @@ export interface State {
   applyPromoError?: string;
   appliedPromoCode?: string;
 }
+
+const getViewFromUrl = (): View | void => {
+    let params = new URLSearchParams(window.location.search);
+    let view = params.get("view");
+    if (view != null && view === 'spotify-callback') {
+        return View.Complete
+    }
+    return View.Tickets;
+};
+
 export const initialState: State = {
   pullUpMenuCollapsed: true,
-  view: View.Tickets,
+  view: getViewFromUrl() as View,
   paymentRequest: null,
   canMakePayment: false,
   checkoutPending: false,
