@@ -98,6 +98,7 @@ function* handleToNextView() {
       return;
     case View.Checkout:
       yield put({type: HomeActionType.SelectView, data: View.Complete});
+      localStorage.clear();
       return;
     case View.Tickets:
       // Defer to a method, login user then proceed to Checkout

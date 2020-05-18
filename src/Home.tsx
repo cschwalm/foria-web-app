@@ -82,7 +82,8 @@ import {
   twoDecimalNoCurrencyFormatter
 } from "./formatCurrency";
 import minMax from "./minMax";
-import {MAX_TICKETS} from "./utils/constants";
+import {fullStateKey, MAX_TICKETS} from "./utils/constants";
+import * as localStorage from 'local-storage';
 
 const ticketOverlayWidth = 385;
 const bodyWidth = 960;
@@ -742,7 +743,7 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderConditionalCheckoutButton = () => {
-    let {toNextView, ticketsForPurchase, checkoutPending} = this.props;
+    let {ticketsForPurchase, checkoutPending} = this.props;
     let disabledCheckout =
       !someTicketsSelected(ticketsForPurchase) || this.ticketSalesNotStarted();
     return this.shouldRenderAddEmailToWaitList() ? null : (
@@ -752,11 +753,23 @@ export class Home extends React.Component<AppPropsT> {
           ...sharedStyles.checkoutButton,
           ...(disabledCheckout ? sharedStyles.disabledCheckoutButton : {})
         }}
-        onClick={toNextView}>
+        onClick={this.setStateAndAdvance}>
         Checkout
         {checkoutPending ? <Ellipsis style={{fontWeight: 700}} /> : null}
       </div>
     );
+  };
+
+  setStateAndAdvance = () => {
+      let {toNextView} = this.props;
+
+      try {
+          localStorage.set(fullStateKey, JSON.stringify({...this.props}));
+      } catch (e) {
+          console.warn("Failed to set state in local storage. Msg: " + e.message);
+      }
+
+      toNextView();
   };
 
   renderDesktopTicketsStep = () => {
@@ -1850,7 +1863,7 @@ export class Home extends React.Component<AppPropsT> {
   }: {
     isVisualPlaceholder: boolean;
   }) => {
-    let {toNextView, ticketsForPurchase, checkoutPending} = this.props;
+    let {ticketsForPurchase, checkoutPending} = this.props;
     let someSelected = someTicketsSelected(ticketsForPurchase);
     return (
       <div
@@ -1872,7 +1885,7 @@ export class Home extends React.Component<AppPropsT> {
             ...sharedStyles.checkoutButton,
             ...(!someSelected ? sharedStyles.disabledCheckoutButton : {})
           }}
-          onClick={isVisualPlaceholder ? () => {} : toNextView}>
+          onClick={isVisualPlaceholder ? () => {} : this.setStateAndAdvance}>
           Checkout
           {checkoutPending ? <Ellipsis style={{fontWeight: 700}} /> : null}
         </div>

@@ -1,5 +1,5 @@
 import {Dispatch} from "redux";
-import {values, omit} from "lodash";
+import {omit, values} from "lodash";
 import * as Sentry from "@sentry/browser";
 
 import Action from "../Action";
@@ -8,6 +8,8 @@ import {ActionType as StripeActionType} from "../stripeSaga";
 import {ActionType as ApiActionType} from "../apiSaga";
 import {ActionType as Auth0ActionType} from "../auth0Saga";
 import {ActionType as BranchActionType} from "../branchSaga";
+import {fullStateKey} from "../../utils/constants";
+import * as localStorage from 'local-storage';
 
 export enum View {
   Tickets,
@@ -23,7 +25,6 @@ export enum ActionType {
   ResetPullUpMenu = "ResetPullUpMenu",
   ShowPullUpMenu = "ShowPullUpMenu",
 
-  RequestView = "RequestView",
   AddTicket = "AddTicket",
   RemoveTicket = "RemoveTicket",
 
@@ -71,26 +72,39 @@ export interface State {
 
 const getViewFromUrl = (): View | void => {
     let params = new URLSearchParams(window.location.search);
-    let view = params.get("view");
-    if (view != null && view === 'spotify-callback') {
+    let callback = params.get("callback");
+    if (callback != null && callback === 'spotify') {
         return View.Complete
     }
     return View.Tickets;
 };
 
-export const initialState: State = {
-  pullUpMenuCollapsed: true,
-  view: getViewFromUrl() as View,
-  paymentRequest: null,
-  canMakePayment: false,
-  checkoutPending: false,
-  purchasePending: false,
-  branchSMSPending: false,
-  branchLinkSent: false,
-  ticketsForPurchase: {},
-  applyPromoPending: false,
-  promoTicketTypeConfigs: []
-};
+export const initialState: State = obtainInitialState();
+
+function obtainInitialState(): State {
+
+    try {
+        if (localStorage.get(fullStateKey) !== null) {
+            return localStorage.get(fullStateKey);
+        }
+    } catch (e) {
+        console.log("Failed to check session storage.");
+    }
+
+    return {
+        pullUpMenuCollapsed: true,
+        view: getViewFromUrl() as View,
+        paymentRequest: null,
+        canMakePayment: false,
+        checkoutPending: false,
+        purchasePending: false,
+        branchSMSPending: false,
+        branchLinkSent: false,
+        ticketsForPurchase: {},
+        applyPromoPending: false,
+        promoTicketTypeConfigs: []
+    }
+}
 
 function updateTicketsQuantityHelper(
   tickets: TicketCounts,
@@ -349,9 +363,6 @@ export const toNextView = (dispatch: Dispatch<Action>) => () =>
 
 export const toPreviousView = (dispatch: Dispatch<Action>) => () =>
   dispatch({type: ActionType.ToPreviousView});
-
-export const requestView = (dispatch: Dispatch<Action>) => (view: View) =>
-  dispatch({type: ActionType.RequestView, data: view});
 
 export const addTicket = (dispatch: Dispatch<Action>) => (
   ticket: TicketTypeConfig
