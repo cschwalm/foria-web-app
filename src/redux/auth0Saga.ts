@@ -4,7 +4,7 @@ import {call, put, fork, take, takeEvery, race} from "redux-saga/effects";
 import {Dispatch} from "redux";
 
 import Action from "./Action";
-import {vividRaspberry} from "../colors";
+import {vividRaspberry, white} from "../colors";
 
 export enum ActionType {
   CheckLogin = "CheckLogin",
@@ -96,7 +96,15 @@ function createLock() {
       loginAfterSignUp: true,
       theme: {
         logo: "https://foriatickets.com/img/foria-logo-color.png",
-        primaryColor: vividRaspberry
+        primaryColor: vividRaspberry,
+          authButtons: {
+              "spotify": {
+                  displayName: "Spotify",
+                  primaryColor: "#1DB954", //TODO: link to const
+                  foregroundColor: white,
+                  icon: "https://foriatickets.com/img/foria-logo-color.png" //TODO: link to image
+              }
+          }
       }
     }
   );
