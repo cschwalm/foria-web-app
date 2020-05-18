@@ -82,10 +82,11 @@ const getViewFromUrl = (): View | void => {
 export const initialState: State = obtainInitialState();
 
 function obtainInitialState(): State {
+    const state : string = localStorage.get(fullStateKey);
 
     try {
-        if (localStorage.get(fullStateKey) !== null) {
-            return localStorage.get(fullStateKey);
+        if (state !== null) {
+            return JSON.parse(state);
         }
     } catch (e) {
         console.log("Failed to check session storage.");

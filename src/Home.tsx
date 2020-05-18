@@ -764,7 +764,7 @@ export class Home extends React.Component<AppPropsT> {
       let {toNextView} = this.props;
 
       try {
-          localStorage.set(fullStateKey, JSON.stringify({...this.props}));
+          localStorage.set(fullStateKey, JSON.stringify(this.props));
       } catch (e) {
           console.warn("Failed to set state in local storage. Msg: " + e.message);
       }
