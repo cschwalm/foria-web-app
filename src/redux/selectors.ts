@@ -1,5 +1,6 @@
 import {AppState} from "./store";
 import {TicketTypeConfig, FREE_TICKET_PRICE} from "./reducers/root";
+import {fullStateKey} from "../utils/constants";
 
 export const getEventId = (state: AppState) => state.root.eventId;
 export const getView = (state: AppState) => state.home.view;
@@ -11,6 +12,14 @@ export const getAppliedPromoCode = (state: AppState) =>
 export const getBranchPhoneNumber = (state: AppState) =>
   state.home.branchPhoneNumber;
 export const getOrderNumber = (state: AppState) => state.home.orderNumber;
+
+export const setLocalStorage = (state: AppState) => {
+    try {
+        localStorage.setItem(fullStateKey, JSON.stringify(state));
+    } catch (e) {
+        console.warn("Failed to set state in local storage. Msg: " + e.message);
+    }
+};
 
 export const isFreePurchase = (state: AppState) => {
   let ticketTypes: TicketTypeConfig[] =

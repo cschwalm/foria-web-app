@@ -6,7 +6,6 @@ import {Dispatch} from "redux";
 import Action from "./Action";
 import {spotifyGreen, vividRaspberry, white} from "../colors";
 import spotifyIcon from "../assets/Spotify_Icon_RGB_White.png";
-import * as localStorage from 'local-storage';
 
 export enum ActionType {
   CheckLogin = "CheckLogin",

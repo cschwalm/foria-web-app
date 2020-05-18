@@ -8,8 +8,6 @@ import {ActionType as StripeActionType} from "../stripeSaga";
 import {ActionType as ApiActionType} from "../apiSaga";
 import {ActionType as Auth0ActionType} from "../auth0Saga";
 import {ActionType as BranchActionType} from "../branchSaga";
-import {fullStateKey} from "../../utils/constants";
-import * as localStorage from 'local-storage';
 
 export enum View {
   Tickets,
@@ -79,20 +77,7 @@ const getViewFromUrl = (): View | void => {
     return View.Tickets;
 };
 
-export const initialState: State = obtainInitialState();
-
-function obtainInitialState(): State {
-    const state : string = localStorage.get(fullStateKey);
-
-    try {
-        if (state !== null) {
-            return JSON.parse(state);
-        }
-    } catch (e) {
-        console.log("Failed to check session storage.");
-    }
-
-    return {
+export const initialState: State = {
         pullUpMenuCollapsed: true,
         view: getViewFromUrl() as View,
         paymentRequest: null,
@@ -104,8 +89,7 @@ function obtainInitialState(): State {
         ticketsForPurchase: {},
         applyPromoPending: false,
         promoTicketTypeConfigs: []
-    }
-}
+};
 
 function updateTicketsQuantityHelper(
   tickets: TicketCounts,
