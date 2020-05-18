@@ -82,6 +82,7 @@ import {
   twoDecimalNoCurrencyFormatter
 } from "./formatCurrency";
 import minMax from "./minMax";
+import {MAX_TICKETS} from "./utils/constants";
 
 const ticketOverlayWidth = 385;
 const bodyWidth = 960;
