@@ -8,7 +8,7 @@ import {
   takeEvery
 } from "redux-saga/effects";
 
-import {getView, getTicketsForPurchase, isFreePurchase} from "./selectors";
+import {setLocalStorage, getView, getTicketsForPurchase, isFreePurchase} from "./selectors";
 import {
   View,
   ActionType as HomeActionType,
@@ -98,8 +98,12 @@ function* handleToNextView() {
       return;
     case View.Checkout:
       yield put({type: HomeActionType.SelectView, data: View.Complete});
+      // allows new new ticket purchases
+      localStorage.clear();
       return;
     case View.Tickets:
+      // allows for state to be returned after social login redirect
+      yield select(setLocalStorage);
       // Defer to a method, login user then proceed to Checkout
       yield call(toCheckoutView);
       break;

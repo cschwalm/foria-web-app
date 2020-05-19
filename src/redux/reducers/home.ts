@@ -1,5 +1,5 @@
 import {Dispatch} from "redux";
-import {values, omit} from "lodash";
+import {omit, values} from "lodash";
 import * as Sentry from "@sentry/browser";
 
 import Action from "../Action";
@@ -7,7 +7,6 @@ import {TicketTypeConfig} from "./root";
 import {ActionType as StripeActionType} from "../stripeSaga";
 import {ActionType as ApiActionType} from "../apiSaga";
 import {ActionType as Auth0ActionType} from "../auth0Saga";
-import {ActionType as BranchActionType} from "../branchSaga";
 
 export enum View {
   Tickets,
@@ -23,7 +22,6 @@ export enum ActionType {
   ResetPullUpMenu = "ResetPullUpMenu",
   ShowPullUpMenu = "ShowPullUpMenu",
 
-  RequestView = "RequestView",
   AddTicket = "AddTicket",
   RemoveTicket = "RemoveTicket",
 
@@ -38,7 +36,6 @@ export enum ActionType {
   FreePurchaseSubmit = "FreePurchaseSubmit",
 
   SendMeAppSubmit = "SendMeAppSubmit",
-  BranchPhoneNumberChange = "BranchPhoneNumberChange",
 
   ApplyPromoCode = "ApplyPromoCode",
   ResetPromoError = "ResetPromoError"
@@ -60,26 +57,31 @@ export interface State {
   orderGrandTotal?: number;
   orderCurrency?: string;
   error?: any;
-  branchPhoneNumber?: string;
-  branchSMSPending: boolean;
-  branchLinkSent: boolean;
   promoTicketTypeConfigs: TicketTypeConfig[];
   applyPromoPending: boolean;
   applyPromoError?: string;
   appliedPromoCode?: string;
 }
+
+const getViewFromUrl = (): View | void => {
+    let params = new URLSearchParams(window.location.search);
+    let callback = params.get("callback");
+    if (callback != null && callback === 'spotify') {
+        return View.Complete
+    }
+    return View.Tickets;
+};
+
 export const initialState: State = {
-  pullUpMenuCollapsed: true,
-  view: View.Tickets,
-  paymentRequest: null,
-  canMakePayment: false,
-  checkoutPending: false,
-  purchasePending: false,
-  branchSMSPending: false,
-  branchLinkSent: false,
-  ticketsForPurchase: {},
-  applyPromoPending: false,
-  promoTicketTypeConfigs: []
+        pullUpMenuCollapsed: true,
+        view: getViewFromUrl() as View,
+        paymentRequest: null,
+        canMakePayment: false,
+        checkoutPending: false,
+        purchasePending: false,
+        ticketsForPurchase: {},
+        applyPromoPending: false,
+        promoTicketTypeConfigs: []
 };
 
 function updateTicketsQuantityHelper(
@@ -154,7 +156,6 @@ export const errorModalReducer = (state = initialState, action: Action) => {
     case ApiActionType.CalculateOrderTotalError:
     case ApiActionType.EventFetchCriticalError:
     case ApiActionType.CheckoutCriticalError:
-    case BranchActionType.SendMeAppError:
     case ApiActionType.CalculateOrderTotalCriticalError:
       return {
         ...state,
@@ -287,27 +288,6 @@ export const mainReducer = (state = initialState, action: Action) => {
         // is created, we reset canMakePayment
         canMakePayment: false
       };
-    case ActionType.SendMeAppSubmit:
-      return {
-        ...state,
-        branchSMSPending: true
-      };
-    case BranchActionType.SendMeAppSuccess:
-      return {
-        ...state,
-        branchSMSPending: false,
-        branchLinkSent: true
-      };
-    case ActionType.BranchPhoneNumberChange:
-      return {
-        ...state,
-        branchPhoneNumber: action.data
-      };
-    case BranchActionType.SendMeAppError:
-      return {
-        ...state,
-        branchSMSPending: false
-      };
   }
   return state;
 };
@@ -340,9 +320,6 @@ export const toNextView = (dispatch: Dispatch<Action>) => () =>
 export const toPreviousView = (dispatch: Dispatch<Action>) => () =>
   dispatch({type: ActionType.ToPreviousView});
 
-export const requestView = (dispatch: Dispatch<Action>) => (view: View) =>
-  dispatch({type: ActionType.RequestView, data: view});
-
 export const addTicket = (dispatch: Dispatch<Action>) => (
   ticket: TicketTypeConfig
 ) => dispatch({type: ActionType.AddTicket, data: ticket});
@@ -366,7 +343,3 @@ export const resetPromoError = (dispatch: Dispatch<Action>) => () =>
 
 export const onSendMeApp = (dispatch: Dispatch<Action>) => () =>
   dispatch({type: ActionType.SendMeAppSubmit});
-
-export const onBranchPhoneNumberChange = (dispatch: Dispatch<Action>) => (
-  phoneNumber: string
-) => dispatch({type: ActionType.BranchPhoneNumberChange, data: phoneNumber});

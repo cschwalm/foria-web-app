@@ -4,7 +4,8 @@ import {call, put, fork, take, takeEvery, race} from "redux-saga/effects";
 import {Dispatch} from "redux";
 
 import Action from "./Action";
-import {vividRaspberry, white} from "../colors";
+import {spotifyGreen, vividRaspberry, white} from "../colors";
+import spotifyIcon from "../assets/Spotify_Icon_RGB_White.png";
 
 export enum ActionType {
   CheckLogin = "CheckLogin",
@@ -70,7 +71,8 @@ function createLock() {
       auth: {
         responseType: "token",
         audience: process.env.REACT_APP_AUTH0_AUDIENCE as string,
-        redirect: false
+        redirect: true,
+        redirectUrl: window.location.href
       },
       initialScreen: "signUp",
       additionalSignUpFields: [
@@ -100,9 +102,9 @@ function createLock() {
           authButtons: {
               "spotify": {
                   displayName: "Spotify",
-                  primaryColor: "#1DB954", //TODO: link to const
+                  primaryColor: spotifyGreen,
                   foregroundColor: white,
-                  icon: "https://foriatickets.com/img/foria-logo-color.png" //TODO: link to image
+                  icon: spotifyIcon
               }
           }
       }
@@ -213,10 +215,12 @@ function* login() {
 }
 
 function logout() {
-  let lock = createLock();
 
-  // Auth0 requires a redirect for logout, redirect back to the current page
-  lock.logout({returnTo: window.location.href});
+    localStorage.clear();
+    let lock = createLock();
+
+    // Auth0 requires a redirect for logout, redirect back to the current page
+    lock.logout({returnTo: window.location.href});
 }
 
 function* checkAlreadyLoggedIn() {

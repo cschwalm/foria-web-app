@@ -13,23 +13,21 @@ import {
 } from "react-stripe-elements";
 import memoizeOne from "memoize-one";
 import ReactMarkdown from "react-markdown";
-import InputMask from "react-input-mask";
 
 import {Layout} from "./layout";
 import {isFreePurchase} from "./redux/selectors";
 import {
-  antiFlashWhite,
-  black,
-  budGreen,
-  lavenderGray,
-  neonCarrot,
-  red,
-  trolleyGray,
-  vividRaspberry,
-  white
+    antiFlashWhite,
+    black,
+    budGreen,
+    lavenderGray,
+    neonCarrot,
+    red,
+    trolleyGray,
+    vividRaspberry,
+    white,
+    spotifyGreen
 } from "./colors";
-import appleStoreBadge from "./appleStoreBadge.svg";
-import googlePlayBadge from "./googlePlayBadge.png";
 import {AppState} from "./redux/store";
 import {
   AuthenticationStatus,
@@ -47,8 +45,6 @@ import {
   onFreePurchaseSubmit as onFreePurchaseSubmitAction,
   onApplyPromoCode as onApplyPromoCodeAction,
   resetPromoError as resetPromoErrorAction,
-  onSendMeApp as onSendMeAppAction,
-  onBranchPhoneNumberChange as onBranchPhoneNumberChangeAction,
   removeTicket as removeTicketAction,
   resetError as resetErrorAction,
   resetPullUpMenu as resetPullUpMenuAction,
@@ -66,15 +62,16 @@ import {
   initiateLogout as initiateLogoutAction
 } from "./redux/auth0Saga";
 import {byLayout as byLayoutWrapper} from "./layout";
-import foriaLogo from "./foria_logo.png";
-import calendarIcon from "./calendar_icon.png";
+import foriaLogo from "./assets/foria_logo.png";
+import calendarIcon from "./assets/calendar_icon.png";
+import spotifyIcon from "./assets/Spotify_Icon_RGB_White.png";
 import PinpointIcon from "./pinpointIcon";
 import DecrementIcon from "./decrementIcon";
 import IncrementIcon from "./incrementIcon";
 import CloseIconMobile from "./closeIconMobile";
 import BackIconMobile from "./backIconMobile";
-import SendIcon from "./sendIcon";
 import LeftChevron from "./leftChevron";
+import RightChevron from "./rightChevron";
 import UpwardChevron from "./upwardChevron";
 import {
   feeFormatter,
@@ -106,8 +103,6 @@ interface AppPropsT {
   onFreePurchaseSubmit: () => void;
   onApplyPromoCode: (promoCode: string) => void;
   resetPromoError: () => void;
-  onSendMeApp: () => void;
-  onBranchPhoneNumberChange: (phoneNumber: string) => void;
   selectView: (view: View) => void;
   toPreviousView: () => void;
   toNextView: () => void;
@@ -117,7 +112,6 @@ interface AppPropsT {
   canMakePayment: boolean;
   checkoutPending: boolean;
   purchasePending: boolean;
-  branchSMSPending: boolean;
   isFree: boolean;
   ticketsForPurchase: TicketCounts;
   profile?: auth0.Auth0UserProfile;
@@ -128,8 +122,6 @@ interface AppPropsT {
   orderGrandTotal?: number;
   orderCurrency?: string;
   error?: any;
-  branchPhoneNumber?: string;
-  branchLinkSent: boolean;
   promoTicketTypeConfigs: TicketTypeConfig[];
   applyPromoPending: boolean;
   applyPromoError?: string;
@@ -379,10 +371,11 @@ const sharedStyles = {
     fontSize: `${font4}px`,
     lineHeight: "1.2em"
   },
-  getTicketsFromForiaApp: {
-    color: vividRaspberry,
-    fontSize: `${font4}px`,
-    lineHeight: "1.2em"
+  eventDetailTitlePink: {
+      marginBottom: "0.2em",
+      color: vividRaspberry,
+      fontSize: `${font4}px`,
+      lineHeight: "1.2em"
   }
 };
 
@@ -574,10 +567,11 @@ const Ellipsis = ({style = {}}: {style?: React.CSSProperties}) => (
 export class Home extends React.Component<AppPropsT> {
   state = {
     // Storing these values in local state, to lower input latency
-    promoCode: "",
-    waitListEmail: "",
+      promoCode: "",
+      waitListEmail: "",
 
-    emailAddedToWaitlist: false
+      emailAddedToWaitlist: false,
+      didUserSkipSpotify: false
   };
   renderTicketDescriptionColumn = (ticketType: TicketTypeConfig) => {
     let soldOut = ticketType.amount_remaining === 0;
@@ -1045,192 +1039,81 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
-  onBranchPhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let {onBranchPhoneNumberChange} = this.props;
-    let cleaned = e.target.value;
-    if (cleaned) {
-      // Remove any non-digits from the number
-      cleaned = cleaned.replace(/[^\d]+/g, "");
-    }
-    onBranchPhoneNumberChange(cleaned);
-  };
-
-  renderCompleteStepBody = () => {
-    let {
-      byLayout,
-      orderNumber,
-      onSendMeApp,
-      branchPhoneNumber,
-      branchSMSPending,
-      branchLinkSent
-    } = this.props;
-    let event = this.props.event as Event;
-
-    let badgeHeight = "42.77px";
-    let styles = {
-      badgeAnchor: {
-        position: "absolute" as "absolute",
-        width: "100%",
-        height: "100%",
-        top: 0,
-        left: 0,
-        textDecoration: "none"
-      },
-      badgeImg: {display: "block", overflow: "hidden", height: badgeHeight}
+    isUserSpotifyConnected = () => {
+        //TODO: hook up to Auth0 user settings
+        return false;
     };
 
-    if (event.type === "RESELL") {
+  renderCompleteStepBody = () => {
+
+      const spotifyStyles = {
+          connectButton: {
+              cursor: "pointer",
+              height: checkoutButtonHeight,
+              flex: `0 0 ${checkoutButtonHeight}`,
+              backgroundColor: spotifyGreen,
+              borderRadius: "5px",
+              padding: "7px 10px",
+              color: white,
+              fontWeight: 500,
+              justifyContent: "space-between",
+              alignItems: "center",
+              boxSizing: "border-box" as "border-box"
+          },
+          skipButton: {
+              margin: "0.5em 0em 0em 0em",
+              cursor: "pointer",
+              height: checkoutButtonHeight,
+              flex: `0 0 ${checkoutButtonHeight}`,
+              borderRadius: "5px",
+              border:"2px solid " + spotifyGreen,
+              color: trolleyGray,
+              fontWeight: 500,
+              justifyContent: "center",
+              alignItems: "center",
+              boxSizing: "border-box" as "border-box"
+          },
+          icon: {
+              height: '100%'
+          }
+      };
+
+    if (!this.isUserSpotifyConnected() && !this.state.didUserSkipSpotify) {
+        //TODO: hook up to Spotify API on button click
       return (
         <>
-          <p style={sharedStyles.eventBody}>Thank you for your purchase!</p>
-          <p style={sharedStyles.eventBody}>
-            Your tickets and receipt will be delivered via email.
-          </p>
-          <p style={sharedStyles.eventBody}>Have fun!</p>
+            <div style={sharedStyles.eventDetailTitlePink}>Would you like more discounts?</div>
+            <p style={sharedStyles.eventBody}>We'll send you more discounts that are tailored to your interests</p>
+            <div
+                className="row"
+                style={{
+                    ...spotifyStyles.connectButton,
+                }}
+                onClick={() => console.log('test')}>
+                <img src={spotifyIcon} style={{...spotifyStyles.icon}} alt="Spotify Icon"/>
+                Connect with Spotify
+                <RightChevron />
+            </div>
+            <div
+                className="row"
+                style={{
+                    ...spotifyStyles.skipButton,
+                }}
+                onClick={() => this.setState({didUserSkipSpotify: true})}>
+                Skip
+            </div>
         </>
       );
     }
 
     return (
-      <>
-        <p style={sharedStyles.eventBody}>Thank you for your purchase!</p>
-        <p style={sharedStyles.eventBody}>
-          Your order number is #{orderNumber as string}
-        </p>
-        {byLayout(
-          <>
-            <p style={sharedStyles.getTicketsFromForiaApp}>
-              <a
-                style={sharedStyles.getTicketsFromForiaApp}
-                href={process.env.REACT_APP_BRANCH_LINK}
-                target="_blank"
-                rel="noopener noreferrer">
-                Access your tickets in the Foria app
-              </a>
+        <>
+            <p style={sharedStyles.eventBody}>Thank you for your purchase!</p>
+            <p style={sharedStyles.eventBody}>
+                Your tickets and receipt will be delivered via email.
             </p>
-          </>,
-          <p style={{fontSize: font5}}>Your tickets are in the Foria app</p>
-        )}
-        <p
-          style={{...sharedStyles.eventBody, marginBottom: `${1.5 * font3}px`}}>
-          To ensure authenticity, your tickets are only available in the Foria
-          app. You will not receive tickets via email. We recommend that you
-          locate your tickets in-app before the event. Once located, the tickets
-          will be saved to your device, and you will not need internet at the
-          event. If you haven't located your tickets in-app, for any reason,
-          then you must have a government ID that shows the name on your Foria
-          account.
-        </p>
-        {byLayout(
-          null,
-          <>
-            <p
-              style={{
-                ...sharedStyles.eventBody,
-                marginBottom: `${0.5 * font3}px`
-              }}>
-              Recieve a one-time SMS to download the app:
-            </p>
-            <InputMask
-              placeholder="Enter phone number"
-              mask="+1 (999) 999-9999"
-              value={branchPhoneNumber || ""}
-              onChange={this.onBranchPhoneNumberChange}>
-              {(inputProps: any) => (
-                <input
-                  {...inputProps}
-                  type="text"
-                  autoComplete="tel"
-                  className={byLayout("mobile", "desktop")}
-                  style={byLayout(
-                    sharedStyles.mobileInput,
-                    sharedStyles.desktopInput
-                  )}
-                />
-              )}
-            </InputMask>
-            <div
-              className="row"
-              style={{
-                ...sharedStyles.checkoutButton,
-                position: "relative",
-                marginBottom: `${0.5 * font3}px`,
-                fontSize: `${font4}px`
-              }}
-              onClick={onSendMeApp}>
-              {branchLinkSent ? "A link was sent" : "Send me the app"}
-              {branchSMSPending ? <Ellipsis style={{fontWeight: 700}} /> : null}
-              <div
-                style={{
-                  position: "absolute",
-                  boxSizing: "border-box",
-                  /* This padding ultimately determines the height of the svg
-                   * in its container, this value was chosen so that the
-                   * button text "Send me the app" would have a similar weight
-                   * as the stroke of the svg SendIcon*/
-                  padding: "11px",
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  height: "100%",
-                  display: "flex",
-                  alignItems: "center"
-                }}>
-                <SendIcon />
-              </div>
-            </div>
-            <p
-              style={{
-                ...sharedStyles.eventBody,
-                marginBottom: `${1.5 * font3}px`,
-                textAlign: "center"
-              }}>
-              Standard messaging rates may apply
-            </p>
-          </>
-        )}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "center"
-          }}>
-          <div style={{position: "relative"}}>
-            <img
-              alt="Apple App Store download badge"
-              src={appleStoreBadge}
-              style={styles.badgeImg}
-            />
-            <a
-              style={styles.badgeAnchor}
-              href="https://apps.apple.com/us/app/foria/id1475421513"
-              target="_blank"
-              rel="noopener noreferrer">
-              <span
-                style={sharedStyles.visuallyHiddenButScreenReaderAccessible}>
-                Download the Foria iOS app
-              </span>
-            </a>
-          </div>
-          <div style={{marginLeft: `${1.5 * font3}px`, position: "relative"}}>
-            <img
-              alt="Google Play Store download badge"
-              src={googlePlayBadge}
-              style={styles.badgeImg}
-            />
-            <a
-              style={styles.badgeAnchor}
-              href="https://play.google.com/store/apps/details?id=com.foriatickets.foria"
-              target="_blank"
-              rel="noopener noreferrer">
-              <span
-                style={sharedStyles.visuallyHiddenButScreenReaderAccessible}>
-                Download the Foria Android app
-              </span>
-            </a>
-          </div>
-        </div>
-      </>
+            <p style={sharedStyles.eventBody}>Have fun!</p>
+        </>
     );
   };
 
@@ -2493,10 +2376,7 @@ export default connect(
       error: home.error,
       checkoutPending: home.checkoutPending,
       purchasePending: home.purchasePending,
-      branchSMSPending: home.branchSMSPending,
       isFree: memoizedIsFreePurchase(state),
-      branchPhoneNumber: home.branchPhoneNumber,
-      branchLinkSent: home.branchLinkSent,
       promoTicketTypeConfigs: home.promoTicketTypeConfigs,
       applyPromoPending: home.applyPromoPending,
       applyPromoError: home.applyPromoError
@@ -2518,8 +2398,6 @@ export default connect(
     onFreePurchaseSubmit: onFreePurchaseSubmitAction(dispatch),
     onApplyPromoCode: onApplyPromoCodeAction(dispatch),
     resetPromoError: resetPromoErrorAction(dispatch),
-    onSendMeApp: onSendMeAppAction(dispatch),
-    onBranchPhoneNumberChange: onBranchPhoneNumberChangeAction(dispatch),
     resetError: resetErrorAction(dispatch)
   })
 )(Home);
