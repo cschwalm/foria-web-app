@@ -1,4 +1,4 @@
-import minMax from "./minMax";
+import minMax from "../src/utils/minMax";
 
 it("yields the proper minimum value", () => {
   let [min] = minMax([0, 1, 2, -1]);

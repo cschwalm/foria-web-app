@@ -27,7 +27,7 @@ import {
     vividRaspberry,
     white,
     spotifyGreen
-} from "./colors";
+} from "./utils/colors";
 import {AppState} from "./redux/store";
 import {
   AuthenticationStatus,
@@ -65,21 +65,21 @@ import {byLayout as byLayoutWrapper} from "./layout";
 import foriaLogo from "./assets/foria_logo.png";
 import calendarIcon from "./assets/calendar_icon.png";
 import spotifyIcon from "./assets/Spotify_Icon_RGB_White.png";
-import PinpointIcon from "./pinpointIcon";
-import DecrementIcon from "./decrementIcon";
-import IncrementIcon from "./incrementIcon";
-import CloseIconMobile from "./closeIconMobile";
-import BackIconMobile from "./backIconMobile";
-import LeftChevron from "./leftChevron";
-import RightChevron from "./rightChevron";
-import UpwardChevron from "./upwardChevron";
+import PinpointIcon from "./icons/pinpointIcon";
+import DecrementIcon from "./icons/decrementIcon";
+import IncrementIcon from "./icons/incrementIcon";
+import CloseIconMobile from "./icons/closeIconMobile";
+import BackIconMobile from "./icons/backIconMobile";
+import LeftChevron from "./icons/leftChevron";
+import RightChevron from "./icons/rightChevron";
+import UpwardChevron from "./icons/upwardChevron";
 import {
   feeFormatter,
   pricePreviewFormatter,
   twoDecimalFormatter,
   twoDecimalNoCurrencyFormatter
-} from "./formatCurrency";
-import minMax from "./minMax";
+} from "./utils/formatCurrency";
+import minMax from "./utils/minMax";
 import {MAX_TICKETS} from "./utils/constants";
 
 const ticketOverlayWidth = 385;

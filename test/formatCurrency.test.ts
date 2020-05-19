@@ -1,4 +1,4 @@
-import {pricePreviewFormatter, feeFormatter} from "./formatCurrency";
+import {pricePreviewFormatter, feeFormatter} from "../src/utils/formatCurrency";
 
 describe("pricePreviewFormatter", () => {
   it("provides no decimal places for amounts greater than 1", () => {

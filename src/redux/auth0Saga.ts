@@ -4,7 +4,7 @@ import {call, put, fork, take, takeEvery, race} from "redux-saga/effects";
 import {Dispatch} from "redux";
 
 import Action from "./Action";
-import {spotifyGreen, vividRaspberry, white} from "../colors";
+import {spotifyGreen, vividRaspberry, white} from "../utils/colors";
 import spotifyIcon from "../assets/Spotify_Icon_RGB_White.png";
 
 export enum ActionType {
