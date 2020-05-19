@@ -24,8 +24,8 @@ export function initializeStore() {
 
     // Sets initial state from local storage if available
     // The initial states in home.ts and root.ts are over written
-    const state = localStorage.getItem(fullStateKey);
     try {
+        const state = localStorage.getItem(fullStateKey);
         if (state !== null) {
             rootInitialState = JSON.parse(state).root;
             homeInitialState = JSON.parse(state).home;
