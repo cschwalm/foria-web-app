@@ -7,7 +7,6 @@ import {TicketTypeConfig} from "./root";
 import {ActionType as StripeActionType} from "../stripeSaga";
 import {ActionType as ApiActionType} from "../apiSaga";
 import {ActionType as Auth0ActionType} from "../auth0Saga";
-import {ActionType as BranchActionType} from "../branchSaga";
 
 export enum View {
   Tickets,
@@ -37,7 +36,6 @@ export enum ActionType {
   FreePurchaseSubmit = "FreePurchaseSubmit",
 
   SendMeAppSubmit = "SendMeAppSubmit",
-  BranchPhoneNumberChange = "BranchPhoneNumberChange",
 
   ApplyPromoCode = "ApplyPromoCode",
   ResetPromoError = "ResetPromoError"
@@ -59,9 +57,6 @@ export interface State {
   orderGrandTotal?: number;
   orderCurrency?: string;
   error?: any;
-  branchPhoneNumber?: string;
-  branchSMSPending: boolean;
-  branchLinkSent: boolean;
   promoTicketTypeConfigs: TicketTypeConfig[];
   applyPromoPending: boolean;
   applyPromoError?: string;
@@ -84,8 +79,6 @@ export const initialState: State = {
         canMakePayment: false,
         checkoutPending: false,
         purchasePending: false,
-        branchSMSPending: false,
-        branchLinkSent: false,
         ticketsForPurchase: {},
         applyPromoPending: false,
         promoTicketTypeConfigs: []
@@ -163,7 +156,6 @@ export const errorModalReducer = (state = initialState, action: Action) => {
     case ApiActionType.CalculateOrderTotalError:
     case ApiActionType.EventFetchCriticalError:
     case ApiActionType.CheckoutCriticalError:
-    case BranchActionType.SendMeAppError:
     case ApiActionType.CalculateOrderTotalCriticalError:
       return {
         ...state,
@@ -296,27 +288,6 @@ export const mainReducer = (state = initialState, action: Action) => {
         // is created, we reset canMakePayment
         canMakePayment: false
       };
-    case ActionType.SendMeAppSubmit:
-      return {
-        ...state,
-        branchSMSPending: true
-      };
-    case BranchActionType.SendMeAppSuccess:
-      return {
-        ...state,
-        branchSMSPending: false,
-        branchLinkSent: true
-      };
-    case ActionType.BranchPhoneNumberChange:
-      return {
-        ...state,
-        branchPhoneNumber: action.data
-      };
-    case BranchActionType.SendMeAppError:
-      return {
-        ...state,
-        branchSMSPending: false
-      };
   }
   return state;
 };
@@ -372,7 +343,3 @@ export const resetPromoError = (dispatch: Dispatch<Action>) => () =>
 
 export const onSendMeApp = (dispatch: Dispatch<Action>) => () =>
   dispatch({type: ActionType.SendMeAppSubmit});
-
-export const onBranchPhoneNumberChange = (dispatch: Dispatch<Action>) => (
-  phoneNumber: string
-) => dispatch({type: ActionType.BranchPhoneNumberChange, data: phoneNumber});

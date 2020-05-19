@@ -45,8 +45,6 @@ import {
   onFreePurchaseSubmit as onFreePurchaseSubmitAction,
   onApplyPromoCode as onApplyPromoCodeAction,
   resetPromoError as resetPromoErrorAction,
-  onSendMeApp as onSendMeAppAction,
-  onBranchPhoneNumberChange as onBranchPhoneNumberChangeAction,
   removeTicket as removeTicketAction,
   resetError as resetErrorAction,
   resetPullUpMenu as resetPullUpMenuAction,
@@ -105,8 +103,6 @@ interface AppPropsT {
   onFreePurchaseSubmit: () => void;
   onApplyPromoCode: (promoCode: string) => void;
   resetPromoError: () => void;
-  onSendMeApp: () => void;
-  onBranchPhoneNumberChange: (phoneNumber: string) => void;
   selectView: (view: View) => void;
   toPreviousView: () => void;
   toNextView: () => void;
@@ -116,7 +112,6 @@ interface AppPropsT {
   canMakePayment: boolean;
   checkoutPending: boolean;
   purchasePending: boolean;
-  branchSMSPending: boolean;
   isFree: boolean;
   ticketsForPurchase: TicketCounts;
   profile?: auth0.Auth0UserProfile;
@@ -127,8 +122,6 @@ interface AppPropsT {
   orderGrandTotal?: number;
   orderCurrency?: string;
   error?: any;
-  branchPhoneNumber?: string;
-  branchLinkSent: boolean;
   promoTicketTypeConfigs: TicketTypeConfig[];
   applyPromoPending: boolean;
   applyPromoError?: string;
@@ -2383,10 +2376,7 @@ export default connect(
       error: home.error,
       checkoutPending: home.checkoutPending,
       purchasePending: home.purchasePending,
-      branchSMSPending: home.branchSMSPending,
       isFree: memoizedIsFreePurchase(state),
-      branchPhoneNumber: home.branchPhoneNumber,
-      branchLinkSent: home.branchLinkSent,
       promoTicketTypeConfigs: home.promoTicketTypeConfigs,
       applyPromoPending: home.applyPromoPending,
       applyPromoError: home.applyPromoError
@@ -2408,8 +2398,6 @@ export default connect(
     onFreePurchaseSubmit: onFreePurchaseSubmitAction(dispatch),
     onApplyPromoCode: onApplyPromoCodeAction(dispatch),
     resetPromoError: resetPromoErrorAction(dispatch),
-    onSendMeApp: onSendMeAppAction(dispatch),
-    onBranchPhoneNumberChange: onBranchPhoneNumberChangeAction(dispatch),
     resetError: resetErrorAction(dispatch)
   })
 )(Home);
