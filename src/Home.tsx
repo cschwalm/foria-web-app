@@ -1078,7 +1078,7 @@ export class Home extends React.Component<AppPropsT> {
           }
       };
 
-    if (!this.isUserSpotifyConnected() && !this.state.didUserSkipSpotify) {
+    if (!this.isUserSpotifyConnected() && !this.state.didUserSkipSpotify && false) { //TODO: remove false bool
         //TODO: hook up to Spotify API on button click
       return (
         <>
