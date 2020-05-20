@@ -91,7 +91,7 @@ it("strips html from the markdown", () => {
     initiateLogout: () => {},
     event: {
       ticket_type_config: [],
-      description: "error",
+      description: "<p>error</p>",
       address: {
         street_address: "12345 Fake Ln",
         city: "Fake City",
