@@ -1078,8 +1078,8 @@ export class Home extends React.Component<AppPropsT> {
           }
       };
 
-    if (!this.isUserSpotifyConnected() && !this.state.didUserSkipSpotify) {
-        //TODO: hook up to Spotify API on button click
+    if (!this.isUserSpotifyConnected() && !this.state.didUserSkipSpotify && false) {
+        //TODO: hook up to Spotify API on button click and remove false above
       return (
         <>
             <div style={sharedStyles.eventDetailTitlePink}>Would you like more discounts?</div>
