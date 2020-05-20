@@ -1,6 +1,6 @@
 import React from "react";
 
-import {vividRaspberry, trolleyGray} from "./colors";
+import {vividRaspberry, trolleyGray} from "../utils/colors";
 
 export default ({disabled = false}: {disabled?: boolean}) => (
   <svg

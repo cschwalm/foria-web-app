@@ -1,6 +1,6 @@
 import React from "react";
 
-import {white} from "./colors";
+import {white} from "../utils/colors";
 
 export default () => (
   <svg

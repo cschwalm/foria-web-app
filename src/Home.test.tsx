@@ -12,7 +12,7 @@ Enzyme.configure({adapter: new Adapter()});
 it("renders an event", () => {
   const props = {
     layout: Layout.Desktop,
-    byLayout: (a, b) => a,
+    byLayout: (a : any) => a,
     promoTicketTypeConfigs: [],
     authenticationStatus: AuthenticationStatus.NoAuth,
     view: View.Tickets,
@@ -39,7 +39,8 @@ it("renders an event", () => {
       }
     }
   };
-  const wrapper = shallow(<Home {...props} />);
+  // @ts-ignore
+    const wrapper = shallow(<Home {...props} />);
   expect(wrapper.contains("Jun 20th, 3:07AM to Oct 1st, 12:00AM")).toEqual(
     true
   );
@@ -49,7 +50,7 @@ it("renders an event", () => {
 it("renders markdown in the event description", () => {
   const props = {
     layout: Layout.Desktop,
-    byLayout: (a, b) => a,
+    byLayout: (a : any) => a,
     promoTicketTypeConfigs: [],
     authenticationStatus: AuthenticationStatus.NoAuth,
     view: View.Tickets,
@@ -69,7 +70,8 @@ it("renders markdown in the event description", () => {
       }
     }
   };
-  const wrapper = mount(<Home {...props} />);
+  // @ts-ignore
+    const wrapper = mount(<Home {...props} />);
   let eventDescription = wrapper.find(ReactMarkdown);
   expect(eventDescription.html()).toEqual(
     "<p>first paragraph</p><p>second paragraph</p>"
@@ -80,7 +82,7 @@ it("strips html from the markdown", () => {
   const props = {
     layout: Layout.Desktop,
     promoTicketTypeConfigs: [],
-    byLayout: (a, b) => a,
+    byLayout: (a : any) => a,
     authenticationStatus: AuthenticationStatus.NoAuth,
     view: View.Tickets,
     togglePullUpMenu: () => {},
@@ -89,7 +91,7 @@ it("strips html from the markdown", () => {
     initiateLogout: () => {},
     event: {
       ticket_type_config: [],
-      description: "<script>oh no!</script>",
+      description: "<p>error</p>",
       address: {
         street_address: "12345 Fake Ln",
         city: "Fake City",
@@ -99,7 +101,8 @@ it("strips html from the markdown", () => {
       }
     }
   };
-  const wrapper = mount(<Home {...props} />);
+  // @ts-ignore
+    const wrapper = mount(<Home {...props} />);
   let eventDescription = wrapper.find(ReactMarkdown);
   expect(eventDescription.html()).toEqual("");
 });

@@ -1,6 +1,6 @@
 import React from "react";
 
-import {antiFlashWhite, trolleyGray} from "./colors";
+import {antiFlashWhite, trolleyGray} from "../utils/colors";
 
 export default () => (
   <svg
