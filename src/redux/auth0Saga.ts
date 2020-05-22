@@ -6,11 +6,13 @@ import {Dispatch} from "redux";
 import Action from "./Action";
 import {spotifyGreen, vividRaspberry, white} from "../utils/colors";
 import spotifyIcon from "../assets/Spotify_Icon_RGB_White.png";
+import {WebAuth} from "auth0-js";
 
 export enum ActionType {
   CheckLogin = "CheckLogin",
   InitiateLogin = "InitiateLogin",
   InitiateLogout = "InitiateLogout",
+  InitiateSpotifyLogin = "InitiateSpotifyLogin",
 
   // checkSession yielded no existing session
   NoExistingSession = "NoExistingSession",
@@ -31,6 +33,9 @@ export const initiateLogin = (dispatch: Dispatch<Action>) => () =>
 
 export const initiateLogout = (dispatch: Dispatch<Action>) => () =>
   dispatch({type: ActionType.InitiateLogout});
+
+export const initiateSpotifyLogin = (dispatch: Dispatch<Action>) => () =>
+    dispatch({type: ActionType.InitiateSpotifyLogin});
 
 export function* initiateLoginIfNotLoggedInSaga() {
   // Initiate a login if they are not logged in
@@ -54,6 +59,38 @@ export function* initiateLoginIfNotLoggedInSaga() {
   if (!success) {
     throw new Error("Login failed");
   }
+}
+
+function triggerSpotifyLogin() {
+
+    const webAuth = new WebAuth({
+        domain: process.env.REACT_APP_AUTH0_DOMAIN as string,
+        clientID: process.env.REACT_APP_AUTH0_CLIENTID as string,
+    });
+
+    webAuth.popup.authorize({
+        domain: process.env.REACT_APP_AUTH0_DOMAIN as string,
+        clientId: process.env.REACT_APP_AUTH0_CLIENTID as string,
+        connection: "spotify",
+        redirectUri: window.location.protocol + "//" + window.location.host + "/auth0/callback" + window.location.search,
+        responseType: "token id_token",
+        scope: "openid profile email",
+        state: "12345"
+    }, (error, authResult) => {
+
+        if (error) {
+
+            put({
+                type: ActionType.AuthenticationError,
+                data: error
+            });
+            console.error("Failed to login via Spotify. Msg: " + JSON.stringify(error));
+            return;
+        }
+
+        //TODO: Link accounts
+        console.log(JSON.stringify(authResult));
+    });
 }
 
 function createLock() {
@@ -270,6 +307,7 @@ function* saga() {
   yield takeEvery(ActionType.CheckLogin, checkAlreadyLoggedIn);
   yield takeEvery(ActionType.InitiateLogin, login);
   yield takeEvery(ActionType.InitiateLogout, logout);
+  yield takeEvery(ActionType.InitiateSpotifyLogin, triggerSpotifyLogin);
 }
 
 export default saga;

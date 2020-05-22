@@ -58,8 +58,9 @@ import {
   View
 } from "./redux/reducers/home";
 import {
-  initiateLogin as initiateLoginAction,
-  initiateLogout as initiateLogoutAction
+    initiateLogin as initiateLoginAction,
+    initiateLogout as initiateLogoutAction,
+    initiateSpotifyLogin as initiateSpotifyAction,
 } from "./redux/auth0Saga";
 import {byLayout as byLayoutWrapper} from "./layout";
 import foriaLogo from "./assets/foria_logo.png";
@@ -92,6 +93,7 @@ interface AppPropsT {
   authenticationStatus: AuthenticationStatus;
   initiateLogin: () => void;
   initiateLogout: () => void;
+  initiateSpotifyLogin: () => void;
   addTicket: (ticket: TicketTypeConfig) => void;
   removeTicket: (ticket: TicketTypeConfig) => void;
   resetError: () => void;
@@ -1078,8 +1080,10 @@ export class Home extends React.Component<AppPropsT> {
           }
       };
 
-    if (!this.isUserSpotifyConnected() && !this.state.didUserSkipSpotify && false) { //TODO: remove false bool
-        //TODO: hook up to Spotify API on button click
+    if (!this.isUserSpotifyConnected() && !this.state.didUserSkipSpotify) {
+
+      const {initiateSpotifyLogin} = this.props;
+
       return (
         <>
             <div style={sharedStyles.eventDetailTitlePink}>Would you like more discounts?</div>
@@ -1089,7 +1093,7 @@ export class Home extends React.Component<AppPropsT> {
                 style={{
                     ...spotifyStyles.connectButton,
                 }}
-                onClick={() => console.log('test')}>
+                onClick={() => initiateSpotifyLogin() }>
                 <img src={spotifyIcon} style={{...spotifyStyles.icon}} alt="Spotify Icon"/>
                 Connect with Spotify
                 <RightChevron />
@@ -2385,6 +2389,7 @@ export default connect(
   dispatch => ({
     initiateLogin: initiateLoginAction(dispatch),
     initiateLogout: initiateLogoutAction(dispatch),
+    initiateSpotifyLogin: initiateSpotifyAction(dispatch),
     addTicket: addTicketAction(dispatch),
     removeTicket: removeTicketAction(dispatch),
     resetPullUpMenu: resetPullUpMenuAction(dispatch),
