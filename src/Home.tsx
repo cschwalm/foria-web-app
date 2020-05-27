@@ -80,10 +80,7 @@ import {
   twoDecimalNoCurrencyFormatter
 } from "./utils/formatCurrency";
 import minMax from "./utils/minMax";
-import {MAX_TICKETS} from "./utils/constants";
-
-const ticketOverlayWidth = 385;
-const bodyWidth = 960;
+import {MAX_TICKETS, TICKET_OVERLAY_WIDTH, BODY_WIDTH} from "./utils/constants";
 
 interface AppPropsT {
   layout: Layout;
@@ -1579,7 +1576,7 @@ export class Home extends React.Component<AppPropsT> {
           borderRadius: "5px",
           right: "-1.5em",
           position: "relative",
-          flex: `0 0 ${ticketOverlayWidth}px`
+          flex: `0 0 ${TICKET_OVERLAY_WIDTH}px`
         }}>
         <div
           style={{
@@ -1587,7 +1584,7 @@ export class Home extends React.Component<AppPropsT> {
             backgroundColor: white,
             position: "absolute",
             zIndex: 1,
-            width: `${ticketOverlayWidth}px`,
+            width: `${TICKET_OVERLAY_WIDTH}px`,
             /* Line up the menu bottom border with the hero bottom border */
             top: `${-5.2 * font3}px`,
             boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.25)",
@@ -1607,7 +1604,7 @@ export class Home extends React.Component<AppPropsT> {
         <div
           style={{
             height: imgHeight,
-            maxWidth: `${bodyWidth}px`,
+            maxWidth: `${BODY_WIDTH}px`,
             margin: "0 auto",
             background: `url(${event.image_url})`,
             backgroundPosition: "center",
@@ -1707,7 +1704,7 @@ export class Home extends React.Component<AppPropsT> {
       <div style={styles.header}>
         <div
           style={{
-            maxWidth: `${bodyWidth}px`,
+            maxWidth: `${BODY_WIDTH}px`,
             margin: "auto",
             display: "flex",
             alignItems: "center",
@@ -1806,7 +1803,7 @@ export class Home extends React.Component<AppPropsT> {
         <div
           style={{
             position: "relative",
-            maxWidth: `${bodyWidth}px`,
+            maxWidth: `${BODY_WIDTH}px`,
             margin: "auto",
             display: "flex",
             alignItems: "center",
@@ -1950,7 +1947,7 @@ export class Home extends React.Component<AppPropsT> {
           flex: 1,
           flexDirection: "column",
           display: "flex",
-          maxWidth: `${bodyWidth}px`,
+          maxWidth: `${BODY_WIDTH}px`,
           backgroundColor: byLayout(white, "initial"),
           margin: "0em auto"
         }}>
@@ -2071,7 +2068,7 @@ export class Home extends React.Component<AppPropsT> {
           flex: 1,
           flexDirection: "column",
           display: "flex",
-          maxWidth: `${bodyWidth}px`,
+          maxWidth: `${BODY_WIDTH}px`,
           backgroundColor: antiFlashWhite,
           position: "relative",
           margin: "0 auto"
@@ -2231,7 +2228,7 @@ export class Home extends React.Component<AppPropsT> {
       },
       innerContainer: {
         margin: "1em",
-        width: ticketOverlayWidth + "px",
+        width: TICKET_OVERLAY_WIDTH + "px",
         backgroundColor: white,
         padding: "1em",
         borderRadius: "5px",

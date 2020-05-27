@@ -11,7 +11,7 @@ import {
   State as HomeState
 } from "./reducers/home";
 import saga from "./sagas";
-import {fullStateKey} from "../utils/constants";
+import {FULL_STATE_KEY} from "../utils/constants";
 
 export interface AppState {
   root: RootState;
@@ -25,7 +25,7 @@ export function initializeStore() {
     // Sets initial state from local storage if available
     // The initial states in home.ts and root.ts are over written
     try {
-        const state = localStorage.getItem(fullStateKey);
+        const state = localStorage.getItem(FULL_STATE_KEY);
         if (state !== null) {
             rootInitialState = JSON.parse(state).root;
             homeInitialState = JSON.parse(state).home;
