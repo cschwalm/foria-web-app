@@ -2,7 +2,7 @@ import {trolleyGray, white} from "../../utils/colors";
 import {BODY_WIDTH} from "../../utils/constants";
 import foriaLogo from "../../assets/foria_logo.png";
 import React from "react";
-import LoginToggle from "./Login";
+import LoginToggle from "./LoginToggle";
 
 const NavBar = (byLayout: <A, B>(a: A, b: B) => A | B) => {
     let styles = {

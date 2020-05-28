@@ -31,7 +31,6 @@ import {
 import Ellipsis from "./icons/Ellipsis";
 import {AppState} from "./redux/store";
 import {
-  AuthenticationStatus,
   Event,
   FREE_TICKET_PRICE,
   TicketTypeConfig
@@ -95,7 +94,6 @@ interface AppPropsT {
   layout: Layout;
   byLayout: <A, B>(a: A, b: B) => A | B;
   pullUpMenuCollapsed: boolean;
-  authenticationStatus: AuthenticationStatus;
   addTicket: (ticket: TicketTypeConfig) => void;
   removeTicket: (ticket: TicketTypeConfig) => void;
   resetError: () => void;
@@ -2174,7 +2172,6 @@ export default connect(
       paymentRequest: home.paymentRequest,
       canMakePayment: home.canMakePayment,
       event: root.event,
-      authenticationStatus: root.authenticationStatus,
       pullUpMenuCollapsed: home.pullUpMenuCollapsed,
       ticketsForPurchase: home.ticketsForPurchase,
       view: home.view,
