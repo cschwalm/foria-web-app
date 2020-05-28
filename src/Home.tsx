@@ -28,9 +28,9 @@ import {
     white,
     spotifyGreen
 } from "./utils/colors";
+import Ellipsis from "./icons/Ellipsis";
 import {AppState} from "./redux/store";
 import {
-  AuthenticationStatus,
   Event,
   FREE_TICKET_PRICE,
   TicketTypeConfig
@@ -57,12 +57,9 @@ import {
   totalTicketsSelected,
   View
 } from "./redux/reducers/home";
-import {
-  initiateLogin as initiateLoginAction,
-  initiateLogout as initiateLogoutAction
-} from "./redux/auth0Saga";
 import {byLayout as byLayoutWrapper} from "./layout";
-import foriaLogo from "./assets/foria_logo.png";
+import NavBar from "./UI/NavBar/NavBar";
+import Footer from "./UI/Footer";
 import calendarIcon from "./assets/calendar_icon.png";
 import spotifyIcon from "./assets/Spotify_Icon_RGB_White.png";
 import PinpointIcon from "./icons/pinpointIcon";
@@ -80,18 +77,23 @@ import {
   twoDecimalNoCurrencyFormatter
 } from "./utils/formatCurrency";
 import minMax from "./utils/minMax";
-import {MAX_TICKETS} from "./utils/constants";
-
-const ticketOverlayWidth = 385;
-const bodyWidth = 960;
+import {
+    MAX_TICKETS,
+    TICKET_OVERLAY_WIDTH,
+    BODY_WIDTH,
+    FONT_6,
+    FONT_5,
+    FONT_4,
+    FONT_3,
+    FONT_2,
+    FONT_1,
+    BUTTON_HEIGHT
+} from "./utils/constants";
 
 interface AppPropsT {
   layout: Layout;
   byLayout: <A, B>(a: A, b: B) => A | B;
   pullUpMenuCollapsed: boolean;
-  authenticationStatus: AuthenticationStatus;
-  initiateLogin: () => void;
-  initiateLogout: () => void;
   addTicket: (ticket: TicketTypeConfig) => void;
   removeTicket: (ticket: TicketTypeConfig) => void;
   resetError: () => void;
@@ -127,14 +129,6 @@ interface AppPropsT {
   applyPromoError?: string;
 }
 
-const font6 = 36;
-const font5 = 20;
-const font4 = 18;
-const font3 = 16;
-const font2 = 14;
-const font1 = 12;
-const checkoutButtonHeight = `${2.5 * font3}px`;
-
 const baseInputStyle = {
   /* Remove the default input shadow */
   WebkitAppearance: "none" as "none",
@@ -142,9 +136,9 @@ const baseInputStyle = {
   appearance: "none" as "none",
   border: `solid 1.75px ${lavenderGray}`,
   width: "100%",
-  marginBottom: `${font3}px`,
+  marginBottom: `${FONT_3}px`,
   borderRadius: "5px",
-  fontSize: `${font3}px`,
+  fontSize: `${FONT_3}px`,
   boxSizing: "border-box" as "border-box"
 };
 
@@ -158,39 +152,6 @@ const sharedStyles = {
     padding: "8px"
   },
   dashedLine: {borderBottom: "dashed 4px", color: antiFlashWhite},
-  helpAnchor: {
-    color: trolleyGray,
-    fontFamily: "Roboto",
-    cursor: "pointer",
-    textDecoration: "none"
-  },
-  loginAnchor: {
-    background: "none",
-    border: "none",
-    padding: 0,
-    fontFamily: "Roboto",
-    fontSize: "1em",
-    lineHeight: "1.2em",
-    cursor: "pointer",
-    color: vividRaspberry
-  },
-  footerLink: {
-    color: trolleyGray,
-    fontFamily: "Roboto",
-    letterSpacing: "0.4px",
-    fontSize: `${font2}px`,
-    lineHeight: "1.2em",
-    textDecoration: "none",
-    backgroundColor: "initial",
-    cursor: "pointer"
-  },
-  copyright: {
-    color: trolleyGray,
-    fontFamily: "Roboto",
-    letterSpacing: "0.4px",
-    fontSize: `${font2}px`,
-    lineHeight: "1.2em"
-  },
   visuallyHiddenButScreenReaderAccessible: {
     height: "1px",
     width: "1px",
@@ -203,7 +164,7 @@ const sharedStyles = {
     color: trolleyGray
   },
   buttonInInput: {
-    fontSize: `${font3}px`,
+    fontSize: `${FONT_3}px`,
     fontWeight: 500,
     lineHeight: "1.2em",
     padding: "0em 1em",
@@ -224,26 +185,26 @@ const sharedStyles = {
     fontFamily: "Roboto",
     boxSizing: "border-box" as "border-box",
     /* Provide exact height to line up the menu bottom border with the hero bottom border */
-    height: `${2.2 * font3}px`,
-    fontSize: `${font5}px`
+    height: `${2.2 * FONT_3}px`,
+    fontSize: `${FONT_5}px`
   },
   eventSubTitle: {
     fontWeight: 500,
-    fontSize: `${font4}px`,
+    fontSize: `${FONT_4}px`,
     color: trolleyGray,
     lineHeight: "1.2em"
   },
   eventTitle: {
     fontFamily: "Rubik",
     fontWeight: 700,
-    fontSize: `${font6}px`,
+    fontSize: `${FONT_6}px`,
     position: "relative" as "relative",
     lineHeight: "1em",
     left: "-2px"
   },
   ticketsRestriction: {
     fontWeight: 500,
-    fontSize: `${font2}px`,
+    fontSize: `${FONT_2}px`,
     color: trolleyGray
   },
   ticketQuantityColumn: {
@@ -255,7 +216,7 @@ const sharedStyles = {
   mobileTicketHeader: {
     fontWeight: 500,
     margin: "0em 0em 1em",
-    fontSize: `${font4}px`
+    fontSize: `${FONT_4}px`
   },
   paymentOrSeparator: {
     display: "flex",
@@ -269,7 +230,7 @@ const sharedStyles = {
     cursor: "pointer",
     fontFamily: "Roboto",
     border: "none",
-    height: checkoutButtonHeight,
+    height: BUTTON_HEIGHT,
     backgroundColor: vividRaspberry,
     borderRadius: "5px",
     color: white,
@@ -292,8 +253,8 @@ const sharedStyles = {
   },
   checkoutButton: {
     cursor: "pointer",
-    height: checkoutButtonHeight,
-    flex: `0 0 ${checkoutButtonHeight}`,
+    height: BUTTON_HEIGHT,
+    flex: `0 0 ${BUTTON_HEIGHT}`,
     backgroundColor: vividRaspberry,
     borderRadius: "5px",
     color: white,
@@ -308,13 +269,13 @@ const sharedStyles = {
     color: lavenderGray
   },
   ticketStepBodyText: {
-    fontSize: `${font3}px`,
+    fontSize: `${FONT_3}px`,
     fontWeight: 500,
     lineHeight: "1.2em",
     color: trolleyGray
   },
   ticketTitle: {
-    fontSize: `${font3}px`,
+    fontSize: `${FONT_3}px`,
     overflow: "hidden",
     whiteSpace: "nowrap" as "nowrap",
     textOverflow: "ellipsis" as "ellipsis",
@@ -323,26 +284,26 @@ const sharedStyles = {
     color: trolleyGray
   },
   ticketPriceFee: {
-    fontSize: `${font1}px`,
+    fontSize: `${FONT_1}px`,
     color: trolleyGray,
     lineHeight: "1.2em"
   },
   ticketDescription: {
-    fontSize: `${font1}px`,
+    fontSize: `${FONT_1}px`,
     lineHeight: "1.2em",
     color: trolleyGray
   },
   ticketPrice: {
     fontWeight: 700,
     fontFamily: "Rubik",
-    fontSize: `${font4}px`,
+    fontSize: `${FONT_4}px`,
     lineHeight: "1.2em",
     display: "flex"
   },
   ticketNumeral: {
     fontWeight: 700,
     fontFamily: "Rubik",
-    fontSize: `${font4}px`,
+    fontSize: `${FONT_4}px`,
     lineHeight: "1.2em",
     display: "flex",
     justifyContent: "center",
@@ -368,13 +329,13 @@ const sharedStyles = {
   },
   eventDetailTitle: {
     marginBottom: "0.2em",
-    fontSize: `${font4}px`,
+    fontSize: `${FONT_4}px`,
     lineHeight: "1.2em"
   },
   eventDetailTitlePink: {
       marginBottom: "0.2em",
       color: vividRaspberry,
-      fontSize: `${font4}px`,
+      fontSize: `${FONT_4}px`,
       lineHeight: "1.2em"
   }
 };
@@ -389,7 +350,7 @@ function PaymentRequest(props: any) {
       style={{
         paymentRequestButton: {
           theme: "dark",
-          height: `${font3 * 2.5}px`
+          height: `${FONT_3 * 2.5}px`
         }
       }}
     />
@@ -510,7 +471,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
             style={{
               marginLeft: "0.2em",
               fontWeight: 500,
-              fontSize: `${font3}px`,
+              fontSize: `${FONT_3}px`,
               lineHeight: "1.2em",
               color: red
             }}>
@@ -529,7 +490,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
             onChange={this.onCardElementChange}
             style={{
               base: {
-                fontSize: `${font3}px`,
+                fontSize: `${FONT_3}px`,
                 color: black,
                 fontFamily: "Roboto, monospace",
                 "::placeholder": {
@@ -555,14 +516,6 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
 }
 
 const WrappedCardForm = injectStripe(CardForm);
-
-const Ellipsis = ({style = {}}: {style?: React.CSSProperties}) => (
-  <div className="ellipsis-anim" style={style}>
-    <span>.</span>
-    <span>.</span>
-    <span>.</span>
-  </div>
-);
 
 export class Home extends React.Component<AppPropsT> {
   state = {
@@ -869,7 +822,7 @@ export class Home extends React.Component<AppPropsT> {
         style={{
           ...sharedStyles.checkoutTicketDetails,
           lineHeight: "1.4em",
-          fontSize: `${font2}px`
+          fontSize: `${FONT_2}px`
         }}>
         By continuing, I acknowledge that tickets are{" "}
         <span style={{color: black, fontWeight: 500}}>NON-REFUNDABLE</span> and
@@ -994,9 +947,9 @@ export class Home extends React.Component<AppPropsT> {
                 position: "absolute",
                 display: "flex",
                 alignItems: "center",
-                top: `${font3}px`,
-                bottom: `${font3}px`,
-                left: `${font3}px`
+                top: `${FONT_3}px`,
+                bottom: `${FONT_3}px`,
+                left: `${FONT_3}px`
               }}>
               <LeftChevron />
             </div>
@@ -1006,7 +959,7 @@ export class Home extends React.Component<AppPropsT> {
                 top: 0,
                 bottom: 0,
                 left: 0,
-                width: `${3 * font3}px`,
+                width: `${3 * FONT_3}px`,
                 cursor: "pointer"
               }}
               onClick={toPreviousView}
@@ -1049,8 +1002,8 @@ export class Home extends React.Component<AppPropsT> {
       const spotifyStyles = {
           connectButton: {
               cursor: "pointer",
-              height: checkoutButtonHeight,
-              flex: `0 0 ${checkoutButtonHeight}`,
+              height: BUTTON_HEIGHT,
+              flex: `0 0 ${BUTTON_HEIGHT}`,
               backgroundColor: spotifyGreen,
               borderRadius: "5px",
               padding: "7px 10px",
@@ -1063,8 +1016,8 @@ export class Home extends React.Component<AppPropsT> {
           skipButton: {
               margin: "0.5em 0em 0em 0em",
               cursor: "pointer",
-              height: checkoutButtonHeight,
-              flex: `0 0 ${checkoutButtonHeight}`,
+              height: BUTTON_HEIGHT,
+              flex: `0 0 ${BUTTON_HEIGHT}`,
               borderRadius: "5px",
               border:"2px solid " + spotifyGreen,
               color: trolleyGray,
@@ -1543,7 +1496,7 @@ export class Home extends React.Component<AppPropsT> {
               boxSizing: "border-box",
               display: "flex",
               backgroundColor: white,
-              minHeight: `${4.75 * font3}px`,
+              minHeight: `${4.75 * FONT_3}px`,
               padding: "1.5em 1em 0em 1em",
               position: "relative"
             }}
@@ -1579,7 +1532,7 @@ export class Home extends React.Component<AppPropsT> {
           borderRadius: "5px",
           right: "-1.5em",
           position: "relative",
-          flex: `0 0 ${ticketOverlayWidth}px`
+          flex: `0 0 ${TICKET_OVERLAY_WIDTH}px`
         }}>
         <div
           style={{
@@ -1587,11 +1540,11 @@ export class Home extends React.Component<AppPropsT> {
             backgroundColor: white,
             position: "absolute",
             zIndex: 1,
-            width: `${ticketOverlayWidth}px`,
+            width: `${TICKET_OVERLAY_WIDTH}px`,
             /* Line up the menu bottom border with the hero bottom border */
-            top: `${-5.2 * font3}px`,
+            top: `${-5.2 * FONT_3}px`,
             boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.25)",
-            marginBottom: `${5 * font3}px`
+            marginBottom: `${5 * FONT_3}px`
           }}>
           {modalView}
         </div>
@@ -1607,7 +1560,7 @@ export class Home extends React.Component<AppPropsT> {
         <div
           style={{
             height: imgHeight,
-            maxWidth: `${bodyWidth}px`,
+            maxWidth: `${BODY_WIDTH}px`,
             margin: "0 auto",
             background: `url(${event.image_url})`,
             backgroundPosition: "center",
@@ -1617,47 +1570,6 @@ export class Home extends React.Component<AppPropsT> {
       );
     }
     return <Skeleton height={imgHeight} />;
-  };
-
-  renderLoginToggle = () => {
-    let {
-      byLayout,
-      initiateLogin,
-      initiateLogout,
-      authenticationStatus
-    } = this.props;
-    let styles = {
-      loginAnchor: {
-        ...sharedStyles.loginAnchor,
-        marginLeft: byLayout("1.5em", "3em")
-      },
-      boldLoginAnchor: {
-        ...sharedStyles.loginAnchor,
-        marginLeft: byLayout("1.5em", "3em"),
-        fontWeight: "bold" as "bold"
-      }
-    };
-
-    switch (authenticationStatus) {
-      case AuthenticationStatus.Pending:
-        return <Ellipsis style={styles.boldLoginAnchor} />;
-      case AuthenticationStatus.NoAuth:
-        return (
-          <button onClick={() => initiateLogin()} style={styles.loginAnchor}>
-            {byLayout("Sign In", "Sign Up/Sign In")}
-          </button>
-        );
-      case AuthenticationStatus.Auth:
-        return (
-          <button onClick={() => initiateLogout()} style={styles.loginAnchor}>
-            Log Out
-          </button>
-        );
-      default:
-        throw new Error(
-          "Unhandled AuthenticationStatus when generating login link"
-        );
-    }
   };
 
   renderMetadata = () => {
@@ -1690,54 +1602,6 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
-  renderHeader = () => {
-    let {byLayout} = this.props;
-    let styles = {
-      header: {
-        backgroundColor: white,
-        boxShadow: "0px 0px 2px 3px #ccc"
-      },
-      logo: {
-        height: byLayout("2em", "2.6em"),
-        cursor: "pointer"
-      }
-    };
-
-    return (
-      <div style={styles.header}>
-        <div
-          style={{
-            maxWidth: `${bodyWidth}px`,
-            margin: "auto",
-            display: "flex",
-            alignItems: "center",
-            padding: byLayout("1em", "1em 1.5em"),
-            boxSizing: "border-box"
-          }}>
-          <div
-            style={{display: "flex", flex: 1}}
-            onClick={() => (window.location.href = "https://foriatickets.com")}>
-            <img src={foriaLogo} alt="Foria Logo" style={styles.logo} />
-          </div>
-          <div
-            style={{
-              display: "flex",
-              flex: 1,
-              alignItems: "center",
-              justifyContent: "flex-end"
-            }}>
-            <a
-              style={sharedStyles.helpAnchor}
-              href="https://foriatickets.com/contact-us.html">
-              Help
-            </a>
-            {this.renderLoginToggle()}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   renderPullUpMenuHeader = () => {
     let {event, view, resetPullUpMenu, toPreviousView} = this.props;
     let styles = {
@@ -1748,7 +1612,7 @@ export class Home extends React.Component<AppPropsT> {
         width: "100%"
       }
     };
-    let spacer = <div className="column" style={{flex: `0 0 ${font3}px`}} />;
+    let spacer = <div className="column" style={{flex: `0 0 ${FONT_3}px`}} />;
     let leftIcon, rightIcon;
     switch (view) {
       case View.Tickets:
@@ -1767,7 +1631,7 @@ export class Home extends React.Component<AppPropsT> {
                 top: "0",
                 right: "0",
                 bottom: "0",
-                width: `${3 * font3}px`,
+                width: `${3 * FONT_3}px`,
                 cursor: "pointer",
                 position: "absolute"
               }}
@@ -1785,7 +1649,7 @@ export class Home extends React.Component<AppPropsT> {
                 top: "0",
                 left: "0",
                 bottom: "0",
-                width: `${3 * font3}px`,
+                width: `${3 * FONT_3}px`,
                 cursor: "pointer",
                 position: "absolute"
               }}
@@ -1806,11 +1670,11 @@ export class Home extends React.Component<AppPropsT> {
         <div
           style={{
             position: "relative",
-            maxWidth: `${bodyWidth}px`,
+            maxWidth: `${BODY_WIDTH}px`,
             margin: "auto",
             display: "flex",
             alignItems: "center",
-            padding: `${font3}px`,
+            padding: `${FONT_3}px`,
             boxSizing: "border-box"
           }}>
           {leftIcon}
@@ -1823,7 +1687,7 @@ export class Home extends React.Component<AppPropsT> {
               justifyContent: "center",
               textAlign: "center",
               fontWeight: 500,
-              fontSize: `${font4}px`,
+              fontSize: `${FONT_4}px`,
               lineHeight: "1.2em"
             }}>
             {(event && event.name) || <Skeleton />}
@@ -1853,7 +1717,7 @@ export class Home extends React.Component<AppPropsT> {
           boxShadow: "rgba(0, 0, 0, 0.21) 0 -2px 8px 2px",
           display: "flex",
           backgroundColor: white,
-          minHeight: `${4.75 * font3}px`,
+          minHeight: `${4.75 * FONT_3}px`,
           height: "100%",
           padding: "1em",
           position: "relative"
@@ -1950,7 +1814,7 @@ export class Home extends React.Component<AppPropsT> {
           flex: 1,
           flexDirection: "column",
           display: "flex",
-          maxWidth: `${bodyWidth}px`,
+          maxWidth: `${BODY_WIDTH}px`,
           backgroundColor: byLayout(white, "initial"),
           margin: "0em auto"
         }}>
@@ -1976,7 +1840,7 @@ export class Home extends React.Component<AppPropsT> {
               <div
                 style={{
                   ...sharedStyles.eventTitle,
-                  marginBottom: `${0.5 * font3}px`,
+                  marginBottom: `${0.5 * FONT_3}px`,
                   overflowWrap: "break-word"
                 }}>
                 {(event && event.name) || <Skeleton />}
@@ -2062,62 +1926,6 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
-  renderFooter = () => {
-    let {byLayout} = this.props;
-
-    return (
-      <div
-        style={{
-          flex: 1,
-          flexDirection: "column",
-          display: "flex",
-          maxWidth: `${bodyWidth}px`,
-          backgroundColor: antiFlashWhite,
-          position: "relative",
-          margin: "0 auto"
-        }}>
-        <div
-          className="column"
-          style={{padding: "0 4px", margin: byLayout("1em", "2em 1.5em")}}>
-          <div className="row" style={{marginBottom: "0.6em"}}>
-            <a
-              href="https://foriatickets.com/privacy-policy.html"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={sharedStyles.footerLink}>
-              Privacy Policy
-            </a>
-            <span
-              style={{
-                color: trolleyGray,
-                fontFamily: "Roboto",
-                margin: "0 0.4em"
-              }}>
-              |
-            </span>
-            <a
-              href="https://foriatickets.com/terms-of-use.html"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={sharedStyles.footerLink}>
-              Terms of Use
-            </a>
-          </div>
-          <div style={sharedStyles.copyright}>
-            &copy; 2020 Foria Technologies, Inc. All Rights Reserved.
-          </div>
-        </div>
-        <div
-          style={{
-            // Create an empty rectangle the size of the collapsed pull up menu,
-            // so that the footer is not hidden beneath the menu
-            height: `${5 * font3}px`
-          }}
-        />
-      </div>
-    );
-  };
-
   renderEventBodyText = () => {
     let {event} = this.props;
     return (
@@ -2178,7 +1986,7 @@ export class Home extends React.Component<AppPropsT> {
             boxShadow: "rgba(0, 0, 0, 0.21) 0 -2px 8px 2px",
             display: "flex",
             backgroundColor: white,
-            minHeight: `${4.75 * font3}px`,
+            minHeight: `${4.75 * FONT_3}px`,
             height: "100%",
             padding: "1em",
             position: "relative"
@@ -2231,7 +2039,7 @@ export class Home extends React.Component<AppPropsT> {
       },
       innerContainer: {
         margin: "1em",
-        width: ticketOverlayWidth + "px",
+        width: TICKET_OVERLAY_WIDTH + "px",
         backgroundColor: white,
         padding: "1em",
         borderRadius: "5px",
@@ -2240,7 +2048,7 @@ export class Home extends React.Component<AppPropsT> {
         overflow: "hidden"
       },
       headerStyle: {
-        fontSize: `${font4}px`,
+        fontSize: `${FONT_4}px`,
         marginBottom: "16px",
         lineHeight: "1.2em",
         fontWeight: 600
@@ -2306,19 +2114,19 @@ export class Home extends React.Component<AppPropsT> {
     if (layout === Layout.Desktop) {
       body = (
         <>
-          {this.renderHeader()}
+          {NavBar(byLayout)}
           {this.renderHero()}
           {this.renderBody()}
-          {this.renderFooter()}
+          {Footer(byLayout)}
         </>
       );
     } else if (layout === Layout.Mobile && pullUpMenuCollapsed) {
       body = (
         <>
-          {this.renderHeader()}
+          {NavBar(byLayout)}
           {this.renderHero()}
           {this.renderBody()}
-          {this.renderFooter()}
+          {Footer(byLayout)}
           {this.renderPullUpFooter()}
         </>
       );
@@ -2330,7 +2138,7 @@ export class Home extends React.Component<AppPropsT> {
       <div
         className="App"
         style={{
-          fontSize: `${font3}px`,
+          fontSize: `${FONT_3}px`,
           fontFamily: "Roboto",
           lineHeight: "1.2em",
           // Mobile cannot have scroll here, because iOS will render a white
@@ -2364,7 +2172,6 @@ export default connect(
       paymentRequest: home.paymentRequest,
       canMakePayment: home.canMakePayment,
       event: root.event,
-      authenticationStatus: root.authenticationStatus,
       pullUpMenuCollapsed: home.pullUpMenuCollapsed,
       ticketsForPurchase: home.ticketsForPurchase,
       view: home.view,
@@ -2383,8 +2190,6 @@ export default connect(
     };
   },
   dispatch => ({
-    initiateLogin: initiateLoginAction(dispatch),
-    initiateLogout: initiateLogoutAction(dispatch),
     addTicket: addTicketAction(dispatch),
     removeTicket: removeTicketAction(dispatch),
     resetPullUpMenu: resetPullUpMenuAction(dispatch),
