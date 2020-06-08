@@ -210,6 +210,9 @@ function createLock() {
       // us from distinguishing between a user close, and a close following
       // authentication.
       // https://github.com/auth0/lock/issues/1713
+      allowedConnections: [
+        "Username-Password-Authentication"
+      ],
       autoclose: false,
       configurationBaseUrl: process.env
         .REACT_APP_AUTH0_CONFIGURATION_BASE_URL as string,
