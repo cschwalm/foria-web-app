@@ -99,9 +99,6 @@ interface AppPropsT {
   layout: Layout;
   byLayout: <A, B>(a: A, b: B) => A | B;
   pullUpMenuCollapsed: boolean;
-  authenticationStatus: AuthenticationStatus;
-  initiateLogin: () => void;
-  initiateLogout: () => void;
   initiateSpotifyLogin: () => void;
   addTicket: (ticket: TicketTypeConfig) => void;
   removeTicket: (ticket: TicketTypeConfig) => void;
