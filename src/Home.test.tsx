@@ -1,5 +1,5 @@
 import React from "react";
-import Enzyme, {shallow, mount} from "enzyme";
+import Enzyme, {shallow} from "enzyme";
 import Adapter from "enzyme-adapter-react-16";
 import ReactMarkdown from "react-markdown";
 
@@ -73,7 +73,7 @@ it("renders markdown in the event description", () => {
     }
   };
   // @ts-ignore
-    const wrapper = mount(<Home {...props} />);
+    const wrapper = shallow(<Home {...props} />);
   let eventDescription = wrapper.find(ReactMarkdown);
   expect(eventDescription.html()).toEqual(
     "<p>first paragraph</p><p>second paragraph</p>"
@@ -105,7 +105,7 @@ it("strips html from the markdown", () => {
     }
   };
   // @ts-ignore
-    const wrapper = mount(<Home {...props} />);
+    const wrapper = shallow(<Home {...props} />);
   let eventDescription = wrapper.find(ReactMarkdown);
   expect(eventDescription.html()).toEqual("");
 });
