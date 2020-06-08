@@ -1,6 +1,8 @@
 import React from "react";
 import auth0 from "auth0-js";
 
+export const SPOTIFY_LINK : string = 'SPOTIFY_LINK';
+
 const Auth0Callback = () => {
 
     const webAuth = new auth0.WebAuth({
@@ -10,7 +12,7 @@ const Auth0Callback = () => {
 
     webAuth.popup.callback({
         hash: window.location.hash,
-        state: "12345"
+        state: SPOTIFY_LINK
     });
 
     return (

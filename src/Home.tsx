@@ -118,6 +118,7 @@ interface AppPropsT {
   ticketsForPurchase: TicketCounts;
   profile?: auth0.Auth0UserProfile;
   event?: Event;
+  spotifyUserId: string | null;
   orderNumber?: string;
   orderSubTotal?: number;
   orderFees?: number;
@@ -1041,10 +1042,10 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
-    isUserSpotifyConnected = () => {
-        //TODO: hook up to Auth0 user settings
-        return false;
-    };
+  isUserSpotifyConnected = () => {
+      let { spotifyUserId } = this.props;
+      return spotifyUserId !== null;
+  };
 
   renderCompleteStepBody = () => {
 
@@ -2364,6 +2365,7 @@ export default connect(
       layout: root.layout,
       byLayout: byLayoutWrapper(root.layout),
       profile: root.profile,
+      spotifyUserId: root.spotifyUserId,
       stripe: root.stripe,
       paymentRequest: home.paymentRequest,
       canMakePayment: home.canMakePayment,

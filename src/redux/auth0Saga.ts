@@ -1,18 +1,20 @@
 import Auth0Lock from "auth0-lock";
 import {eventChannel} from "redux-saga";
-import {call, put, fork, take, takeEvery, race} from "redux-saga/effects";
+import {call, fork, put, race, take, takeEvery} from "redux-saga/effects";
 import {Dispatch} from "redux";
 
 import Action from "./Action";
 import {spotifyGreen, vividRaspberry, white} from "../utils/colors";
 import spotifyIcon from "../assets/Spotify_Icon_RGB_White.png";
-import {WebAuth} from "auth0-js";
+import {Management, WebAuth} from "auth0-js";
+import {SPOTIFY_LINK} from "../Auth0Callback";
 
 export enum ActionType {
   CheckLogin = "CheckLogin",
   InitiateLogin = "InitiateLogin",
   InitiateLogout = "InitiateLogout",
   InitiateSpotifyLogin = "InitiateSpotifyLogin",
+  SpotifyConnected = "SpotifyConnected",
 
   // checkSession yielded no existing session
   NoExistingSession = "NoExistingSession",
@@ -61,36 +63,142 @@ export function* initiateLoginIfNotLoggedInSaga() {
   }
 }
 
-function triggerSpotifyLogin() {
+function* triggerSpotifyLogin() {
 
+    //Obtain MGT token to edit user Auth0 profile.
+    let mgtAuthResult: AuthResult;
+    try {
+        mgtAuthResult = yield call(obtainAuth0UserManagementTokens);
+    } catch (err) {
+        console.error("Failed to obtain user management token.");
+        yield put({
+            type: ActionType.LoginError,
+            data: err
+        });
+        return;
+    }
+
+    const primaryProfile = mgtAuthResult.idTokenPayload;
+    console.log(`Primary profile ID: ${primaryProfile.sub}`);
+
+    //Obtain Spotify tokens to preform link.
+    let spotifyAuthResult: AuthResult;
+    try {
+        spotifyAuthResult = yield call(obtainSpotifyAuthTokens);
+    } catch (err) {
+        console.error("Failed to obtain spotify tokens.");
+        yield put({
+            type: ActionType.LoginError,
+            data: err
+        });
+        return;
+    }
+
+    //Obtain MGT token to edit user Auth0 profile.
+    try {
+        yield call(bridgeSpotifyAccounts, mgtAuthResult.accessToken, primaryProfile.sub, spotifyAuthResult.idToken);
+    } catch (err) {
+        console.error("Failed to merge accounts.");
+        yield put({
+            type: ActionType.LoginError,
+            data: err
+        });
+        return;
+    }
+
+    // @ts-ignore
+    const spotifyUserId: string = spotifyAuthResult.idTokenPayload["https://foriatickets.com/spotify/user_id"];
+    console.log("Spotify account linked with ID: " + spotifyUserId);
+
+    yield put({
+        type: ActionType.SpotifyConnected,
+        data: spotifyUserId
+    });
+}
+
+/**
+ * Obtains token with required audience and scopes to edit profile.
+ */
+function obtainAuth0UserManagementTokens() {
+
+    const auth0Domain = process.env.REACT_APP_AUTH0_DOMAIN as string;
+    const auth0ClientId = process.env.REACT_APP_AUTH0_CLIENTID as string;
+    const auth0MgtAudience = process.env.REACT_APP_AUTH0_MGT_AUDIENCE as string;
+
+    //Required to obtain access token with the Auth0 MGT audience to change user account.
     const webAuth = new WebAuth({
-        domain: process.env.REACT_APP_AUTH0_DOMAIN as string,
-        clientID: process.env.REACT_APP_AUTH0_CLIENTID as string,
+        domain: auth0Domain,
+        clientID: auth0ClientId,
+        audience: auth0MgtAudience,
     });
 
-    webAuth.popup.authorize({
-        domain: process.env.REACT_APP_AUTH0_DOMAIN as string,
-        clientId: process.env.REACT_APP_AUTH0_CLIENTID as string,
-        connection: "spotify",
-        redirectUri: window.location.protocol + "//" + window.location.host + "/auth0/callback" + window.location.search,
-        responseType: "token id_token",
-        scope: "openid profile email",
-        state: "12345"
-    }, (error, authResult) => {
+    return new Promise((resolve, reject) =>
+        webAuth.popup.authorize({
+                domain: auth0Domain,
+                clientId: auth0ClientId,
+                redirectUri: window.location.protocol + "//" + window.location.host + "/auth0/callback" + window.location.search,
+                audience: auth0MgtAudience,
+                responseType: "token id_token",
+                scope: "openid profile email read:current_user update:current_user_identities",
+                state: SPOTIFY_LINK
+            }, (err, authResult) => err ? reject(err) : resolve(authResult)
+        )
+    );
+}
 
-        if (error) {
+/**
+ * Start Spotify login flow.
+ */
+function obtainSpotifyAuthTokens() {
 
-            put({
-                type: ActionType.AuthenticationError,
-                data: error
-            });
-            console.error("Failed to login via Spotify. Msg: " + JSON.stringify(error));
-            return;
-        }
+    const auth0Domain = process.env.REACT_APP_AUTH0_DOMAIN as string;
+    const auth0ClientId = process.env.REACT_APP_AUTH0_CLIENTID as string;
+    const auth0MgtAudience = process.env.REACT_APP_AUTH0_MGT_AUDIENCE as string;
 
-        //TODO: Link accounts
-        console.log(JSON.stringify(authResult));
+    //Required to obtain access token with the Auth0 MGT audience to change user account.
+    const webAuth = new WebAuth({
+        domain: auth0Domain,
+        clientID: auth0ClientId,
+        audience: auth0MgtAudience,
     });
+
+    return new Promise((resolve, reject) =>
+        webAuth.popup.authorize({
+                domain: auth0Domain,
+                clientId: auth0ClientId,
+                connection: "spotify",
+                redirectUri: window.location.protocol + "//" + window.location.host + "/auth0/callback" + window.location.search,
+                responseType: "token id_token",
+                scope: "openid profile email read:current_user update:current_user_identities",
+                state: SPOTIFY_LINK
+            }, (err, authResult) => err ? reject(err) : resolve(authResult)
+        )
+    );
+}
+
+/**
+ * Combines two Auth0 accounts into one. The secondary will no longer show up in users list.
+ *
+ * @param primaryAccessToken
+ * @param primaryUserId
+ * @param secondaryIdToken
+ */
+function bridgeSpotifyAccounts(primaryAccessToken: string, primaryUserId: string, secondaryIdToken: string) {
+
+    const auth0Domain = process.env.REACT_APP_AUTH0_DOMAIN as string;
+    const auth0ClientId = process.env.REACT_APP_AUTH0_CLIENTID as string;
+
+    const auth0Manage = new Management({
+        domain: auth0Domain,
+        clientId: auth0ClientId,
+        token: primaryAccessToken
+    });
+
+    return new Promise((resolve, reject) =>
+        auth0Manage.linkUser(primaryUserId, secondaryIdToken, (err, result) =>
+            err ? reject(err) : resolve(result)
+        )
+    );
 }
 
 function createLock() {
