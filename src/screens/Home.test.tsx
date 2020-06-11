@@ -3,10 +3,10 @@ import Enzyme, {shallow} from "enzyme";
 import Adapter from "enzyme-adapter-react-16";
 import ReactMarkdown from "react-markdown";
 
-import {Layout} from "./layout";
+import {Layout} from "../layout";
 import {Home} from "./Home";
-import {AuthenticationStatus} from "./redux/reducers/root";
-import {View} from "./redux/reducers/home";
+import {AuthenticationStatus} from "../redux/reducers/root";
+import {View} from "../redux/reducers/home";
 
 Enzyme.configure({adapter: new Adapter()});
 it("renders an event", () => {

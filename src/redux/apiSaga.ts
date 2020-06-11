@@ -278,6 +278,10 @@ function* saga() {
   );
 
   let eventId = yield select(getEventId);
+  if (eventId == null) {
+      return;
+  }
+
   let [event, error400, error500, connectionError] = yield call(
     fetchEvent,
     eventId
