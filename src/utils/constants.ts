@@ -10,6 +10,7 @@ export const FONT_3 = 16;
 export const FONT_2 = 14;
 export const FONT_1 = 12;
 export const BUTTON_HEIGHT = `${2.5 * FONT_3}px`;
+export const BUTTON_WIDTH = `200px`;
 
 export const LINK_FORIA_PRIVACY = 'https://foriatickets.com/privacy-policy.html';
 export const LINK_FORIA_TERMS = 'https://foriatickets.com/terms-of-use.html';
