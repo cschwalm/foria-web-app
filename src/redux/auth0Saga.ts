@@ -1,20 +1,20 @@
 import Auth0Lock from "auth0-lock";
 import {eventChannel} from "redux-saga";
-import {call, fork, put, race, take, takeEvery} from "redux-saga/effects";
+import {call, fork, put, race, select, take, takeEvery} from "redux-saga/effects";
 import {Dispatch} from "redux";
 
 import Action from "./Action";
 import {spotifyGreen, vividRaspberry, white} from "../utils/colors";
 import spotifyIcon from "../assets/Spotify_Icon_RGB_White.png";
-import {Management, WebAuth} from "auth0-js";
-import {SPOTIFY_LINK} from "../Auth0Callback";
+import {Auth0DecodedHash, AuthOptions, WebAuth} from "auth0-js";
+import {setLocalStorage} from "./selectors";
+import {ActionType as ApiActionType} from "./apiSaga";
 
 export enum ActionType {
   CheckLogin = "CheckLogin",
   InitiateLogin = "InitiateLogin",
   InitiateLogout = "InitiateLogout",
   InitiateSpotifyLogin = "InitiateSpotifyLogin",
-  SpotifyConnected = "SpotifyConnected",
 
   // checkSession yielded no existing session
   NoExistingSession = "NoExistingSession",
@@ -63,142 +63,40 @@ export function* initiateLoginIfNotLoggedInSaga() {
   }
 }
 
-function* triggerSpotifyLogin() {
-
-    //Obtain MGT token to edit user Auth0 profile.
-    let mgtAuthResult: AuthResult;
-    try {
-        mgtAuthResult = yield call(obtainAuth0UserManagementTokens);
-    } catch (err) {
-        console.error("Failed to obtain user management token.");
-        yield put({
-            type: ActionType.LoginError,
-            data: err
-        });
-        return;
-    }
-
-    const primaryProfile = mgtAuthResult.idTokenPayload;
-    console.log(`Primary profile ID: ${primaryProfile.sub}`);
-
-    //Obtain Spotify tokens to preform link.
-    let spotifyAuthResult: AuthResult;
-    try {
-        spotifyAuthResult = yield call(obtainSpotifyAuthTokens);
-    } catch (err) {
-        console.error("Failed to obtain spotify tokens.");
-        yield put({
-            type: ActionType.LoginError,
-            data: err
-        });
-        return;
-    }
-
-    //Obtain MGT token to edit user Auth0 profile.
-    try {
-        yield call(bridgeSpotifyAccounts, mgtAuthResult.accessToken, primaryProfile.sub, spotifyAuthResult.idToken);
-    } catch (err) {
-        console.error("Failed to merge accounts.");
-        yield put({
-            type: ActionType.LoginError,
-            data: err
-        });
-        return;
-    }
-
-    // @ts-ignore
-    const spotifyUserId: string = spotifyAuthResult.idTokenPayload["https://foriatickets.com/spotify/user_id"];
-    console.log("Spotify account linked with ID: " + spotifyUserId);
-
-    yield put({
-        type: ActionType.SpotifyConnected,
-        data: spotifyUserId
-    });
-}
-
-/**
- * Obtains token with required audience and scopes to edit profile.
- */
-function obtainAuth0UserManagementTokens() {
-
-    const auth0Domain = process.env.REACT_APP_AUTH0_DOMAIN as string;
-    const auth0ClientId = process.env.REACT_APP_AUTH0_CLIENTID as string;
-    const auth0MgtAudience = process.env.REACT_APP_AUTH0_MGT_AUDIENCE as string;
-
-    //Required to obtain access token with the Auth0 MGT audience to change user account.
-    const webAuth = new WebAuth({
-        domain: auth0Domain,
-        clientID: auth0ClientId,
-        audience: auth0MgtAudience,
-    });
-
-    return new Promise((resolve, reject) =>
-        webAuth.popup.authorize({
-                domain: auth0Domain,
-                clientId: auth0ClientId,
-                redirectUri: window.location.protocol + "//" + window.location.host + "/auth0/callback" + window.location.search,
-                audience: auth0MgtAudience,
-                responseType: "token id_token",
-                scope: "openid profile email read:current_user update:current_user_identities",
-                state: SPOTIFY_LINK
-            }, (err, authResult) => err ? reject(err) : resolve(authResult)
-        )
-    );
-}
-
 /**
  * Start Spotify login flow.
  */
-function obtainSpotifyAuthTokens() {
+function* redirectToSpotifyLogin() {
 
-    const auth0Domain = process.env.REACT_APP_AUTH0_DOMAIN as string;
-    const auth0ClientId = process.env.REACT_APP_AUTH0_CLIENTID as string;
-    const auth0MgtAudience = process.env.REACT_APP_AUTH0_MGT_AUDIENCE as string;
+    const auth = createWebAuth();
+    yield select(setLocalStorage);
 
-    //Required to obtain access token with the Auth0 MGT audience to change user account.
-    const webAuth = new WebAuth({
-        domain: auth0Domain,
-        clientID: auth0ClientId,
-        audience: auth0MgtAudience,
+    //Fire the redirect to Spotify.
+    auth.authorize({
+        connection: "spotify",
+        state: "spotify"
     });
-
-    return new Promise((resolve, reject) =>
-        webAuth.popup.authorize({
-                domain: auth0Domain,
-                clientId: auth0ClientId,
-                connection: "spotify",
-                redirectUri: window.location.protocol + "//" + window.location.host + "/auth0/callback" + window.location.search,
-                responseType: "token id_token",
-                scope: "openid profile email read:current_user update:current_user_identities",
-                state: SPOTIFY_LINK
-            }, (err, authResult) => err ? reject(err) : resolve(authResult)
-        )
-    );
 }
 
 /**
- * Combines two Auth0 accounts into one. The secondary will no longer show up in users list.
- *
- * @param primaryAccessToken
- * @param primaryUserId
- * @param secondaryIdToken
+ * Lib for manual token operations.
  */
-function bridgeSpotifyAccounts(primaryAccessToken: string, primaryUserId: string, secondaryIdToken: string) {
+function createWebAuth() {
 
     const auth0Domain = process.env.REACT_APP_AUTH0_DOMAIN as string;
     const auth0ClientId = process.env.REACT_APP_AUTH0_CLIENTID as string;
+    const auth0Audience = process.env.REACT_APP_AUTH0_AUDIENCE as string;
 
-    const auth0Manage = new Management({
+    const authOptions : AuthOptions = {
         domain: auth0Domain,
-        clientId: auth0ClientId,
-        token: primaryAccessToken
-    });
+        clientID: auth0ClientId,
+        audience: auth0Audience,
+        redirectUri: window.location.href,
+        responseType: "token id_token",
+        scope: "openid profile email"
+    };
 
-    return new Promise((resolve, reject) =>
-        auth0Manage.linkUser(primaryUserId, secondaryIdToken, (err, result) =>
-            err ? reject(err) : resolve(result)
-        )
-    );
+    return new WebAuth(authOptions);
 }
 
 function createLock() {
@@ -217,7 +115,10 @@ function createLock() {
       configurationBaseUrl: process.env
         .REACT_APP_AUTH0_CONFIGURATION_BASE_URL as string,
       auth: {
-        responseType: "token",
+        responseType: "id_token token",
+        params: {
+            scope: "openid profile email"
+        },
         audience: process.env.REACT_APP_AUTH0_AUDIENCE as string,
         redirect: true,
         redirectUrl: window.location.href
@@ -371,7 +272,54 @@ function logout() {
     lock.logout({returnTo: window.location.href});
 }
 
+/**
+ * Checks URL hash to see if an Auth0 token is present. If so, it checks the state param to see if it is the result
+ * of a Spotify social link. If so, the account linking event is processed and the hash is removed to prevent account logout.
+ */
+function* checkForSpotifyHash() {
+
+    let decodedHash : Auth0DecodedHash | null = null;
+    try {
+        decodedHash = yield call(decodeHash);
+    } catch (ex) {
+        console.error(ex.error);
+    }
+
+    if (decodedHash == null) {
+        console.debug("No Auth0 hash found in URL.");
+        return;
+    }
+
+    if (decodedHash.state === "spotify") {
+        console.log("Spotify response detected. Processing account linking.");
+        console.log(decodedHash.idToken);
+
+        console.log("Sending event");
+        localStorage.clear();
+        yield put({
+            type: ApiActionType.LinkAccount,
+            data: decodedHash.idToken
+        });
+    }
+}
+
+/**
+ * Handles the decode. Error thrown if verifications fails.
+ */
+function decodeHash() {
+
+    const auth = createWebAuth();
+    return new Promise((resolve, reject) =>
+        auth.parseHash({}, (err, tokenPayload) =>
+            err ? reject(err) : resolve(tokenPayload)
+        )
+    );
+}
+
 function* checkAlreadyLoggedIn() {
+
+    yield call(checkForSpotifyHash);
+
   const lock = createLock();
   let authResult;
   try {
@@ -396,16 +344,8 @@ function* checkAlreadyLoggedIn() {
     data: authResult.accessToken
   });
 
-  let profile;
-  try {
-    profile = yield call(getUserInfo, lock, authResult.accessToken);
-  } catch (err) {
-    yield put({
-      type: ActionType.LoginError,
-      data: err
-    });
-    return;
-  }
+  let profile = authResult.idTokenPayload;
+  console.log(`Logged in userID: ${profile.sub} - ${profile.name}`);
 
   yield put({
     type: ActionType.LoginSuccess,
@@ -418,7 +358,7 @@ function* saga() {
   yield takeEvery(ActionType.CheckLogin, checkAlreadyLoggedIn);
   yield takeEvery(ActionType.InitiateLogin, login);
   yield takeEvery(ActionType.InitiateLogout, logout);
-  yield takeEvery(ActionType.InitiateSpotifyLogin, triggerSpotifyLogin);
+  yield takeEvery(ActionType.InitiateSpotifyLogin, redirectToSpotifyLogin);
 }
 
 export default saga;

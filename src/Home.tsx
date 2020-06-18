@@ -94,6 +94,7 @@ import {
     FONT_1,
     BUTTON_HEIGHT
 } from "./utils/constants";
+import {Auth0UserProfile} from "auth0-js";
 
 interface AppPropsT {
   layout: Layout;
@@ -122,9 +123,9 @@ interface AppPropsT {
   purchasePending: boolean;
   isFree: boolean;
   ticketsForPurchase: TicketCounts;
-  profile?: auth0.Auth0UserProfile;
+  profile?: Auth0UserProfile;
   event?: Event;
-  spotifyUserId: string | null;
+  isSpotifyLinked: boolean;
   orderNumber?: string;
   orderSubTotal?: number;
   orderFees?: number;
@@ -1000,8 +1001,8 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   isUserSpotifyConnected = () => {
-      let { spotifyUserId } = this.props;
-      return spotifyUserId !== null;
+      let { isSpotifyLinked } = this.props;
+      return isSpotifyLinked;
   };
 
   renderCompleteStepBody = () => {
@@ -2177,7 +2178,7 @@ export default connect(
       layout: root.layout,
       byLayout: byLayoutWrapper(root.layout),
       profile: root.profile,
-      spotifyUserId: root.spotifyUserId,
+      isSpotifyLinked: root.isSpotifyLinked,
       stripe: root.stripe,
       paymentRequest: home.paymentRequest,
       canMakePayment: home.canMakePayment,
