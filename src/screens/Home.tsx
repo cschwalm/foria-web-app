@@ -14,8 +14,8 @@ import {
 import memoizeOne from "memoize-one";
 import ReactMarkdown from "react-markdown";
 
-import {Layout} from "./layout";
-import {isFreePurchase} from "./redux/selectors";
+import {Layout} from "../layout";
+import {isFreePurchase} from "../redux/selectors";
 import {
     antiFlashWhite,
     black,
@@ -27,18 +27,18 @@ import {
     vividRaspberry,
     white,
     spotifyGreen
-} from "./utils/colors";
-import Ellipsis from "./icons/Ellipsis";
-import {AppState} from "./redux/store";
+} from "../utils/colors";
+import Ellipsis from "../icons/Ellipsis";
+import {AppState} from "../redux/store";
 import {
   Event,
   FREE_TICKET_PRICE,
   TicketTypeConfig
-} from "./redux/reducers/root";
+} from "../redux/reducers/root";
 import {
   onTokenCreate as onTokenCreateAction,
   onTokenCreateError as onTokenCreateErrorAction
-} from "./redux/stripeSaga";
+} from "../redux/stripeSaga";
 import {
   addTicket as addTicketAction,
   onCreditCardSubmit as onCreditCardSubmitAction,
@@ -56,32 +56,32 @@ import {
   toPreviousView as toPreviousViewAction,
   totalTicketsSelected,
   View
-} from "./redux/reducers/home";
+} from "../redux/reducers/home";
+import {byLayout as byLayoutWrapper} from "../layout";
+import NavBar from "../UI/NavBar/NavBar";
+import Footer from "../UI/Footer";
+import calendarIcon from "../assets/calendar_icon.png";
+import spotifyIcon from "../assets/Spotify_Icon_RGB_White.png";
+import PinpointIcon from "../icons/pinpointIcon";
+import DecrementIcon from "../icons/decrementIcon";
+import IncrementIcon from "../icons/incrementIcon";
+import CloseIconMobile from "../icons/closeIconMobile";
+import BackIconMobile from "../icons/backIconMobile";
+import LeftChevron from "../icons/leftChevron";
+import RightChevron from "../icons/rightChevron";
+import UpwardChevron from "../icons/upwardChevron";
 import {
     initiateLogin as initiateLoginAction,
     initiateLogout as initiateLogoutAction,
     initiateSpotifyLogin as initiateSpotifyAction,
-} from "./redux/auth0Saga";
-import {byLayout as byLayoutWrapper} from "./layout";
-import NavBar from "./UI/NavBar/NavBar";
-import Footer from "./UI/Footer";
-import calendarIcon from "./assets/calendar_icon.png";
-import spotifyIcon from "./assets/Spotify_Icon_RGB_White.png";
-import PinpointIcon from "./icons/pinpointIcon";
-import DecrementIcon from "./icons/decrementIcon";
-import IncrementIcon from "./icons/incrementIcon";
-import CloseIconMobile from "./icons/closeIconMobile";
-import BackIconMobile from "./icons/backIconMobile";
-import LeftChevron from "./icons/leftChevron";
-import RightChevron from "./icons/rightChevron";
-import UpwardChevron from "./icons/upwardChevron";
+} from "../redux/auth0Saga";
 import {
   feeFormatter,
   pricePreviewFormatter,
   twoDecimalFormatter,
   twoDecimalNoCurrencyFormatter
-} from "./utils/formatCurrency";
-import minMax from "./utils/minMax";
+} from "../utils/formatCurrency";
+import minMax from "../utils/minMax";
 import {
     MAX_TICKETS,
     TICKET_OVERLAY_WIDTH,
@@ -93,7 +93,7 @@ import {
     FONT_2,
     FONT_1,
     BUTTON_HEIGHT
-} from "./utils/constants";
+} from "../utils/constants";
 import {Auth0UserProfile} from "auth0-js";
 
 interface AppPropsT {

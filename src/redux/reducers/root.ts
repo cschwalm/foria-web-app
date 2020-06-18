@@ -46,7 +46,7 @@ export interface Event {
 
 export interface State {
   layout: Layout;
-  eventId: string;
+  eventId: string | null;
   authenticationStatus: AuthenticationStatus;
   stripe: stripe.Stripe | null;
   profile?: auth0.Auth0UserProfile;
@@ -64,9 +64,13 @@ const getEventIdFromUrl = (): string | void => {
   window.location.href = "https://foriatickets.com";
 };
 
+const isEvent = () : boolean => {
+    return window.location.pathname !== '/sign-up';
+}
+
 export const initialState: State = {
   layout: getLayout(),
-  eventId: getEventIdFromUrl() as string,
+  eventId: isEvent() ? getEventIdFromUrl() as string : null,
   authenticationStatus: AuthenticationStatus.NoAuth,
   stripe: null,
   isSpotifyLinked: false
