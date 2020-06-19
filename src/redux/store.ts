@@ -31,7 +31,7 @@ export function initializeStore() {
             homeInitialState = JSON.parse(state).home;
         }
     } catch (e) {
-        console.log("Failed to check session storage.");
+        console.error("Failed to check session storage.");
     }
 
   const sagaMiddleWare = createSagaMiddleware();

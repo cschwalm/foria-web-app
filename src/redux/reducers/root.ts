@@ -50,6 +50,7 @@ export interface State {
   authenticationStatus: AuthenticationStatus;
   stripe: stripe.Stripe | null;
   profile?: auth0.Auth0UserProfile;
+  isSpotifyLinked: boolean;
   event?: Event;
   accessToken?: string;
 }
@@ -71,7 +72,8 @@ export const initialState: State = {
   layout: getLayout(),
   eventId: isEvent() ? getEventIdFromUrl() as string : null,
   authenticationStatus: AuthenticationStatus.NoAuth,
-  stripe: null
+  stripe: null,
+  isSpotifyLinked: false
 };
 
 export enum ActionType {
@@ -97,9 +99,17 @@ export const reducer = (state = initialState, action: Action) => {
         authenticationStatus: AuthenticationStatus.NoAuth
       };
     case Auth0ActionType.LoginSuccess:
+
+      const profile: any = action.data;
+      let spotifyId = null;
+      if (profile["https://foriatickets.com/spotify/user_id"] !== undefined) {
+          spotifyId = profile["https://foriatickets.com/spotify/user_id"] as string;
+      }
+
       return {
-        ...state,
-        profile: action.data
+          ...state,
+          profile: action.data,
+          isSpotifyLinked: (spotifyId != null)
       };
     case ApiActionType.EventFetchSuccess:
       return {
@@ -115,6 +125,12 @@ export const reducer = (state = initialState, action: Action) => {
       return {
         ...state,
         stripe: action.data
+      };
+    case ApiActionType.LinkAccountSuccess:
+        localStorage.clear();
+      return {
+          ...state,
+          isSpotifyLinked: true
       };
     default:
       return state;

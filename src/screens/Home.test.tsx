@@ -20,6 +20,7 @@ it("renders an event", () => {
     pullUpMenuCollapsed: true,
     initiateLogin: () => {},
     initiateLogout: () => {},
+    initiateSpotifyLogin: () => {},
     event: {
       id: "a42205c9-f7fc-4371-80e4-99b73385f462",
       name: "Test Event",
@@ -58,6 +59,7 @@ it("renders markdown in the event description", () => {
     pullUpMenuCollapsed: true,
     initiateLogin: () => {},
     initiateLogout: () => {},
+    initiateSpotifyLogin: () => {},
     event: {
       ticket_type_config: [],
       description: "first paragraph\n\nsecond paragraph",
@@ -89,6 +91,7 @@ it("strips html from the markdown", () => {
     pullUpMenuCollapsed: true,
     initiateLogin: () => {},
     initiateLogout: () => {},
+    initiateSpotifyLogin: () => {},
     event: {
       ticket_type_config: [],
       description: "<p>error</p>",

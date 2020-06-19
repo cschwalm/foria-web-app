@@ -71,6 +71,11 @@ import LeftChevron from "../icons/leftChevron";
 import RightChevron from "../icons/rightChevron";
 import UpwardChevron from "../icons/upwardChevron";
 import {
+    initiateLogin as initiateLoginAction,
+    initiateLogout as initiateLogoutAction,
+    initiateSpotifyLogin as initiateSpotifyAction,
+} from "../redux/auth0Saga";
+import {
   feeFormatter,
   pricePreviewFormatter,
   twoDecimalFormatter,
@@ -89,11 +94,13 @@ import {
     FONT_1,
     BUTTON_HEIGHT
 } from "../utils/constants";
+import {Auth0UserProfile} from "auth0-js";
 
 interface AppPropsT {
   layout: Layout;
   byLayout: <A, B>(a: A, b: B) => A | B;
   pullUpMenuCollapsed: boolean;
+  initiateSpotifyLogin: () => void;
   addTicket: (ticket: TicketTypeConfig) => void;
   removeTicket: (ticket: TicketTypeConfig) => void;
   resetError: () => void;
@@ -116,8 +123,9 @@ interface AppPropsT {
   purchasePending: boolean;
   isFree: boolean;
   ticketsForPurchase: TicketCounts;
-  profile?: auth0.Auth0UserProfile;
+  profile?: Auth0UserProfile;
   event?: Event;
+  isSpotifyLinked: boolean;
   orderNumber?: string;
   orderSubTotal?: number;
   orderFees?: number;
@@ -992,10 +1000,10 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
-    isUserSpotifyConnected = () => {
-        //TODO: hook up to Auth0 user settings
-        return false;
-    };
+  isUserSpotifyConnected = () => {
+      let { isSpotifyLinked } = this.props;
+      return isSpotifyLinked;
+  };
 
   renderCompleteStepBody = () => {
 
@@ -1031,8 +1039,10 @@ export class Home extends React.Component<AppPropsT> {
           }
       };
 
-    if (!this.isUserSpotifyConnected() && !this.state.didUserSkipSpotify && false) { //TODO: remove false bool
-        //TODO: hook up to Spotify API on button click
+    if (!this.isUserSpotifyConnected() && !this.state.didUserSkipSpotify) {
+
+      const {initiateSpotifyLogin} = this.props;
+
       return (
         <>
             <div style={sharedStyles.eventDetailTitlePink}>Would you like more discounts?</div>
@@ -1042,7 +1052,7 @@ export class Home extends React.Component<AppPropsT> {
                 style={{
                     ...spotifyStyles.connectButton,
                 }}
-                onClick={() => console.log('test')}>
+                onClick={() => initiateSpotifyLogin() }>
                 <img src={spotifyIcon} style={{...spotifyStyles.icon}} alt="Spotify Icon"/>
                 Connect with Spotify
                 <RightChevron />
@@ -2168,6 +2178,7 @@ export default connect(
       layout: root.layout,
       byLayout: byLayoutWrapper(root.layout),
       profile: root.profile,
+      isSpotifyLinked: root.isSpotifyLinked,
       stripe: root.stripe,
       paymentRequest: home.paymentRequest,
       canMakePayment: home.canMakePayment,
@@ -2190,6 +2201,9 @@ export default connect(
     };
   },
   dispatch => ({
+    initiateLogin: initiateLoginAction(dispatch),
+    initiateLogout: initiateLogoutAction(dispatch),
+    initiateSpotifyLogin: initiateSpotifyAction(dispatch),
     addTicket: addTicketAction(dispatch),
     removeTicket: removeTicketAction(dispatch),
     resetPullUpMenu: resetPullUpMenuAction(dispatch),

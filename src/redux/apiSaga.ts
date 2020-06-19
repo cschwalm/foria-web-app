@@ -1,33 +1,31 @@
-import {call, select, put, takeEvery, actionChannel} from "redux-saga/effects";
+import {actionChannel, call, put, select, takeEvery} from "redux-saga/effects";
 
 import Action from "./Action";
 import {ActionType as StripeActionType} from "./stripeSaga";
-import {
-  getEventId,
-  getTicketsForPurchase,
-  getAccessToken,
-  getAppliedPromoCode
-} from "./selectors";
-import {TicketCounts, ActionType as HomeActionType} from "./reducers/home";
+import {getAccessToken, getAppliedPromoCode, getEventId, getTicketsForPurchase} from "./selectors";
+import {ActionType as HomeActionType, TicketCounts} from "./reducers/home";
 import {atLeast} from "../delay";
 
 const foriaBackend = process.env.REACT_APP_FORIA_BACKEND_BASE_URL as "string";
 
 export enum ActionType {
-  EventFetchError = "EventFetchError",
-  EventFetchCriticalError = "EventFetchCriticalError",
-  EventFetchSuccess = "EventFetchSuccess",
-  CheckoutSuccess = "CheckoutSuccess",
-  CheckoutError = "CheckoutError",
-  CheckoutCriticalError = "CheckoutCriticalError",
-  InitiateCalculateOrder = "InitiateCalculateOrder",
-  CalculateOrderTotalError = "CalculateOrderTotalError",
-  CalculateOrderTotalCriticalError = "CalculateOrderTotalCriticalError",
-  CalculateOrderTotalSuccess = "CalculateOrderTotalSuccess",
-  ApplyPromoError = "ApplyPromoError",
-  ApplyPromoCriticalError = "ApplyPromoCriticalError",
-  ApplyPromoSuccess = "ApplyPromoSuccess",
-  ApplyPromoCancelledNoLogin = "ApplyPromoCancelledNoLogin"
+    EventFetchError = "EventFetchError",
+    EventFetchCriticalError = "EventFetchCriticalError",
+    EventFetchSuccess = "EventFetchSuccess",
+    CheckoutSuccess = "CheckoutSuccess",
+    CheckoutError = "CheckoutError",
+    CheckoutCriticalError = "CheckoutCriticalError",
+    InitiateCalculateOrder = "InitiateCalculateOrder",
+    CalculateOrderTotalError = "CalculateOrderTotalError",
+    CalculateOrderTotalCriticalError = "CalculateOrderTotalCriticalError",
+    CalculateOrderTotalSuccess = "CalculateOrderTotalSuccess",
+    ApplyPromoError = "ApplyPromoError",
+    ApplyPromoCriticalError = "ApplyPromoCriticalError",
+    ApplyPromoSuccess = "ApplyPromoSuccess",
+    ApplyPromoCancelledNoLogin = "ApplyPromoCancelledNoLogin",
+    LinkAccount = "LinkAccount",
+    LinkAccountSuccess = "LinkAccountSuccess",
+    LinkAccountError = "LinkAccountError"
 }
 
 const defaultHeaders = {
@@ -100,6 +98,12 @@ interface OrderPayload {
 type OrderTotalPayload = Omit<OrderPayload, "payment_token"> & {
   payment_token?: string;
 };
+
+interface LinkAccountsRequest {
+    "connection"?: string,
+    "provider"?: string,
+    "id_token"?: string
+}
 
 function completeCheckout(data: OrderPayload, accessToken: string) {
   return tupleResponse(
@@ -261,6 +265,68 @@ function* calculateOrderTotalSaga() {
   });
 }
 
+function linkAccounts(data: LinkAccountsRequest, accessToken: string) {
+
+    return tupleResponse(
+        fetch(`${foriaBackend}/v1/user/linkAccounts`, {
+            method: "POST",
+            body: JSON.stringify(data),
+            headers: {...defaultHeaders, ...authHeaders(accessToken)}
+        })
+    );
+}
+
+/**
+ * Bridges the primary and specified account together in Auth0.
+ * The account that supplies the access token will be primary.
+ */
+function* linkAccountSaga(action: Action) {
+
+    let idToken;
+    if (action.type === ActionType.LinkAccount) {
+        idToken = action.data;
+    } else {
+        return;
+    }
+
+    if (idToken == null) {
+        console.error("Missing ID token. Unable to link accounts.");
+    }
+
+    const accessToken = yield select(getAccessToken);
+
+    const linkAccountsPayload: LinkAccountsRequest = {
+        id_token: idToken,
+        connection: "spotify",
+        provider: "oauth2"
+    };
+
+    const [result, error400, error500, connectionError] = yield call(
+        linkAccounts,
+        linkAccountsPayload,
+        accessToken
+    );
+
+    if (error400) {
+        yield put({
+            type: ActionType.LinkAccountError,
+            data: error400
+        });
+        return;
+    } else if (error500 || connectionError) {
+        yield put({
+            type: ActionType.LinkAccountError,
+            data: error500 || connectionError
+        });
+        return;
+    }
+
+    yield put({
+        type: ActionType.LinkAccountSuccess,
+        data: result.code
+    });
+}
+
 function* saga() {
   // Before anything, setup a channel to capture any actions we will handle, so
   // we don't lose actions in the interim
@@ -275,6 +341,9 @@ function* saga() {
   );
   let applyPromoCodeChannel = yield actionChannel(
     HomeActionType.ApplyPromoCode
+  );
+  const linkAccountChannel = yield actionChannel(
+      ActionType.LinkAccount
   );
 
   let eventId = yield select(getEventId);
@@ -310,6 +379,7 @@ function* saga() {
   yield takeEvery(applyPromoCodeChannel, applyPromoCode);
   yield takeEvery(stripeTokenChannel, completePurchase);
   yield takeEvery(calculateOrderChannel, calculateOrderTotalSaga);
+  yield takeEvery(linkAccountChannel, linkAccountSaga);
 }
 
 export default saga;
