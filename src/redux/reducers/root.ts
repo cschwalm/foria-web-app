@@ -66,7 +66,7 @@ const getEventIdFromUrl = (): string | void => {
 
 const isEvent = () : boolean => {
     return window.location.pathname !== '/sign-up';
-}
+};
 
 export const initialState: State = {
   layout: getLayout(),
