@@ -50,8 +50,18 @@ const styles = {
         fontWeight: 500,
         margin: '36px auto',
         maxWidth: '600px'
+    },
+    mobileContainer: {
+        top: '15%',
+        margin: '0 10%',
+        position: 'absolute' as const
+    },
+    desktopContainer: {
+        top: '50%',
+        left:'50%',
+        transform: 'translate(-50%, -50%)' as const,
+        position: 'absolute' as const
     }
-
 }
 
 class SignUpScreen extends Component<SignUpScreenProps> {
@@ -64,7 +74,7 @@ class SignUpScreen extends Component<SignUpScreenProps> {
 
         const signUpComponent = (
             <div style={styles.backgroundImage}>
-                <div style={{top: '30%', position: 'absolute', margin: byLayout("auto 5%", "auto 15%")}}>
+                <div style={byLayout(styles.mobileContainer, styles.desktopContainer)}>
                     <div style={styles.headerText}>
                         Discover amazing events. Access personalized discounts.</div>
                     <div style={styles.subtitleText}>
