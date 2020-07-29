@@ -6,10 +6,12 @@ import {connect} from "react-redux";
 import {AppState} from "../../redux/store";
 import {byLayout as byLayoutWrapper} from "../../layout";
 import {initiateLogin as initiateLoginAction, initiateLogout as initiateLogoutAction} from "../../redux/auth0Saga";
+import {Auth0UserProfile} from "auth0-js";
 
 interface LoginProps {
     byLayout: <A, B>(a: A, b: B) => A | B;
     authenticationStatus: AuthenticationStatus;
+    profile?: Auth0UserProfile;
     initiateLogin: () => void;
     initiateLogout: () => void;
 }
@@ -45,7 +47,7 @@ class LoginToggle extends Component<LoginProps> {
             case AuthenticationStatus.Auth:
                 return (
                     <button onClick={() => this.props.initiateLogout()} style={loginAnchorStyle}>
-                        Log Out
+                        Log Out ({this.props.profile?.email})
                     </button>
                 );
             default:
@@ -62,6 +64,7 @@ export default connect(
         return {
             byLayout: byLayoutWrapper(root.layout),
             authenticationStatus: root.authenticationStatus,
+            profile: root.profile,
         };
     },
     dispatch => ({
