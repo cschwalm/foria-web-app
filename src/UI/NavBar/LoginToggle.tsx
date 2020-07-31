@@ -35,6 +35,14 @@ class LoginToggle extends Component<LoginProps> {
             fontWeight: "bold" as "bold"
         };
 
+        const email = this.props.profile?.email;
+        let logoutText;
+        if (email === null || email === "undefined") {
+            logoutText = 'Log Out';
+        } else {
+            logoutText = 'Log Out (' + email + ')';
+        }
+
         switch (this.props.authenticationStatus) {
             case AuthenticationStatus.Pending:
                 return <Ellipsis style={boldLoginAnchorStyle} />;
@@ -47,7 +55,7 @@ class LoginToggle extends Component<LoginProps> {
             case AuthenticationStatus.Auth:
                 return (
                     <button onClick={() => this.props.initiateLogout()} style={loginAnchorStyle}>
-                        Log Out ({this.props.profile?.email})
+                        {logoutText}
                     </button>
                 );
             default:
