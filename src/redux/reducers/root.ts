@@ -55,13 +55,14 @@ export interface State {
   accessToken?: string;
 }
 
-const getEventIdFromUrl = (): string | void => {
+const getEventIdFromUrl = (): string | null => {
   let params = new URLSearchParams(window.location.search);
   let eventId = params.get("eventId");
   if (eventId != null) {
     return eventId;
+  } else {
+      return null;
   }
-  window.location.href = "https://foriatickets.com";
 };
 
 const isEvent = () : boolean => {

@@ -4,7 +4,7 @@ import Adapter from "enzyme-adapter-react-16";
 import ReactMarkdown from "react-markdown";
 
 import {Layout} from "../layout";
-import {Home} from "./Home";
+import {EventPage} from "./EventPage";
 import {AuthenticationStatus} from "../redux/reducers/root";
 import {View} from "../redux/reducers/home";
 
@@ -41,7 +41,7 @@ it("renders an event", () => {
     }
   };
   // @ts-ignore
-    const wrapper = shallow(<Home {...props} />);
+    const wrapper = shallow(<EventPage {...props} />);
   expect(wrapper.contains("Jun 20th, 3:07AM to Oct 1st, 12:00AM")).toEqual(
     true
   );
@@ -73,7 +73,7 @@ it("renders markdown in the event description", () => {
     }
   };
   // @ts-ignore
-    const wrapper = shallow(<Home {...props} />);
+    const wrapper = shallow(<EventPage {...props} />);
   let eventDescription = wrapper.find(ReactMarkdown);
   expect(eventDescription.html()).toEqual(
     "<p>first paragraph</p><p>second paragraph</p>"
@@ -105,7 +105,7 @@ it("strips html from the markdown", () => {
     }
   };
   // @ts-ignore
-    const wrapper = shallow(<Home {...props} />);
+    const wrapper = shallow(<EventPage {...props} />);
   let eventDescription = wrapper.find(ReactMarkdown);
   expect(eventDescription.html()).toEqual("");
 });

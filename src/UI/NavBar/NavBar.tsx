@@ -35,7 +35,7 @@ const NavBar = (byLayout: <A, B>(a: A, b: B) => A | B) => {
                 }}>
                 <div
                     style={{display: "flex", flex: 1}}
-                    onClick={() => (window.location.href = "https://foriatickets.com")}>
+                    onClick={() => (window.location.href = "https://events.foriatickets.com")}>
                     <img src={foriaLogo} alt="Foria Logo" style={styles.logo} />
                 </div>
                 <div

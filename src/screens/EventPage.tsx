@@ -525,7 +525,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
 
 const WrappedCardForm = injectStripe(CardForm);
 
-export class Home extends React.Component<AppPropsT> {
+export class EventPage extends React.Component<AppPropsT> {
   state = {
     // Storing these values in local state, to lower input latency
       promoCode: "",
@@ -1000,11 +1000,6 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
-  isUserSpotifyConnected = () => {
-      let { isSpotifyLinked } = this.props;
-      return isSpotifyLinked;
-  };
-
   renderCompleteStepBody = () => {
 
       const spotifyStyles = {
@@ -1039,7 +1034,7 @@ export class Home extends React.Component<AppPropsT> {
           }
       };
 
-    if (!this.isUserSpotifyConnected() && !this.state.didUserSkipSpotify) {
+    if (!this.props.isSpotifyLinked && !this.state.didUserSkipSpotify) {
 
       const {initiateSpotifyLogin} = this.props;
 
@@ -2219,4 +2214,4 @@ export default connect(
     resetPromoError: resetPromoErrorAction(dispatch),
     resetError: resetErrorAction(dispatch)
   })
-)(Home);
+)(EventPage);
