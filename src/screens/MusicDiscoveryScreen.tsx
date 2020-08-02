@@ -2,7 +2,7 @@ import React, {Component} from "react";
 import {AuthenticationStatus} from "../redux/reducers/root";
 import {AppState} from "../redux/store";
 import {connect} from "react-redux";
-import {byLayout as byLayoutWrapper} from "../layout";
+import {byLayout as byLayoutWrapper, Layout} from "../layout";
 import {initiateLogin as initiateLoginAction, initiateSpotifyLogin as initiateSpotifyAction} from "../redux/auth0Saga";
 import NavBar from "../UI/NavBar/NavBar";
 import Footer from "../UI/Footer";
@@ -11,14 +11,13 @@ import {BODY_WIDTH, BUTTON_HEIGHT, FONT_4, FONT_6, MAX_BUTTON_WIDTH} from "../ut
 import {vividRaspberry, white} from "../utils/colors";
 
 interface MusicDiscoveryScreenProps {
+    layout: Layout;
     byLayout: <A, B>(a: A, b: B) => A | B;
     initiateLogin: () => void;
     authenticationStatus: AuthenticationStatus;
     initiateSpotifyLogin: () => void;
     isSpotifyLinked: boolean;
-    match: object,
     location: object,
-    history: object,
 }
 
 const styles = {
@@ -33,7 +32,7 @@ const styles = {
         fontWeight: 600,
         justifyContent: "center",
         alignItems: "center",
-        margin: '0 auto'
+        margin: '1em auto',
     },
     backgroundImage: {
         height: '100%',
@@ -85,8 +84,8 @@ const styles = {
 enum DiscoveryView {
     Login,
     SpotifyCheck,
-    ResultsWithAuth,
-    ResultsNoAuth
+    UserResults,
+    PermalinkResults
 }
 
 const getPermalinkFromUrl = (): string | null => {
@@ -101,18 +100,75 @@ const getPermalinkFromUrl = (): string | null => {
 
 class MusicDiscoveryScreen extends Component<MusicDiscoveryScreenProps> {
 
-    renderArtistRow = (item : any) => {
+    renderArtistRow = (item : any, index : number) => {
 
         return (
             <div className='row' key={item.id} style={styles.artistRow} >
-                    <img src={item.image_url} alt={item.name} width="128" height="128"/>
-                    <div style={styles.bodyText}>
-                        #1
+                    <img src={item.image_url} alt={item.name} width="100" height="100"/>
+                    <div style={{...styles.headerText, paddingLeft: '1em'}}>
+                        #{index+1}
                     </div>
-                    <div style={styles.bodyText}>
+                    <div style={{...styles.headerText, paddingLeft: '1em'}}>
                         {item.name}
                     </div>
 
+            </div>
+        );
+    }
+
+    resultsScreen = (isPermalink : boolean) => {
+
+        const resultsButton = (
+            <div
+                className="row"
+                style={{...styles.buttonStyle,}}
+                onClick={() => window.location.search = ''}
+            >
+                See your results
+            </div>
+        );
+        ///TODO: add share with friends functionality
+        const shareButton = (
+            <div
+                className="row"
+                style={styles.buttonStyle}
+                onClick={() => console.log('Share with friends button click')}
+            >
+                Share with friends
+            </div>
+        );
+
+        let {layout, byLayout} = this.props;
+        let button = shareButton;
+
+        if (isPermalink && layout === Layout.Desktop) {
+            button = (
+                <div className='row'>
+                    <div style={{width: '50%'}}> {shareButton} </div>
+                    <div style={{width: '1em'}}/>
+                    <div style={{width: '50%'}}> {resultsButton} </div>
+                </div>
+            );
+        } else if (isPermalink && layout === Layout.Mobile){
+            button = (
+                <div>
+                    {shareButton}
+                    {resultsButton}
+                </div>
+            );
+        }
+
+        return (
+            <div style={styles.bodyContainer}>
+                <div style={byLayout(styles.mobileContainer, styles.desktopContainer)}>
+                    <div style={styles.headerText}>
+                        Here are your results!
+                    </div>
+                    <div >
+                        {button}
+                    </div>
+                    {dummyData.spotify_artist_list.map((item, index) => this.renderArtistRow(item,index))}
+                </div>
             </div>
         );
     }
@@ -123,11 +179,13 @@ class MusicDiscoveryScreen extends Component<MusicDiscoveryScreenProps> {
         let view = DiscoveryView.SpotifyCheck;
         let renderBody;
 
-        ///TODO handle Auth pending case
+        ///TODO: handle Auth pending case
         if (getPermalinkFromUrl() != null) {
-            view = DiscoveryView.ResultsNoAuth;
+            ///TODO:insert user permalink call here?
+            view = DiscoveryView.PermalinkResults;
         } else if (authenticationStatus === AuthenticationStatus.Auth && isSpotifyLinked) {
-            view = DiscoveryView.ResultsWithAuth;
+            ///TODO:insert user API call here?
+            view = DiscoveryView.UserResults;
         } else if (authenticationStatus === AuthenticationStatus.Auth) {
             view = DiscoveryView.SpotifyCheck
         } else if (authenticationStatus === AuthenticationStatus.NoAuth) {
@@ -137,51 +195,6 @@ class MusicDiscoveryScreen extends Component<MusicDiscoveryScreenProps> {
                 "Unhandled AuthenticationStatus when generating login link"
             );
         }
-
-        const resultWithAuthScreen = (
-            <div style={styles.bodyContainer}>
-                <div style={byLayout(styles.mobileContainer, styles.desktopContainer)}>
-                    <div style={styles.headerText}>
-                        Here are your results!
-                    </div>
-                    <div
-                        className="row"
-                        style={styles.buttonStyle}
-                        onClick={() => this.props.initiateLogin()}
-                    >
-                        Share with Friends
-                    </div>
-                    {dummyData.spotify_artist_list.map(item => this.renderArtistRow(item))}
-                </div>
-            </div>
-        );
-
-        const resultNoAuthScreen = (
-            <div style={styles.bodyContainer}>
-                <div style={byLayout(styles.mobileContainer, styles.desktopContainer)}>
-                    <div style={styles.headerText}>
-                        Here are your results!
-                    </div>
-                    <div className='row'>
-                        <div
-                            className="row"
-                            style={styles.buttonStyle}
-                            onClick={() => this.props.initiateLogin()}
-                        >
-                            Share with Friends
-                        </div>
-                        <div
-                            className="row"
-                            style={styles.buttonStyle}
-                            onClick={() => window.location.search = ''}
-                        >
-                            See your results
-                        </div>
-                    </div>
-                    {dummyData.spotify_artist_list.map(item => this.renderArtistRow(item))}
-                </div>
-            </div>
-        );
 
         const spotifyScreen = (
             <div style={styles.bodyContainer}>
@@ -221,14 +234,14 @@ class MusicDiscoveryScreen extends Component<MusicDiscoveryScreenProps> {
             case DiscoveryView.Login:
                 renderBody = signUpComponent;
                 break;
-            case DiscoveryView.ResultsWithAuth:
-                renderBody = resultWithAuthScreen;
+            case DiscoveryView.UserResults:
+                renderBody = this.resultsScreen(false);
                 break;
             case DiscoveryView.SpotifyCheck:
                 renderBody = spotifyScreen;
                 break;
-            case DiscoveryView.ResultsNoAuth:
-                renderBody = resultNoAuthScreen;
+            case DiscoveryView.PermalinkResults:
+                renderBody = this.resultsScreen(true);
                 break;
             default:
                 renderBody = signUpComponent;
