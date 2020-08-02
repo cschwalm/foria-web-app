@@ -7,8 +7,9 @@ import {initiateLogin as initiateLoginAction, initiateSpotifyLogin as initiateSp
 import NavBar from "../UI/NavBar/NavBar";
 import Footer from "../UI/Footer";
 import SpotifyButton from "../UI/SpotifyButton";
-import {BODY_WIDTH, BUTTON_HEIGHT, FONT_4, FONT_6, MAX_BUTTON_WIDTH} from "../utils/constants";
-import {vividRaspberry, white} from "../utils/colors";
+import {BODY_WIDTH, BUTTON_HEIGHT, FONT_4, FONT_5, FONT_6, MAX_BUTTON_WIDTH} from "../utils/constants";
+import {antiFlashWhite, vividRaspberry, white} from "../utils/colors";
+import Ellipsis from "../icons/Ellipsis";
 
 interface MusicDiscoveryScreenProps {
     layout: Layout;
@@ -41,20 +42,33 @@ const styles = {
         backgroundPosition: "center",
         backgroundSize: "cover",
     },
-    headerText: {
+    headerTextWhite: {
         textAlign: 'center' as const,
         color: 'white',
         fontWeight: 700,
         fontSize: `${FONT_6}px`,
         marginBottom: '18px'
     },
-    subtitleText: {
+    headerTextBlack: {
         textAlign: 'center' as const,
-        color: 'white',
-        fontSize: `${FONT_4}px`,
-        fontWeight: 500,
-        margin: '36px auto',
-        maxWidth: '600px'
+        color: 'black',
+        fontWeight: 700,
+        fontSize: `${FONT_6}px`,
+        marginBottom: '18px'
+    },
+    artistTextMobile: {
+        color: vividRaspberry,
+        fontWeight: 700,
+        fontSize: `${FONT_5}px`,
+        marginLeft: '0.5em',
+        width: '40px'
+    },
+    artistTextDesktop: {
+        color: vividRaspberry,
+        fontWeight: 700,
+        fontSize: `${FONT_6}px`,
+        marginLeft: '1em',
+        width: '80px'
     },
     mobileContainer: {
         padding: '5em 1em 1em 1em',
@@ -77,7 +91,7 @@ const styles = {
     artistRow: {
         display: "flex",
         alignItems: 'center',
-        paddingBottom: '2em'
+        paddingBottom: '1.5em'
     }
 }
 
@@ -100,18 +114,22 @@ const getPermalinkFromUrl = (): string | null => {
 
 class MusicDiscoveryScreen extends Component<MusicDiscoveryScreenProps> {
 
+    ///TODO: have API call set loading to true
+    state = {
+        areArtistsLoading: false,
+    };
+
     renderArtistRow = (item : any, index : number) => {
 
         return (
             <div className='row' key={item.id} style={styles.artistRow} >
-                    <img src={item.image_url} alt={item.name} width="100" height="100"/>
-                    <div style={{...styles.headerText, paddingLeft: '1em'}}>
-                        #{index+1}
-                    </div>
-                    <div style={{...styles.headerText, paddingLeft: '1em'}}>
-                        {item.name}
-                    </div>
-
+                <img src={item.image_url} alt={item.name} width="100" height="100"/>
+                <div style={this.props.byLayout(styles.artistTextMobile,styles.artistTextDesktop)}>
+                    #{index+1}
+                </div>
+                <div style={this.props.byLayout(styles.artistTextMobile,styles.artistTextDesktop)}>
+                    {item.name}
+                </div>
             </div>
         );
     }
@@ -158,16 +176,20 @@ class MusicDiscoveryScreen extends Component<MusicDiscoveryScreenProps> {
             );
         }
 
+        const artistList = dummyData.spotify_artist_list.map((item, index) => this.renderArtistRow(item,index));
+
         return (
-            <div style={styles.bodyContainer}>
-                <div style={byLayout(styles.mobileContainer, styles.desktopContainer)}>
-                    <div style={styles.headerText}>
-                        Here are your results!
+            <div style={{backgroundColor: antiFlashWhite}}>
+                <div style={styles.bodyContainer}>
+                    <div style={byLayout(styles.mobileContainer, styles.desktopContainer)}>
+                        <div style={styles.headerTextBlack}>
+                            Here are your results!
+                        </div>
+                        <div >
+                            {button}
+                        </div>
+                        {this.state.areArtistsLoading ? <Ellipsis style={{fontSize: FONT_6, textAlign: 'center'}} /> : artistList}
                     </div>
-                    <div >
-                        {button}
-                    </div>
-                    {dummyData.spotify_artist_list.map((item, index) => this.renderArtistRow(item,index))}
                 </div>
             </div>
         );
@@ -190,41 +212,45 @@ class MusicDiscoveryScreen extends Component<MusicDiscoveryScreenProps> {
             view = DiscoveryView.SpotifyCheck
         } else if (authenticationStatus === AuthenticationStatus.NoAuth) {
             view = DiscoveryView.Login
-        }else {
+        } else {
             throw new Error(
                 "Unhandled AuthenticationStatus when generating login link"
             );
         }
 
         const spotifyScreen = (
-            <div style={styles.bodyContainer}>
-                <div style={byLayout(styles.mobileContainer, styles.desktopContainer)}>
-                    <div style={styles.headerText}>
-                        Want to find out your top music artists and share them with friends?
+            <div style={styles.backgroundImage}>
+                <div style={styles.bodyContainer}>
+                    <div style={byLayout(styles.mobileContainer, styles.desktopContainer)}>
+                        <div style={styles.headerTextWhite}>
+                            Want to find out your top music artists and share them with friends?
+                        </div>
+                        <p style={styles.bodyText}>
+                            It’s a breeze with Foria, simply create an account and connect with Spotify
+                        </p>
+                        {SpotifyButton(() => this.props.initiateSpotifyLogin())}
                     </div>
-                    <p style={styles.bodyText}>
-                        It’s a breeze with Foria, simply create an account and connect with Spotify
-                    </p>
-                    {SpotifyButton(() => this.props.initiateSpotifyLogin())}
                 </div>
             </div>
         );
 
         const signUpComponent = (
-            <div style={styles.bodyContainer}>
-                <div style={byLayout(styles.mobileContainer, styles.desktopContainer)}>
-                    <div style={styles.headerText}>
-                        Want to find out your top music artists and share them with friends?
-                    </div>
-                    <p style={styles.bodyText}>
-                        It’s a breeze with Foria, simply create an account and connect with Spotify
-                    </p>
-                    <div
-                        className="row"
-                        style={styles.buttonStyle}
-                        onClick={() => this.props.initiateLogin()}
-                    >
-                        Join The Foria Family
+            <div style={styles.backgroundImage}>
+                <div style={styles.bodyContainer}>
+                    <div style={byLayout(styles.mobileContainer, styles.desktopContainer)}>
+                        <div style={styles.headerTextWhite}>
+                            Want to find out your top music artists and share them with friends?
+                        </div>
+                        <p style={styles.bodyText}>
+                            It’s a breeze with Foria, simply create an account and connect with Spotify
+                        </p>
+                        <div
+                            className="row"
+                            style={styles.buttonStyle}
+                            onClick={() => this.props.initiateLogin()}
+                        >
+                            Join The Foria Family
+                        </div>
                     </div>
                 </div>
             </div>
@@ -250,9 +276,7 @@ class MusicDiscoveryScreen extends Component<MusicDiscoveryScreenProps> {
         return (
             <>
                 {NavBar(this.props.byLayout)}
-                <div style={styles.backgroundImage}>
-                    {renderBody}
-                </div>
+                {renderBody}
                 {Footer(this.props.byLayout)}
             </>
         );
