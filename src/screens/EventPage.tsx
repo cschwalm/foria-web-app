@@ -26,7 +26,6 @@ import {
     trolleyGray,
     vividRaspberry,
     white,
-    spotifyGreen
 } from "../utils/colors";
 import Ellipsis from "../icons/Ellipsis";
 import {AppState} from "../redux/store";
@@ -61,14 +60,12 @@ import {byLayout as byLayoutWrapper} from "../layout";
 import NavBar from "../UI/NavBar/NavBar";
 import Footer from "../UI/Footer";
 import calendarIcon from "../assets/calendar_icon.png";
-import spotifyIcon from "../assets/Spotify_Icon_RGB_White.png";
 import PinpointIcon from "../icons/pinpointIcon";
 import DecrementIcon from "../icons/decrementIcon";
 import IncrementIcon from "../icons/incrementIcon";
 import CloseIconMobile from "../icons/closeIconMobile";
 import BackIconMobile from "../icons/backIconMobile";
 import LeftChevron from "../icons/leftChevron";
-import RightChevron from "../icons/rightChevron";
 import UpwardChevron from "../icons/upwardChevron";
 import {
     initiateLogin as initiateLoginAction,
@@ -95,6 +92,8 @@ import {
     BUTTON_HEIGHT
 } from "../utils/constants";
 import {Auth0UserProfile} from "auth0-js";
+import SpotifyButton from "../UI/SpotifyButton";
+import SkipSpotifyButton from "../UI/SkipSpotifyButton";
 
 interface AppPropsT {
   layout: Layout;
@@ -1002,64 +1001,14 @@ export class EventPage extends React.Component<AppPropsT> {
 
   renderCompleteStepBody = () => {
 
-      const spotifyStyles = {
-          connectButton: {
-              cursor: "pointer",
-              height: BUTTON_HEIGHT,
-              flex: `0 0 ${BUTTON_HEIGHT}`,
-              backgroundColor: spotifyGreen,
-              borderRadius: "5px",
-              padding: "7px 10px",
-              color: white,
-              fontWeight: 500,
-              justifyContent: "space-between",
-              alignItems: "center",
-              boxSizing: "border-box" as "border-box"
-          },
-          skipButton: {
-              margin: "0.5em 0em 0em 0em",
-              cursor: "pointer",
-              height: BUTTON_HEIGHT,
-              flex: `0 0 ${BUTTON_HEIGHT}`,
-              borderRadius: "5px",
-              border:"2px solid " + spotifyGreen,
-              color: trolleyGray,
-              fontWeight: 500,
-              justifyContent: "center",
-              alignItems: "center",
-              boxSizing: "border-box" as "border-box"
-          },
-          icon: {
-              height: '100%'
-          }
-      };
-
     if (!this.props.isSpotifyLinked && !this.state.didUserSkipSpotify) {
-
-      const {initiateSpotifyLogin} = this.props;
 
       return (
         <>
             <div style={sharedStyles.eventDetailTitlePink}>Would you like more discounts?</div>
             <p style={sharedStyles.eventBody}>We'll send you more discounts that are tailored to your interests</p>
-            <div
-                className="row"
-                style={{
-                    ...spotifyStyles.connectButton,
-                }}
-                onClick={() => initiateSpotifyLogin() }>
-                <img src={spotifyIcon} style={{...spotifyStyles.icon}} alt="Spotify Icon"/>
-                Connect with Spotify
-                <RightChevron />
-            </div>
-            <div
-                className="row"
-                style={{
-                    ...spotifyStyles.skipButton,
-                }}
-                onClick={() => this.setState({didUserSkipSpotify: true})}>
-                Skip
-            </div>
+            {SpotifyButton(() => this.props.initiateSpotifyLogin())}
+            {SkipSpotifyButton(()=> this.setState({didUserSkipSpotify: true}))}
         </>
       );
     }
