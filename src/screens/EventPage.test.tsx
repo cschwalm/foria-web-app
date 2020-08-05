@@ -6,7 +6,7 @@ import ReactMarkdown from "react-markdown";
 import {Layout} from "../layout";
 import {EventPage} from "./EventPage";
 import {AuthenticationStatus} from "../redux/reducers/root";
-import {View} from "../redux/reducers/home";
+import {View} from "../redux/reducers/event";
 
 Enzyme.configure({adapter: new Adapter()});
 it("renders an event", () => {

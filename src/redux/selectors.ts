@@ -3,12 +3,12 @@ import {TicketTypeConfig, FREE_TICKET_PRICE} from "./reducers/root";
 import {FULL_STATE_EVENT_KEY, FULL_STATE_KEY, FULL_STATE_TIME_EXPIRE_KEY} from "../utils/constants";
 
 export const getEventId = (state: AppState) => state.root.eventId;
-export const getView = (state: AppState) => state.home.view;
+export const getView = (state: AppState) => state.event.view;
 export const getTicketsForPurchase = (state: AppState) =>
-  state.home.ticketsForPurchase;
+  state.event.ticketsForPurchase;
 export const getAccessToken = (state: AppState) => state.root.accessToken;
 export const getAppliedPromoCode = (state: AppState) =>
-  state.home.appliedPromoCode;
+  state.event.appliedPromoCode;
 
 export const setLocalStorage = (state: AppState) => {
 

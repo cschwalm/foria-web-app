@@ -3,7 +3,7 @@ import {actionChannel, call, put, select, takeEvery} from "redux-saga/effects";
 import Action from "./Action";
 import {ActionType as StripeActionType} from "./stripeSaga";
 import {getAccessToken, getAppliedPromoCode, getEventId, getTicketsForPurchase} from "./selectors";
-import {ActionType as HomeActionType, TicketCounts} from "./reducers/home";
+import {ActionType as EventActionType, TicketCounts} from "./reducers/event";
 import {atLeast} from "../delay";
 import {Dispatch} from "redux";
 
@@ -419,10 +419,10 @@ function* saga() {
     ActionType.InitiateCalculateOrder
   );
   let freePurchaseChannel = yield actionChannel(
-    HomeActionType.FreePurchaseSubmit
+    EventActionType.FreePurchaseSubmit
   );
   let applyPromoCodeChannel = yield actionChannel(
-    HomeActionType.ApplyPromoCode
+    EventActionType.ApplyPromoCode
   );
   const linkAccountChannel = yield actionChannel(
       ActionType.LinkAccount

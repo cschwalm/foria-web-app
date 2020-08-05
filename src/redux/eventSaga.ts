@@ -11,9 +11,9 @@ import {
 import {setLocalStorage, getView, getTicketsForPurchase, isFreePurchase} from "./selectors";
 import {
     View,
-    ActionType as HomeActionType,
+    ActionType as EventActionType,
     someTicketsSelected
-} from "./reducers/home";
+} from "./reducers/event";
 import {ActionType as StripeActionType} from "./stripeSaga";
 import {initiateLoginIfNotLoggedInSaga} from "./auth0Saga";
 import {ActionType as ApiActionType} from "./apiSaga";
@@ -63,12 +63,12 @@ function* toCheckoutView() {
             ]);
         }
 
-        yield put({type: HomeActionType.SelectView, data: View.Checkout});
+        yield put({type: EventActionType.SelectView, data: View.Checkout});
     }
 
-    yield put({type: HomeActionType.ToCheckoutPending});
+    yield put({type: EventActionType.ToCheckoutPending});
     yield call(_toCheckoutView);
-    yield put({type: HomeActionType.ToCheckoutCompleted});
+    yield put({type: EventActionType.ToCheckoutCompleted});
 }
 
 function* handleToPreviousView() {
@@ -82,7 +82,7 @@ function* handleToPreviousView() {
         case View.Complete:
             return;
         case View.Checkout:
-            yield put({type: HomeActionType.SelectView, data: View.Tickets});
+            yield put({type: EventActionType.SelectView, data: View.Tickets});
             return;
         default:
             throw new Error(`Unhandled view: ${currentView}`);
@@ -97,7 +97,7 @@ function* handleToNextView() {
         case View.Complete:
             return;
         case View.Checkout:
-            yield put({type: HomeActionType.SelectView, data: View.Complete});
+            yield put({type: EventActionType.SelectView, data: View.Complete});
             // allows new new ticket purchases
             localStorage.clear();
             return;
@@ -117,12 +117,12 @@ function* trackPurchase() {
     // Map these events to a purchase pending event
     yield takeEvery(
         [
-            HomeActionType.FreePurchaseSubmit,
-            HomeActionType.CreditCardSubmit,
+            EventActionType.FreePurchaseSubmit,
+            EventActionType.CreditCardSubmit,
             StripeActionType.StripeCreateTokenSuccess
         ],
         function* () {
-            yield put({type: HomeActionType.PurchasePending});
+            yield put({type: EventActionType.PurchasePending});
         }
     );
 
@@ -134,7 +134,7 @@ function* trackPurchase() {
             ApiActionType.CheckoutSuccess
         ],
         function* () {
-            yield put({type: HomeActionType.PurchaseNotPending});
+            yield put({type: EventActionType.PurchaseNotPending});
         }
     );
 
@@ -145,8 +145,8 @@ function* trackPurchase() {
 }
 
 function* saga() {
-    yield takeEvery(HomeActionType.ToPreviousView, handleToPreviousView);
-    yield takeEvery(HomeActionType.ToNextView, handleToNextView);
+    yield takeEvery(EventActionType.ToPreviousView, handleToPreviousView);
+    yield takeEvery(EventActionType.ToNextView, handleToNextView);
     yield fork(trackPurchase);
 }
 

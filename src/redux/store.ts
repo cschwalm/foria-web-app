@@ -1,25 +1,25 @@
 import {applyMiddleware, combineReducers, createStore} from "redux";
 import createSagaMiddleware from "redux-saga";
 import {initialState as defaultRootInitialState, reducer as root, State as RootState} from "./reducers/root";
-import {initialState as defaultHomeInitialState, reducer as home, State as HomeState} from "./reducers/home";
+import {initialState as defaultEventInitialState, reducer as event, State as EventState} from "./reducers/event";
 import saga from "./sagas";
 import {FULL_STATE_EVENT_KEY, FULL_STATE_KEY, FULL_STATE_TIME_EXPIRE_KEY} from "../utils/constants";
 
 export interface AppState {
   root: RootState;
-  home: HomeState;
+  event: EventState;
 }
 
 export function initializeStore() {
     let rootInitialState = defaultRootInitialState;
-    let homeInitialState = defaultHomeInitialState;
+    let eventInitialState = defaultEventInitialState;
 
     const currentTime = (new Date()).getTime();
     const params = new URLSearchParams(window.location.search);
     const eventId = params.get("eventId");
 
     // Sets initial state from local storage if available
-    // The initial states in home.ts and root.ts are over written
+    // The initial states in event.ts and root.ts are over written
     try {
         const stateExpireTime = localStorage.getItem(FULL_STATE_TIME_EXPIRE_KEY);
         const state = localStorage.getItem(FULL_STATE_KEY);
@@ -31,7 +31,7 @@ export function initializeStore() {
 
             if (currentTime <= stateExpireTimeInt && eventId === loadedEventId) {
                 rootInitialState = JSON.parse(state).root;
-                homeInitialState = JSON.parse(state).home;
+                eventInitialState = JSON.parse(state).event;
             } else {
                 console.warn("Time/event ID check failed. Clearing local storage.");
                 localStorage.clear();
@@ -43,8 +43,8 @@ export function initializeStore() {
 
   const sagaMiddleWare = createSagaMiddleware();
   const store = createStore(
-    combineReducers({root, home}),
-    {root: rootInitialState, home: homeInitialState},
+    combineReducers({root, event}),
+    {root: rootInitialState, event: eventInitialState},
     applyMiddleware(sagaMiddleWare)
   );
 
