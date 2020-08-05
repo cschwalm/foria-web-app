@@ -5,6 +5,7 @@ import {ActionType as StripeActionType} from "./stripeSaga";
 import {getAccessToken, getAppliedPromoCode, getEventId, getTicketsForPurchase} from "./selectors";
 import {ActionType as HomeActionType, TicketCounts} from "./reducers/home";
 import {atLeast} from "../delay";
+import {Dispatch} from "redux";
 
 const foriaBackend = process.env.REACT_APP_FORIA_BACKEND_BASE_URL as "string";
 
@@ -25,8 +26,14 @@ export enum ActionType {
     ApplyPromoCancelledNoLogin = "ApplyPromoCancelledNoLogin",
     LinkAccount = "LinkAccount",
     LinkAccountSuccess = "LinkAccountSuccess",
-    LinkAccountError = "LinkAccountError"
+    LinkAccountError = "LinkAccountError",
+    MusicFetch = "MusicFetch",
+    MusicFetchSuccess = "MusicFetchSuccess",
+    MusicFetchError = "MusicFetchError",
 }
+
+export const initiateMusicFetch = (dispatch: Dispatch<Action>) => (permalinkUUID: string) =>
+    dispatch({type: ActionType.MusicFetch, data: permalinkUUID});
 
 const defaultHeaders = {
   Accept: "application/json",
@@ -103,6 +110,81 @@ interface LinkAccountsRequest {
     "connection"?: string,
     "provider"?: string,
     "id_token"?: string
+}
+
+interface Artist {
+    "id": string
+    "name": string
+    "image_url": string
+    "image_height": number
+    "image_width": number
+    "bio_url": string
+}
+
+interface UserTopArtistsResponse {
+    "user_id": string,
+    "timestamp": string,
+    "permalink_uuid": string,
+    "artist_list": Artist[]
+}
+
+function getTopArtists(accessToken: string) {
+    return tupleResponse(
+        fetch(`${foriaBackend}/v1/user/music/topArtists`, {
+            headers: {...defaultHeaders, ...authHeaders(accessToken)}
+        })
+    );
+}
+
+function getTopArtistsByPermalink(permalinkUUID: string) {
+    return tupleResponse(
+        fetch(`${foriaBackend}/v1/user/music/topArtists/${permalinkUUID}`, {
+            headers: {...defaultHeaders}
+        })
+    );
+}
+
+/**
+ * Checks the action data payload for a Permalink ID.
+ * If missing, it pulls the latest data for the currently logged in user.
+ *
+ * @param action
+ */
+function* fetchMusicInterests(action: Action) {
+
+    let response: any;
+    if (action.data != undefined) {
+
+        const permalinkUUID = action.data as string;
+        response = yield call(
+            getTopArtistsByPermalink,
+            permalinkUUID
+        );
+
+    } else {
+
+        const accessToken = yield select(getAccessToken);
+        response = yield call(
+            getTopArtists,
+            accessToken
+        );
+    }
+
+    const [userTopArtists, error400, error500] = response;
+
+    if (error400 || error500) {
+
+        yield put({
+            type: ActionType.MusicFetchError,
+            data: error400 ?? error500
+        });
+        return;
+    }
+
+    yield put({
+        type: ActionType.MusicFetchSuccess,
+        data: userTopArtists as UserTopArtistsResponse
+    });
 }
 
 function completeCheckout(data: OrderPayload, accessToken: string) {
@@ -345,6 +427,9 @@ function* saga() {
   const linkAccountChannel = yield actionChannel(
       ActionType.LinkAccount
   );
+  const musicFetchChannel = yield actionChannel(
+      ActionType.MusicFetch
+  );
 
   let eventId = yield select(getEventId);
   if (eventId == null) {
@@ -380,6 +465,7 @@ function* saga() {
   yield takeEvery(stripeTokenChannel, completePurchase);
   yield takeEvery(calculateOrderChannel, calculateOrderTotalSaga);
   yield takeEvery(linkAccountChannel, linkAccountSaga);
+  yield takeEvery(musicFetchChannel, fetchMusicInterests);
 }
 
 export default saga;
