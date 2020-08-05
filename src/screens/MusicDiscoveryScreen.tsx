@@ -1,4 +1,5 @@
 import React, {Component} from "react";
+
 import {AuthenticationStatus} from "../redux/reducers/root";
 import {AppState} from "../redux/store";
 import {connect} from "react-redux";
@@ -18,7 +19,6 @@ interface MusicDiscoveryScreenProps {
     authenticationStatus: AuthenticationStatus;
     initiateSpotifyLogin: () => void;
     isSpotifyLinked: boolean;
-    location: object,
 }
 
 const styles = {
@@ -139,7 +139,7 @@ class MusicDiscoveryScreen extends Component<MusicDiscoveryScreenProps> {
         const resultsButton = (
             <div
                 className="row"
-                style={{...styles.buttonStyle,}}
+                style={styles.buttonStyle}
                 onClick={() => window.location.search = ''}
             >
                 See your results
@@ -183,9 +183,9 @@ class MusicDiscoveryScreen extends Component<MusicDiscoveryScreenProps> {
                 <div style={styles.bodyContainer}>
                     <div style={byLayout(styles.mobileContainer, styles.desktopContainer)}>
                         <div style={styles.headerTextBlack}>
-                            Here are your results!
+                            We've ranked your favorite artists!
                         </div>
-                        <div >
+                        <div style={{paddingBottom: '1em'}}>
                             {button}
                         </div>
                         {this.state.areArtistsLoading ? <Ellipsis style={{fontSize: FONT_6, textAlign: 'center'}} /> : artistList}

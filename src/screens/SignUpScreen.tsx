@@ -1,7 +1,10 @@
+import {connect} from "react-redux";
+import React, {Component} from "react";
+import {Redirect} from "react-router-dom";
+
+
 import NavBar from "../UI/NavBar/NavBar";
 import Footer from "../UI/Footer";
-import React, {Component} from "react";
-import {connect} from "react-redux";
 import {AppState} from "../redux/store";
 import {byLayout as byLayoutWrapper} from "../layout";
 import {BODY_WIDTH, BUTTON_HEIGHT, FONT_4, FONT_6, MAX_BUTTON_WIDTH} from "../utils/constants";
@@ -84,12 +87,18 @@ const styles = {
 class SignUpScreen extends Component<SignUpScreenProps> {
 
     state = {
-        didUserSkipSpotify: false
+        didUserSkipSpotify: false,
+        shouldRedirect: false
     };
 
     accountCreated = () => {
 
         let content;
+
+        if (this.state.shouldRedirect) {
+            return (<Redirect to="/music-discovery"/>);
+        }
+
         if (this.props.isSpotifyLinked || this.state.didUserSkipSpotify) {
             content = (
                 <div>
@@ -99,7 +108,7 @@ class SignUpScreen extends Component<SignUpScreenProps> {
                     <div
                         className="row"
                         style={styles.buttonStyle}
-                        onClick={() => this.props.initiateLogin()}
+                        onClick={() => this.setState({shouldRedirect: true})}
                     >
                         See your top artists
                     </div>
