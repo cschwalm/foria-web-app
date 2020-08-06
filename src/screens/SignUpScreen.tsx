@@ -2,7 +2,7 @@ import {connect} from "react-redux";
 import React, {Component} from "react";
 import {Redirect} from "react-router-dom";
 
-
+import backgroundImage from "../assets/background.jpg";
 import NavBar from "../UI/NavBar/NavBar";
 import Footer from "../UI/Footer";
 import {AppState} from "../redux/store";
@@ -13,6 +13,8 @@ import {initiateLogin as initiateLoginAction, initiateSpotifyLogin as initiateSp
 import {AuthenticationStatus} from "../redux/reducers/root";
 import SpotifyButton from "../UI/SpotifyButton";
 import SkipSpotifyButton from "../UI/SkipSpotifyButton";
+import ErrorOverlay from "../UI/ErrorOverlay";
+import {resetError as resetErrorAction} from "../redux/reducers/event";
 
 interface SignUpScreenProps {
     byLayout: <A, B>(a: A, b: B) => A | B;
@@ -20,6 +22,8 @@ interface SignUpScreenProps {
     authenticationStatus: AuthenticationStatus;
     initiateSpotifyLogin: () => void;
     isSpotifyLinked: boolean;
+    error?: any;
+    resetError: () => void;
 }
 
 const styles = {
@@ -39,7 +43,7 @@ const styles = {
     backgroundImage: {
         height: '100%',
         background: `linear-gradient(rgba(0, 0, 0, 0.5),rgba(0, 0, 0, 0.5))
-                ,url(https://foriatickets.com/img/background.jpg) no-repeat`,
+                ,url(${backgroundImage}) no-repeat`,
         backgroundPosition: "center",
         backgroundSize: "cover",
     },
@@ -149,6 +153,15 @@ class SignUpScreen extends Component<SignUpScreenProps> {
         );
     }
 
+    renderErrorOverlay() {
+        let {error, resetError} = this.props;
+        if (!error) {
+            return;
+        }
+        console.log('render Error Overlay');
+        return (<div> {ErrorOverlay(error,resetError)} </div>);
+    }
+
     render () {
 
         let {byLayout, authenticationStatus} = this.props;
@@ -194,6 +207,7 @@ class SignUpScreen extends Component<SignUpScreenProps> {
                     {renderBody}
                 </div>
                 {Footer(this.props.byLayout)}
+                {this.renderErrorOverlay()}
             </>
         );
     }
@@ -201,16 +215,18 @@ class SignUpScreen extends Component<SignUpScreenProps> {
 
 export default connect(
     (state: AppState) => {
-        let {root} = state;
+        let {root, event} = state;
         return {
             layout: root.layout,
             byLayout: byLayoutWrapper(root.layout),
             authenticationStatus: root.authenticationStatus,
             isSpotifyLinked: root.isSpotifyLinked,
+            error: event.error
         };
     },
     dispatch => ({
         initiateLogin: initiateLoginAction(dispatch),
         initiateSpotifyLogin: initiateSpotifyAction(dispatch),
+        resetError: resetErrorAction(dispatch)
     })
 )(SignUpScreen);

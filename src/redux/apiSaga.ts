@@ -32,7 +32,7 @@ export enum ActionType {
     MusicFetchError = "MusicFetchError",
 }
 
-export const initiateMusicFetch = (dispatch: Dispatch<Action>) => (permalinkUUID: string) =>
+export const initiateMusicFetch = (dispatch: Dispatch<Action>) => (permalinkUUID: string | null) =>
     dispatch({type: ActionType.MusicFetch, data: permalinkUUID});
 
 const defaultHeaders = {
@@ -121,7 +121,7 @@ interface Artist {
     "bio_url": string
 }
 
-interface UserTopArtistsResponse {
+export interface UserTopArtistsResponse {
     "user_id": string,
     "timestamp": string,
     "permalink_uuid": string,
@@ -152,8 +152,9 @@ function getTopArtistsByPermalink(permalinkUUID: string) {
  */
 function* fetchMusicInterests(action: Action) {
 
+    console.log('fetchMusicInterests initiated');
     let response: any;
-    if (action.data != undefined) {
+    if (action.data != null) {
 
         const permalinkUUID = action.data as string;
         response = yield call(
@@ -364,6 +365,7 @@ function linkAccounts(data: LinkAccountsRequest, accessToken: string) {
  */
 function* linkAccountSaga(action: Action) {
 
+    console.log('linkAccountSaga initiated')
     let idToken;
     if (action.type === ActionType.LinkAccount) {
         idToken = action.data;
@@ -432,33 +434,31 @@ function* saga() {
   );
 
   let eventId = yield select(getEventId);
-  if (eventId == null) {
-      return;
-  }
+  if (eventId != null) {
+      let [event, error400, error500, connectionError] = yield call(
+          fetchEvent,
+          eventId
+      );
+      if (error400) {
+          yield put({
+              type: ActionType.EventFetchError,
+              data: error400
+          });
+          return;
+      } else if (error500 || connectionError) {
+          yield put({
+              type: ActionType.EventFetchCriticalError,
+              data: error500 || connectionError
+          });
+          return;
+      }
 
-  let [event, error400, error500, connectionError] = yield call(
-    fetchEvent,
-    eventId
-  );
-  if (error400) {
-    yield put({
-      type: ActionType.EventFetchError,
-      data: error400
-    });
-    return;
-  } else if (error500 || connectionError) {
-    yield put({
-      type: ActionType.EventFetchCriticalError,
-      data: error500 || connectionError
-    });
-    return;
+      // event.ticket_type_config = [];
+      yield put({
+          type: ActionType.EventFetchSuccess,
+          data: event
+      });
   }
-
-  // event.ticket_type_config = [];
-  yield put({
-    type: ActionType.EventFetchSuccess,
-    data: event
-  });
 
   yield takeEvery(freePurchaseChannel, completePurchase);
   yield takeEvery(applyPromoCodeChannel, applyPromoCode);

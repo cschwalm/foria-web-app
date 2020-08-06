@@ -1,7 +1,7 @@
 import {getLayout, Layout} from "../../layout";
 import {ActionType as StripeActionType} from "../stripeSaga";
 import {ActionType as Auth0ActionType} from "../auth0Saga";
-import {ActionType as ApiActionType} from "../apiSaga";
+import {ActionType as ApiActionType, UserTopArtistsResponse} from "../apiSaga";
 import Action from "../Action";
 
 export enum AuthenticationStatus {
@@ -47,12 +47,14 @@ export interface Event {
 export interface State {
   layout: Layout;
   eventId: string | null;
+  permalink: string | null;
   authenticationStatus: AuthenticationStatus;
   stripe: stripe.Stripe | null;
   profile?: auth0.Auth0UserProfile;
   isSpotifyLinked: boolean;
   event?: Event;
   accessToken?: string;
+  userTopArtists?: UserTopArtistsResponse;
 }
 
 const getEventIdFromUrl = (): string | null => {
@@ -65,13 +67,20 @@ const getEventIdFromUrl = (): string | null => {
   }
 };
 
-const isEvent = () : boolean => {
-    return window.location.pathname !== '/sign-up';
+const getPermalinkFromUrl = (): string | null => {
+    let params = new URLSearchParams(window.location.search);
+    let permalink = params.get("permalink");
+    if (permalink != null) {
+        return permalink;
+    } else {
+        return null;
+    }
 };
 
 export const initialState: State = {
   layout: getLayout(),
-  eventId: isEvent() ? getEventIdFromUrl() as string : null,
+  eventId: getEventIdFromUrl(),
+  permalink: getPermalinkFromUrl(),
   authenticationStatus: AuthenticationStatus.NoAuth,
   stripe: null,
   isSpotifyLinked: false
@@ -133,6 +142,11 @@ export const reducer = (state = initialState, action: Action) => {
           ...state,
           isSpotifyLinked: true
       };
+    case ApiActionType.MusicFetchSuccess:
+        return {
+            ...state,
+            userTopArtists: action.data
+        };
     default:
       return state;
   }
