@@ -119,7 +119,7 @@ export const reducer = (state = initialState, action: Action) => {
       return {
           ...state,
           profile: action.data,
-          isSpotifyLinked: (spotifyId != null)
+          isSpotifyLinked: (spotifyId != null && !profile?.sub.includes("spotify"))
       };
     case ApiActionType.EventFetchSuccess:
       return {

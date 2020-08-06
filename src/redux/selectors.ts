@@ -12,6 +12,7 @@ export const getView = (state: AppState) => state.event.view;
 export const getTicketsForPurchase = (state: AppState) =>
   state.event.ticketsForPurchase;
 export const getAccessToken = (state: AppState) => state.root.accessToken;
+export const getIdProfile = (state: AppState) => state.root.profile;
 export const getAppliedPromoCode = (state: AppState) =>
   state.event.appliedPromoCode;
 

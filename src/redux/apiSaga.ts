@@ -2,7 +2,8 @@ import {actionChannel, call, put, select, takeEvery} from "redux-saga/effects";
 
 import Action from "./Action";
 import {ActionType as StripeActionType} from "./stripeSaga";
-import {getAccessToken, getAppliedPromoCode, getEventId, getTicketsForPurchase} from "./selectors";
+import {ActionType as AuthActionType} from "./auth0Saga";
+import {getAccessToken, getAppliedPromoCode, getEventId, getIdProfile, getTicketsForPurchase} from "./selectors";
 import {ActionType as EventActionType, TicketCounts} from "./reducers/event";
 import {atLeast} from "../delay";
 import {Dispatch} from "redux";
@@ -374,6 +375,7 @@ function* linkAccountSaga(action: Action) {
     }
 
     const accessToken = yield select(getAccessToken);
+    const primaryProfile = yield select(getIdProfile);
 
     if (idToken == null || accessToken === undefined) {
         console.error("Missing ID/access token. Unable to link accounts.");
@@ -410,6 +412,19 @@ function* linkAccountSaga(action: Action) {
         });
         return;
     }
+
+    //Replace access token to use primary account.
+    yield put({
+        type: AuthActionType.AuthenticationSuccess,
+        data: accessToken
+    });
+
+    yield put({
+        type: AuthActionType.LoginSuccess,
+        data: primaryProfile
+    });
+
+    console.log(`Accounts linked. Primary Account ID: ${primaryProfile.sub}`);
 
     yield put({
         type: ActionType.LinkAccountSuccess,
