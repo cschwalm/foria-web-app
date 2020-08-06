@@ -125,7 +125,7 @@ export interface UserTopArtistsResponse {
     "user_id": string,
     "timestamp": string,
     "permalink_uuid": string,
-    "artist_list": Artist[]
+    "spotify_artist_list": Artist[]
 }
 
 function getTopArtists(accessToken: string) {

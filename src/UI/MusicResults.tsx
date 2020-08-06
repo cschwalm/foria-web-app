@@ -95,10 +95,23 @@ class MusicResults extends Component<MusicResultsProps> {
             </div>
         );
     }
+    
+    renderArtistList = () => {
+        let {userTopArtists} = this.props;
+
+        if (userTopArtists === null || userTopArtists === undefined) {
+            return (<Ellipsis style={{fontSize: FONT_6, textAlign: 'center'}} />);
+        }
+        return (
+            <div>
+                {userTopArtists.spotify_artist_list.map((item, index) => this.renderArtistRow(item,index))}
+            </div>
+        );
+    }
 
     render() {
 
-        let {layout, byLayout, userTopArtists, permalink} = this.props;
+        let {layout, byLayout, permalink} = this.props;
 
         const resultsButton = (
             <div
@@ -139,8 +152,6 @@ class MusicResults extends Component<MusicResultsProps> {
             );
         }
 
-        const artistList = userTopArtists?.artist_list.map((item, index) => this.renderArtistRow(item,index));
-
         return (
             <div style={{backgroundColor: antiFlashWhite}}>
                 <div style={styles.bodyContainer}>
@@ -151,7 +162,7 @@ class MusicResults extends Component<MusicResultsProps> {
                         <div style={{paddingBottom: '1em'}}>
                             {button}
                         </div>
-                        {userTopArtists === null ? <Ellipsis style={{fontSize: FONT_6, textAlign: 'center'}} /> : artistList}
+                        {this.renderArtistList()}
                     </div>
                 </div>
             </div>
