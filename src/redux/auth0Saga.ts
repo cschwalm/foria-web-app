@@ -294,7 +294,7 @@ function* checkForSpotifyHash() {
         console.log("Spotify response detected. Processing account linking.");
         console.log(decodedHash.idToken);
 
-        console.log("Sending event");
+        console.log("Sending Spotify account link event. Local storage cleared.");
         localStorage.clear();
         yield put({
             type: ApiActionType.LinkAccount,
@@ -318,7 +318,7 @@ function decodeHash() {
 
 function* checkAlreadyLoggedIn() {
 
-    yield call(checkForSpotifyHash);
+  yield call(checkForSpotifyHash)
 
   const lock = createLock();
   let authResult;

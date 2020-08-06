@@ -373,11 +373,17 @@ function* linkAccountSaga(action: Action) {
         return;
     }
 
-    if (idToken == null) {
-        console.error("Missing ID token. Unable to link accounts.");
-    }
-
     const accessToken = yield select(getAccessToken);
+
+    if (idToken == null || accessToken === undefined) {
+        console.error("Missing ID/access token. Unable to link accounts.");
+
+        yield put({
+            type: ActionType.LinkAccountError,
+            data: "Missing ID/access token. Unable to link accounts."
+        });
+        return;
+    }
 
     const linkAccountsPayload: LinkAccountsRequest = {
         id_token: idToken,

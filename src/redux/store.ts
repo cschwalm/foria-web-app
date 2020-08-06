@@ -3,7 +3,12 @@ import createSagaMiddleware from "redux-saga";
 import {initialState as defaultRootInitialState, reducer as root, State as RootState} from "./reducers/root";
 import {initialState as defaultEventInitialState, reducer as event, State as EventState} from "./reducers/event";
 import saga from "./sagas";
-import {FULL_STATE_EVENT_KEY, FULL_STATE_KEY, FULL_STATE_TIME_EXPIRE_KEY} from "../utils/constants";
+import {
+    FULL_STATE_EVENT_ID_KEY,
+    FULL_STATE_EVENT_KEY,
+    FULL_STATE_ROOT_KEY,
+    FULL_STATE_TIME_EXPIRE_KEY
+} from "../utils/constants";
 
 export interface AppState {
   root: RootState;
@@ -22,21 +27,34 @@ export function initializeStore() {
     // The initial states in event.ts and root.ts are over written
     try {
         const stateExpireTime = localStorage.getItem(FULL_STATE_TIME_EXPIRE_KEY);
-        const state = localStorage.getItem(FULL_STATE_KEY);
-        const loadedEventId = localStorage.getItem(FULL_STATE_EVENT_KEY);
+        const rootState = localStorage.getItem(FULL_STATE_ROOT_KEY);
 
-        if (state !== null && stateExpireTime !== null && loadedEventId !== null) {
+        const eventState = localStorage.getItem(FULL_STATE_EVENT_KEY);
+        const loadedEventId = localStorage.getItem(FULL_STATE_EVENT_ID_KEY);
+
+        if (rootState !== null && stateExpireTime !== null) {
 
             const stateExpireTimeInt = parseInt(stateExpireTime);
 
-            if (currentTime <= stateExpireTimeInt && eventId === loadedEventId) {
-                rootInitialState = JSON.parse(state).root;
-                eventInitialState = JSON.parse(state).event;
+            if (currentTime <= stateExpireTimeInt) {
+                rootInitialState = JSON.parse(rootState);
             } else {
-                console.warn("Time/event ID check failed. Clearing local storage.");
+                console.warn("Time check failed. Clearing full local storage.");
                 localStorage.clear();
             }
         }
+
+        if (eventState != null && loadedEventId != null && eventId != null) {
+
+            if (loadedEventId === eventId) {
+                eventInitialState = JSON.parse(eventState);
+            } else {
+                console.warn("Event ID check failed. Clearing event local storage.");
+                localStorage.removeItem(FULL_STATE_EVENT_KEY);
+                localStorage.removeItem(FULL_STATE_EVENT_ID_KEY);
+            }
+        }
+
     } catch (e) {
         console.error("Failed to check session storage.");
     }

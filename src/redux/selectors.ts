@@ -1,6 +1,11 @@
 import {AppState} from "./store";
 import {TicketTypeConfig, FREE_TICKET_PRICE} from "./reducers/root";
-import {FULL_STATE_EVENT_KEY, FULL_STATE_KEY, FULL_STATE_TIME_EXPIRE_KEY} from "../utils/constants";
+import {
+    FULL_STATE_EVENT_ID_KEY,
+    FULL_STATE_EVENT_KEY,
+    FULL_STATE_ROOT_KEY,
+    FULL_STATE_TIME_EXPIRE_KEY
+} from "../utils/constants";
 
 export const getEventId = (state: AppState) => state.root.eventId;
 export const getView = (state: AppState) => state.event.view;
@@ -17,9 +22,11 @@ export const setLocalStorage = (state: AppState) => {
     const eventId: string = state.root.eventId ?? "";
 
     try {
-        localStorage.setItem(FULL_STATE_KEY, JSON.stringify(state));
+        localStorage.setItem(FULL_STATE_ROOT_KEY, JSON.stringify(state.root));
+        localStorage.setItem(FULL_STATE_EVENT_KEY, JSON.stringify(state.event));
+
         localStorage.setItem(FULL_STATE_TIME_EXPIRE_KEY, timeExpire.toString());
-        localStorage.setItem(FULL_STATE_EVENT_KEY, eventId);
+        localStorage.setItem(FULL_STATE_EVENT_ID_KEY, eventId);
     } catch (e) {
         console.warn("Failed to set state in local storage. Msg: " + e.message);
     }
