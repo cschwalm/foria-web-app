@@ -5,7 +5,7 @@ import {connect} from "react-redux";
 import {AppState} from "../redux/store";
 import {initiateLogin as initiateLoginAction, initiateSpotifyLogin as initiateSpotifyAction} from "../redux/auth0Saga";
 import {resetError as resetErrorAction} from "../redux/reducers/event";
-import {antiFlashWhite, vividRaspberry, white} from "../utils/colors";
+import {antiFlashWhite, trolleyGray, vividRaspberry, white} from "../utils/colors";
 import Ellipsis from "../icons/Ellipsis";
 import {BODY_WIDTH, BUTTON_HEIGHT, FONT_5, FONT_6, MAX_BUTTON_WIDTH} from "../utils/constants";
 
@@ -43,6 +43,12 @@ const styles = {
         fontSize: `${FONT_6}px`,
         marginBottom: '18px'
     },
+    subHeaderText: {
+        textAlign: 'center' as const,
+        color: trolleyGray,
+        fontSize: `${FONT_5}px`,
+        marginBottom: '1.5em'
+    },
     artistRow: {
         display: "flex",
         alignItems: 'center',
@@ -52,15 +58,13 @@ const styles = {
         color: vividRaspberry,
         fontWeight: 700,
         fontSize: `${FONT_5}px`,
-        marginLeft: '0.5em',
-        width: '40px'
+        marginLeft: '0.5em'
     },
     artistTextDesktop: {
         color: vividRaspberry,
         fontWeight: 700,
         fontSize: `${FONT_6}px`,
-        marginLeft: '1em',
-        width: '80px'
+        marginLeft: '1em'
     }
 }
 
@@ -97,14 +101,18 @@ class MusicResults extends Component<MusicResultsProps> {
     }
     
     renderArtistList = () => {
-        let {userTopArtists} = this.props;
+        let userTopArtists = this.props.userTopArtists?.spotify_artist_list;
 
         if (userTopArtists === null || userTopArtists === undefined) {
             return (<Ellipsis style={{fontSize: FONT_6, textAlign: 'center'}} />);
         }
+
+        /// Clones the artist array then takes the top 10
+        let topSevenArtists = [...userTopArtists].splice(0,7);
+
         return (
             <div>
-                {userTopArtists.spotify_artist_list.map((item, index) => this.renderArtistRow(item,index))}
+                {topSevenArtists.map((item, index) => this.renderArtistRow(item,index))}
             </div>
         );
     }
@@ -157,9 +165,12 @@ class MusicResults extends Component<MusicResultsProps> {
                 <div style={styles.bodyContainer}>
                     <div style={byLayout(styles.mobileContainer, styles.desktopContainer)}>
                         <div style={styles.headerTextBlack}>
-                            We've ranked your favorite artists!
+                            Your Top 7 Artists
                         </div>
-                        <div style={{paddingBottom: '1em'}}>
+                        <div style={styles.subHeaderText}>
+                            We've ranked your favorite artists from the last month
+                        </div>
+                        <div style={{paddingBottom: '2em'}}>
                             {button}
                         </div>
                         {this.renderArtistList()}

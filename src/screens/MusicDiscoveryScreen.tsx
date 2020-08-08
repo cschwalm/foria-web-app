@@ -1,6 +1,7 @@
 import React, {Component} from "react";
 
 import backgroundImage from "../assets/background.jpg";
+import shieldImage from "../assets/shield.png";
 import {AuthenticationStatus} from "../redux/reducers/root";
 import {AppState} from "../redux/store";
 import {connect} from "react-redux";
@@ -75,9 +76,18 @@ const styles = {
         margin: "0em auto",
     },
     bodyText: {
+        textAlign: 'center' as const,
         color: 'white',
         fontSize: `${FONT_4}px`,
         fontWeight: 500,
+    },
+    shieldText: {
+        textAlign: 'center' as const,
+        alignItems: 'center',
+        justifyContent: 'center',
+        margin: "0 auto",
+        color: white,
+        maxWidth: '400px'
     }
 }
 
@@ -123,12 +133,15 @@ class MusicDiscoveryScreen extends Component<MusicDiscoveryScreenProps> {
                 <div style={styles.bodyContainer}>
                     <div style={byLayout(styles.mobileContainer, styles.desktopContainer)}>
                         <div style={styles.headerTextWhite}>
-                            Want to find out your top music artists and share them with friends?
+                            One last step, connect your Spotify
                         </div>
-                        <p style={styles.bodyText}>
-                            It’s a breeze with Foria, simply create an account and connect with Spotify
-                        </p>
-                        {SpotifyButton(() => this.props.initiateSpotifyLogin())}
+                        <div style={{marginTop: '2em'}}>
+                            {SpotifyButton(() => this.props.initiateSpotifyLogin())}
+                            <div className="row" style={styles.shieldText} >
+                                <img src={shieldImage} style={{height: '1.5em', marginRight: '0.5em'}} alt="Shield"/>
+                                We will never sell your information.
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -139,17 +152,19 @@ class MusicDiscoveryScreen extends Component<MusicDiscoveryScreenProps> {
                 <div style={styles.bodyContainer}>
                     <div style={byLayout(styles.mobileContainer, styles.desktopContainer)}>
                         <div style={styles.headerTextWhite}>
-                            Want to find out your top music artists and share them with friends?
+                            Can you guess your top Spotify artists?
                         </div>
                         <p style={styles.bodyText}>
-                            It’s a breeze with Foria, simply create an account and connect with Spotify
+                            Continue to reveal your top artists and share them!
                         </p>
-                        <div
-                            className="row"
-                            style={styles.buttonStyle}
-                            onClick={() => this.props.initiateLogin()}
-                        >
-                            Join The Foria Family
+                        <div style={{marginTop: '3em'}}>
+                            <div
+                                className="row"
+                                style={styles.buttonStyle}
+                                onClick={() => this.props.initiateLogin()}
+                            >
+                                Continue
+                            </div>
                         </div>
                     </div>
                 </div>
