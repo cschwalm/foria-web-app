@@ -149,7 +149,7 @@ class MusicResults extends Component<MusicResultsProps> {
                             navigator.share({
                                 title: `${firstName}'s Music Interests`,
                                 text: 'Check out my music listening interests.',
-                                url: `${location.protocol}//${location.host}${location.pathname}?permalink=${permalink}`,
+                                url: `${window.location.protocol}//${window.location.host}${window.location.pathname}?permalink=${permalink}`,
                             }).then(
                                 () => console.log('Successful sharing of music interests.')
                             ).catch(
