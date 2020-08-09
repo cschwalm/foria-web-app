@@ -136,20 +136,19 @@ class MusicResults extends Component<MusicResultsProps> {
             </div>
         );
 
-        const isSharingSupported: boolean = navigator.share !== undefined;
         let shareButton;
-        if (isSharingSupported && permalink != null) {
+        if (navigator.share) {
             shareButton = (
                 <div
                     className="row"
                     style={styles.buttonStyle}
                     onClick={() => {
-                        if (navigator.share) {
-
+                        const sharePermalink = this.props.userTopArtists?.permalink_uuid;
+                        if (navigator.share && sharePermalink !== null) {
                             navigator.share({
                                 title: `${firstName}'s Music Interests`,
                                 text: 'Check out my music listening interests.',
-                                url: `${window.location.protocol}//${window.location.host}${window.location.pathname}?permalink=${permalink}`,
+                                url: `${window.location.protocol}//${window.location.host}${window.location.pathname}?permalink=${sharePermalink}`,
                             }).then(
                                 () => console.log('Successful sharing of music interests.')
                             ).catch(
@@ -166,7 +165,7 @@ class MusicResults extends Component<MusicResultsProps> {
             console.log("Share sheet not supported in this browser.")
         }
 
-        let buttons;
+        let buttons = shareButton;
         if (permalink != null && layout === Layout.Desktop) {
             buttons = (
                 <div className='row'>
