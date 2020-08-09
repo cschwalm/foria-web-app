@@ -206,6 +206,7 @@ export default connect(
             isSpotifyLinked: root.isSpotifyLinked,
             permalink: root.permalink,
             userTopArtists: root.userTopArtists,
+            firstName: root.profile?.given_name,
             error: event.error
         };
     },

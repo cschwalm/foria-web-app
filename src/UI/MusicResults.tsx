@@ -74,6 +74,7 @@ interface MusicResultsProps {
     permalink: string | null;
     initiateMusicFetch: (permalinkUUID: string | null) => void;
     userTopArtists?: UserTopArtistsResponse;
+    firstName?: string;
 }
 
 class MusicResults extends Component<MusicResultsProps> {
@@ -119,7 +120,11 @@ class MusicResults extends Component<MusicResultsProps> {
 
     render() {
 
-        let {layout, byLayout, permalink} = this.props;
+        let {layout, byLayout, permalink, firstName} = this.props;
+
+        if (firstName === undefined) {
+            firstName = "Your friend";
+        }
 
         const resultsButton = (
             <div
@@ -130,21 +135,40 @@ class MusicResults extends Component<MusicResultsProps> {
                 See your results
             </div>
         );
-        ///TODO: add share with friends functionality
-        const shareButton = (
-            <div
-                className="row"
-                style={styles.buttonStyle}
-                onClick={() => console.log('Share with friends button click')}
-            >
-                Share with friends
-            </div>
-        );
 
-        let button = shareButton;
+        const isSharingSupported: boolean = navigator.share !== undefined;
+        let shareButton;
+        if (isSharingSupported && permalink != null) {
+            shareButton = (
+                <div
+                    className="row"
+                    style={styles.buttonStyle}
+                    onClick={() => {
+                        if (navigator.share) {
 
+                            navigator.share({
+                                title: `${firstName}'s Music Interests`,
+                                text: 'Check out my music listening interests.',
+                                url: `${location.protocol}//${location.host}${location.pathname}?permalink=${permalink}`,
+                            }).then(
+                                () => console.log('Successful sharing of music interests.')
+                            ).catch(
+                                (error) => console.log('Error sharing music interests.', error)
+                            );
+                        }
+                    }}
+                >
+                    Share with friends
+                </div>
+            );
+        } else {
+            shareButton = null;
+            console.log("Share sheet not supported in this browser.")
+        }
+
+        let buttons;
         if (permalink != null && layout === Layout.Desktop) {
-            button = (
+            buttons = (
                 <div className='row'>
                     <div style={{width: '50%'}}> {shareButton} </div>
                     <div style={{width: '1em'}}/>
@@ -152,7 +176,7 @@ class MusicResults extends Component<MusicResultsProps> {
                 </div>
             );
         } else if (permalink != null && layout === Layout.Mobile){
-            button = (
+            buttons = (
                 <div>
                     {shareButton}
                     {resultsButton}
@@ -171,7 +195,7 @@ class MusicResults extends Component<MusicResultsProps> {
                             We've ranked your favorite artists from the last month
                         </div>
                         <div style={{paddingBottom: '2em'}}>
-                            {button}
+                            {buttons}
                         </div>
                         {this.renderArtistList()}
                     </div>
@@ -191,6 +215,7 @@ export default connect(
             isSpotifyLinked: root.isSpotifyLinked,
             permalink: root.permalink,
             userTopArtists: root.userTopArtists,
+            firstname: root.profile?.given_name,
             error: event.error
         };
     },
