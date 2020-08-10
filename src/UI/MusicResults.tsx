@@ -222,7 +222,7 @@ class MusicResults extends Component<MusicResultsProps> {
         let {byLayout, permalink} = this.props;
         let friend;
         if (permalink) {
-            friend = " friend's";
+            friend = " Friend's";
         }
 
         return (
