@@ -2,9 +2,11 @@ import {actionChannel, call, put, select, takeEvery} from "redux-saga/effects";
 
 import Action from "./Action";
 import {ActionType as StripeActionType} from "./stripeSaga";
-import {getAccessToken, getAppliedPromoCode, getEventId, getTicketsForPurchase} from "./selectors";
-import {ActionType as HomeActionType, TicketCounts} from "./reducers/home";
+import {ActionType as AuthActionType} from "./auth0Saga";
+import {getAccessToken, getAppliedPromoCode, getEventId, getIdProfile, getTicketsForPurchase} from "./selectors";
+import {ActionType as EventActionType, TicketCounts} from "./reducers/event";
 import {atLeast} from "../delay";
+import {Dispatch} from "redux";
 
 const foriaBackend = process.env.REACT_APP_FORIA_BACKEND_BASE_URL as "string";
 
@@ -25,8 +27,14 @@ export enum ActionType {
     ApplyPromoCancelledNoLogin = "ApplyPromoCancelledNoLogin",
     LinkAccount = "LinkAccount",
     LinkAccountSuccess = "LinkAccountSuccess",
-    LinkAccountError = "LinkAccountError"
+    LinkAccountError = "LinkAccountError",
+    MusicFetch = "MusicFetch",
+    MusicFetchSuccess = "MusicFetchSuccess",
+    MusicFetchError = "MusicFetchError",
 }
+
+export const initiateMusicFetch = (dispatch: Dispatch<Action>) => (permalinkUUID: string | null) =>
+    dispatch({type: ActionType.MusicFetch, data: permalinkUUID});
 
 const defaultHeaders = {
   Accept: "application/json",
@@ -103,6 +111,82 @@ interface LinkAccountsRequest {
     "connection"?: string,
     "provider"?: string,
     "id_token"?: string
+}
+
+interface Artist {
+    "id": string
+    "name": string
+    "image_url": string
+    "image_height": number
+    "image_width": number
+    "bio_url": string
+}
+
+export interface UserTopArtistsResponse {
+    "user_id": string,
+    "timestamp": string,
+    "permalink_uuid": string,
+    "spotify_artist_list": Artist[]
+}
+
+function getTopArtists(accessToken: string) {
+    return tupleResponse(
+        fetch(`${foriaBackend}/v1/user/music/topArtists`, {
+            headers: {...defaultHeaders, ...authHeaders(accessToken)}
+        })
+    );
+}
+
+function getTopArtistsByPermalink(permalinkUUID: string) {
+    return tupleResponse(
+        fetch(`${foriaBackend}/v1/user/music/topArtists/${permalinkUUID}`, {
+            headers: {...defaultHeaders}
+        })
+    );
+}
+
+/**
+ * Checks the action data payload for a Permalink ID.
+ * If missing, it pulls the latest data for the currently logged in user.
+ *
+ * @param action
+ */
+function* fetchMusicInterests(action: Action) {
+
+    console.log('fetchMusicInterests initiated');
+    let response: any;
+    if (action.data != null) {
+
+        const permalinkUUID = action.data as string;
+        response = yield call(
+            getTopArtistsByPermalink,
+            permalinkUUID
+        );
+
+    } else {
+
+        const accessToken = yield select(getAccessToken);
+        response = yield call(
+            getTopArtists,
+            accessToken
+        );
+    }
+
+    const [userTopArtists, error400, error500] = response;
+
+    if (error400 || error500) {
+
+        yield put({
+            type: ActionType.MusicFetchError,
+            data: error400 ?? error500
+        });
+        return;
+    }
+
+    yield put({
+        type: ActionType.MusicFetchSuccess,
+        data: userTopArtists as UserTopArtistsResponse
+    });
 }
 
 function completeCheckout(data: OrderPayload, accessToken: string) {
@@ -282,6 +366,7 @@ function linkAccounts(data: LinkAccountsRequest, accessToken: string) {
  */
 function* linkAccountSaga(action: Action) {
 
+    console.log('linkAccountSaga initiated')
     let idToken;
     if (action.type === ActionType.LinkAccount) {
         idToken = action.data;
@@ -289,11 +374,18 @@ function* linkAccountSaga(action: Action) {
         return;
     }
 
-    if (idToken == null) {
-        console.error("Missing ID token. Unable to link accounts.");
-    }
-
     const accessToken = yield select(getAccessToken);
+    const primaryProfile = yield select(getIdProfile);
+
+    if (idToken == null || accessToken === undefined) {
+        console.error("Missing ID/access token. Unable to link accounts.");
+
+        yield put({
+            type: ActionType.LinkAccountError,
+            data: "Missing ID/access token. Unable to link accounts."
+        });
+        return;
+    }
 
     const linkAccountsPayload: LinkAccountsRequest = {
         id_token: idToken,
@@ -321,6 +413,19 @@ function* linkAccountSaga(action: Action) {
         return;
     }
 
+    //Replace access token to use primary account.
+    yield put({
+        type: AuthActionType.AuthenticationSuccess,
+        data: accessToken
+    });
+
+    yield put({
+        type: AuthActionType.LoginSuccess,
+        data: primaryProfile
+    });
+
+    console.log(`Accounts linked. Primary Account ID: ${primaryProfile.sub}`);
+
     yield put({
         type: ActionType.LinkAccountSuccess,
         data: result.code
@@ -337,49 +442,51 @@ function* saga() {
     ActionType.InitiateCalculateOrder
   );
   let freePurchaseChannel = yield actionChannel(
-    HomeActionType.FreePurchaseSubmit
+    EventActionType.FreePurchaseSubmit
   );
   let applyPromoCodeChannel = yield actionChannel(
-    HomeActionType.ApplyPromoCode
+    EventActionType.ApplyPromoCode
   );
   const linkAccountChannel = yield actionChannel(
       ActionType.LinkAccount
   );
+  const musicFetchChannel = yield actionChannel(
+      ActionType.MusicFetch
+  );
 
   let eventId = yield select(getEventId);
-  if (eventId == null) {
-      return;
-  }
+  if (eventId != null) {
+      let [event, error400, error500, connectionError] = yield call(
+          fetchEvent,
+          eventId
+      );
+      if (error400) {
+          yield put({
+              type: ActionType.EventFetchError,
+              data: error400
+          });
+          return;
+      } else if (error500 || connectionError) {
+          yield put({
+              type: ActionType.EventFetchCriticalError,
+              data: error500 || connectionError
+          });
+          return;
+      }
 
-  let [event, error400, error500, connectionError] = yield call(
-    fetchEvent,
-    eventId
-  );
-  if (error400) {
-    yield put({
-      type: ActionType.EventFetchError,
-      data: error400
-    });
-    return;
-  } else if (error500 || connectionError) {
-    yield put({
-      type: ActionType.EventFetchCriticalError,
-      data: error500 || connectionError
-    });
-    return;
+      // event.ticket_type_config = [];
+      yield put({
+          type: ActionType.EventFetchSuccess,
+          data: event
+      });
   }
-
-  // event.ticket_type_config = [];
-  yield put({
-    type: ActionType.EventFetchSuccess,
-    data: event
-  });
 
   yield takeEvery(freePurchaseChannel, completePurchase);
   yield takeEvery(applyPromoCodeChannel, applyPromoCode);
   yield takeEvery(stripeTokenChannel, completePurchase);
   yield takeEvery(calculateOrderChannel, calculateOrderTotalSaga);
   yield takeEvery(linkAccountChannel, linkAccountSaga);
+  yield takeEvery(musicFetchChannel, fetchMusicInterests);
 }
 
 export default saga;

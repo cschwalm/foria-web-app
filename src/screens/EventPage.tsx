@@ -26,7 +26,6 @@ import {
     trolleyGray,
     vividRaspberry,
     white,
-    spotifyGreen
 } from "../utils/colors";
 import Ellipsis from "../icons/Ellipsis";
 import {AppState} from "../redux/store";
@@ -56,19 +55,17 @@ import {
   toPreviousView as toPreviousViewAction,
   totalTicketsSelected,
   View
-} from "../redux/reducers/home";
+} from "../redux/reducers/event";
 import {byLayout as byLayoutWrapper} from "../layout";
 import NavBar from "../UI/NavBar/NavBar";
 import Footer from "../UI/Footer";
 import calendarIcon from "../assets/calendar_icon.png";
-import spotifyIcon from "../assets/Spotify_Icon_RGB_White.png";
 import PinpointIcon from "../icons/pinpointIcon";
 import DecrementIcon from "../icons/decrementIcon";
 import IncrementIcon from "../icons/incrementIcon";
 import CloseIconMobile from "../icons/closeIconMobile";
 import BackIconMobile from "../icons/backIconMobile";
 import LeftChevron from "../icons/leftChevron";
-import RightChevron from "../icons/rightChevron";
 import UpwardChevron from "../icons/upwardChevron";
 import {
     initiateLogin as initiateLoginAction,
@@ -95,6 +92,9 @@ import {
     BUTTON_HEIGHT
 } from "../utils/constants";
 import {Auth0UserProfile} from "auth0-js";
+import SpotifyButton from "../UI/SpotifyButton";
+import SkipSpotifyButton from "../UI/SkipSpotifyButton";
+import ErrorOverlay from "../UI/ErrorOverlay";
 
 interface AppPropsT {
   layout: Layout;
@@ -525,7 +525,7 @@ class CardForm extends React.Component<CardFormProps, CardFormState> {
 
 const WrappedCardForm = injectStripe(CardForm);
 
-export class Home extends React.Component<AppPropsT> {
+export class EventPage extends React.Component<AppPropsT> {
   state = {
     // Storing these values in local state, to lower input latency
       promoCode: "",
@@ -1000,71 +1000,16 @@ export class Home extends React.Component<AppPropsT> {
     );
   };
 
-  isUserSpotifyConnected = () => {
-      let { isSpotifyLinked } = this.props;
-      return isSpotifyLinked;
-  };
-
   renderCompleteStepBody = () => {
 
-      const spotifyStyles = {
-          connectButton: {
-              cursor: "pointer",
-              height: BUTTON_HEIGHT,
-              flex: `0 0 ${BUTTON_HEIGHT}`,
-              backgroundColor: spotifyGreen,
-              borderRadius: "5px",
-              padding: "7px 10px",
-              color: white,
-              fontWeight: 500,
-              justifyContent: "space-between",
-              alignItems: "center",
-              boxSizing: "border-box" as "border-box"
-          },
-          skipButton: {
-              margin: "0.5em 0em 0em 0em",
-              cursor: "pointer",
-              height: BUTTON_HEIGHT,
-              flex: `0 0 ${BUTTON_HEIGHT}`,
-              borderRadius: "5px",
-              border:"2px solid " + spotifyGreen,
-              color: trolleyGray,
-              fontWeight: 500,
-              justifyContent: "center",
-              alignItems: "center",
-              boxSizing: "border-box" as "border-box"
-          },
-          icon: {
-              height: '100%'
-          }
-      };
-
-    if (!this.isUserSpotifyConnected() && !this.state.didUserSkipSpotify) {
-
-      const {initiateSpotifyLogin} = this.props;
+    if (!this.props.isSpotifyLinked && !this.state.didUserSkipSpotify) {
 
       return (
         <>
             <div style={sharedStyles.eventDetailTitlePink}>Would you like more discounts?</div>
             <p style={sharedStyles.eventBody}>We'll send you more discounts that are tailored to your interests</p>
-            <div
-                className="row"
-                style={{
-                    ...spotifyStyles.connectButton,
-                }}
-                onClick={() => initiateSpotifyLogin() }>
-                <img src={spotifyIcon} style={{...spotifyStyles.icon}} alt="Spotify Icon"/>
-                Connect with Spotify
-                <RightChevron />
-            </div>
-            <div
-                className="row"
-                style={{
-                    ...spotifyStyles.skipButton,
-                }}
-                onClick={() => this.setState({didUserSkipSpotify: true})}>
-                Skip
-            </div>
+            {SpotifyButton(() => this.props.initiateSpotifyLogin())}
+            {SkipSpotifyButton(()=> this.setState({didUserSkipSpotify: true}))}
         </>
       );
     }
@@ -2030,78 +1975,12 @@ export class Home extends React.Component<AppPropsT> {
   };
 
   renderErrorOverlay() {
-    let {error, resetError} = this.props;
-    if (!error) {
-      return;
-    }
-    const styles = {
-      container: {
-        position: "fixed" as "fixed",
-        backgroundColor: "rgba(0, 0, 0, 0.3)",
-        top: 0,
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 2,
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center"
-      },
-      innerContainer: {
-        margin: "1em",
-        width: TICKET_OVERLAY_WIDTH + "px",
-        backgroundColor: white,
-        padding: "1em",
-        borderRadius: "5px",
-        borderBottom: `1px solid #B5B5B5`,
-        boxShadow: "rgb(199, 199, 199) 0 2px 3px 0px",
-        overflow: "hidden"
-      },
-      headerStyle: {
-        fontSize: `${FONT_4}px`,
-        marginBottom: "16px",
-        lineHeight: "1.2em",
-        fontWeight: 600
-      },
-      body: {
-        ...sharedStyles.eventBody,
-        color: black,
-        marginBottom: "16px",
-        overflowWrap: "break-word" as "break-word"
-      },
-      buttonContainer: {
-        ...sharedStyles.checkoutButton,
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        color: black,
-        backgroundColor: "#EDEDED"
+      let {error, resetError} = this.props;
+      if (!error) {
+          return;
       }
-    };
 
-    let errorMessage: string;
-    if (typeof error === "string") {
-      errorMessage = error;
-    } else if (error.message && typeof error.message === "string") {
-      errorMessage = error.message;
-    } else {
-      errorMessage = JSON.stringify(error);
-    }
-
-    return (
-      <div style={styles.container}>
-        <div style={styles.innerContainer}>
-          <div style={styles.headerStyle}>Oops!</div>
-          <p style={{...styles.body, maxHeight: "150px", overflowY: "auto"}}>
-            {errorMessage}
-          </p>
-          <p style={styles.body}>Please try again.</p>
-          <div onClick={resetError} style={styles.buttonContainer}>
-            Okay
-          </div>
-        </div>
-      </div>
-    );
+      return (<div> {ErrorOverlay(error,resetError)} </div>);
   }
 
   render() {
@@ -2173,31 +2052,31 @@ let memoizedIsFreePurchase = memoizeOne(isFreePurchase);
 
 export default connect(
   (state: AppState) => {
-    let {root, home} = state;
+    let {root, event} = state;
     return {
       layout: root.layout,
       byLayout: byLayoutWrapper(root.layout),
       profile: root.profile,
       isSpotifyLinked: root.isSpotifyLinked,
       stripe: root.stripe,
-      paymentRequest: home.paymentRequest,
-      canMakePayment: home.canMakePayment,
+      paymentRequest: event.paymentRequest,
+      canMakePayment: event.canMakePayment,
       event: root.event,
-      pullUpMenuCollapsed: home.pullUpMenuCollapsed,
-      ticketsForPurchase: home.ticketsForPurchase,
-      view: home.view,
-      orderNumber: home.orderNumber,
-      orderSubTotal: home.orderSubTotal,
-      orderFees: home.orderFees,
-      orderGrandTotal: home.orderGrandTotal,
-      orderCurrency: home.orderCurrency,
-      error: home.error,
-      checkoutPending: home.checkoutPending,
-      purchasePending: home.purchasePending,
+      pullUpMenuCollapsed: event.pullUpMenuCollapsed,
+      ticketsForPurchase: event.ticketsForPurchase,
+      view: event.view,
+      orderNumber: event.orderNumber,
+      orderSubTotal: event.orderSubTotal,
+      orderFees: event.orderFees,
+      orderGrandTotal: event.orderGrandTotal,
+      orderCurrency: event.orderCurrency,
+      error: event.error,
+      checkoutPending: event.checkoutPending,
+      purchasePending: event.purchasePending,
       isFree: memoizedIsFreePurchase(state),
-      promoTicketTypeConfigs: home.promoTicketTypeConfigs,
-      applyPromoPending: home.applyPromoPending,
-      applyPromoError: home.applyPromoError
+      promoTicketTypeConfigs: event.promoTicketTypeConfigs,
+      applyPromoPending: event.applyPromoPending,
+      applyPromoError: event.applyPromoError
     };
   },
   dispatch => ({
@@ -2219,4 +2098,4 @@ export default connect(
     resetPromoError: resetPromoErrorAction(dispatch),
     resetError: resetErrorAction(dispatch)
   })
-)(Home);
+)(EventPage);

@@ -3,16 +3,16 @@ import {Provider} from "react-redux";
 import {initializeStore} from "./redux/store";
 import {BrowserRouter as Router, Route, Switch} from "react-router-dom";
 
-import Home from "./screens/Home";
 import "./App.css";
-import SignUpScreen from "./screens/SignUpScreen";
+import WrapperComponent from "./screens/WrapperComponent";
+import MusicDiscoveryScreen from "./screens/MusicDiscoveryScreen";
 
 const App = () => (
   <Provider store={initializeStore()}>
     <Router>
         <Switch>
-            <Route path="/sign-up" component={SignUpScreen} />
-            <Route component={Home} />
+            <Route path="/music-discovery" component={MusicDiscoveryScreen} />
+            <Route component={WrapperComponent} />
         </Switch>
     </Router>
   </Provider>

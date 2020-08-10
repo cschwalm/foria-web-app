@@ -119,6 +119,8 @@ export const sentryCaptureErrorReducer = (
         case ApiActionType.EventFetchCriticalError:
         case ApiActionType.CheckoutCriticalError:
         case ApiActionType.CalculateOrderTotalCriticalError:
+        case ApiActionType.MusicFetchError:
+        case ApiActionType.LinkAccountError:
             Sentry.withScope(scope => {
                 let error;
                 if (action.data instanceof Error) {
@@ -156,6 +158,7 @@ export const errorModalReducer = (state = initialState, action: Action) => {
         case ApiActionType.CheckoutCriticalError:
         case ApiActionType.CalculateOrderTotalCriticalError:
         case ApiActionType.LinkAccountError:
+        case ApiActionType.MusicFetchError:
             return {
                 ...state,
                 error: action.data

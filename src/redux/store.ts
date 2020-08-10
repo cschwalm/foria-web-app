@@ -1,50 +1,68 @@
 import {applyMiddleware, combineReducers, createStore} from "redux";
 import createSagaMiddleware from "redux-saga";
 import {initialState as defaultRootInitialState, reducer as root, State as RootState} from "./reducers/root";
-import {initialState as defaultHomeInitialState, reducer as home, State as HomeState} from "./reducers/home";
+import {initialState as defaultEventInitialState, reducer as event, State as EventState} from "./reducers/event";
 import saga from "./sagas";
-import {FULL_STATE_EVENT_KEY, FULL_STATE_KEY, FULL_STATE_TIME_EXPIRE_KEY} from "../utils/constants";
+import {
+    FULL_STATE_EVENT_ID_KEY,
+    FULL_STATE_EVENT_KEY,
+    FULL_STATE_ROOT_KEY,
+    FULL_STATE_TIME_EXPIRE_KEY
+} from "../utils/constants";
 
 export interface AppState {
   root: RootState;
-  home: HomeState;
+  event: EventState;
 }
 
 export function initializeStore() {
     let rootInitialState = defaultRootInitialState;
-    let homeInitialState = defaultHomeInitialState;
+    let eventInitialState = defaultEventInitialState;
 
     const currentTime = (new Date()).getTime();
     const params = new URLSearchParams(window.location.search);
     const eventId = params.get("eventId");
 
     // Sets initial state from local storage if available
-    // The initial states in home.ts and root.ts are over written
+    // The initial states in event.ts and root.ts are over written
     try {
         const stateExpireTime = localStorage.getItem(FULL_STATE_TIME_EXPIRE_KEY);
-        const state = localStorage.getItem(FULL_STATE_KEY);
-        const loadedEventId = localStorage.getItem(FULL_STATE_EVENT_KEY);
+        const rootState = localStorage.getItem(FULL_STATE_ROOT_KEY);
 
-        if (state !== null && stateExpireTime !== null && loadedEventId !== null) {
+        const eventState = localStorage.getItem(FULL_STATE_EVENT_KEY);
+        const loadedEventId = localStorage.getItem(FULL_STATE_EVENT_ID_KEY);
+
+        if (rootState !== null && stateExpireTime !== null) {
 
             const stateExpireTimeInt = parseInt(stateExpireTime);
 
-            if (currentTime <= stateExpireTimeInt && eventId === loadedEventId) {
-                rootInitialState = JSON.parse(state).root;
-                homeInitialState = JSON.parse(state).home;
+            if (currentTime <= stateExpireTimeInt) {
+                rootInitialState = JSON.parse(rootState);
             } else {
-                console.warn("Time/event ID check failed. Clearing local storage.");
+                console.warn("Time check failed. Clearing full local storage.");
                 localStorage.clear();
             }
         }
+
+        if (eventState != null && loadedEventId != null && eventId != null) {
+
+            if (loadedEventId === eventId) {
+                eventInitialState = JSON.parse(eventState);
+            } else {
+                console.warn("Event ID check failed. Clearing event local storage.");
+                localStorage.removeItem(FULL_STATE_EVENT_KEY);
+                localStorage.removeItem(FULL_STATE_EVENT_ID_KEY);
+            }
+        }
+
     } catch (e) {
         console.error("Failed to check session storage.");
     }
 
   const sagaMiddleWare = createSagaMiddleware();
   const store = createStore(
-    combineReducers({root, home}),
-    {root: rootInitialState, home: homeInitialState},
+    combineReducers({root, event}),
+    {root: rootInitialState, event: eventInitialState},
     applyMiddleware(sagaMiddleWare)
   );
 
