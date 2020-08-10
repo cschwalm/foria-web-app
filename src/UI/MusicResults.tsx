@@ -3,8 +3,6 @@ import {initiateMusicFetch as initiateMusicFetchAction, UserTopArtistsResponse} 
 import {byLayout as byLayoutWrapper, Layout} from "../layout";
 import {connect} from "react-redux";
 import {AppState} from "../redux/store";
-import {initiateLogin as initiateLoginAction, initiateSpotifyLogin as initiateSpotifyAction} from "../redux/auth0Saga";
-import {resetError as resetErrorAction} from "../redux/reducers/event";
 import {antiFlashWhite, trolleyGray, vividRaspberry, white} from "../utils/colors";
 import Ellipsis from "../icons/Ellipsis";
 import {BODY_WIDTH, BUTTON_HEIGHT, FONT_5, FONT_6, MAX_BUTTON_WIDTH} from "../utils/constants";
@@ -79,6 +77,10 @@ interface MusicResultsProps {
 
 class MusicResults extends Component<MusicResultsProps> {
 
+    state = {
+        isTextCopied: false
+    }
+
     componentDidMount() {
         let {initiateMusicFetch, permalink} = this.props;
 
@@ -118,69 +120,109 @@ class MusicResults extends Component<MusicResultsProps> {
         );
     }
 
-    render() {
+    shareFunction = () => {
 
-        let {layout, byLayout, permalink, firstName} = this.props;
+        let {firstName, userTopArtists} = this.props;
+        const sharePermalink = userTopArtists?.permalink_uuid;
 
         if (firstName === undefined) {
             firstName = "Your friend";
         }
 
-        const resultsButton = (
-            <div
-                className="row"
-                style={styles.buttonStyle}
-                onClick={() => window.location.search = ''}
-            >
-                See your results
-            </div>
-        );
+        if (sharePermalink === null || sharePermalink === undefined) {
+            return;
+        }
 
-        let shareButton;
+        const shareLink = `${window.location.protocol}//${window.location.host}${window.location.pathname}?permalink=${sharePermalink}`;
+
         if (navigator.share) {
+
+            navigator.share({
+                title: `${firstName}'s Music Interests`,
+                text: 'Check out my music listening interests.',
+                url: shareLink,
+            }).then(
+                () => console.log('Successful sharing of music interests.')
+            ).catch(
+                (error) => console.log('Error sharing music interests.', error)
+            );
+        } else if (document.queryCommandSupported('copy')) {
+
+            let link = document.createElement('textarea');
+            link.innerText = shareLink;
+            document.body.appendChild(link);
+            link.select();
+            document.execCommand('copy');
+            link.remove();
+            this.setState({isTextCopied: true});
+        }
+    }
+
+    renderButtons = () => {
+
+        let {layout, permalink, userTopArtists} = this.props;
+        let sharePermalink = userTopArtists?.permalink_uuid;
+        let resultsButton = null;
+        let shareButton = null;
+        let shareButtonText : string;
+
+        if (this.state.isTextCopied) {
+            shareButtonText = 'Link copied!';
+        } else {
+            shareButtonText = 'Share';
+        }
+
+        if (permalink != null ) {
+            resultsButton = (
+                <div
+                    className="row"
+                    style={styles.buttonStyle}
+                    onClick={() => window.location.search = ''}
+                >
+                    See your results
+                </div>
+            );
+        }
+
+        if (sharePermalink != null
+            && (navigator.share || document.queryCommandSupported('copy'))) {
             shareButton = (
                 <div
                     className="row"
                     style={styles.buttonStyle}
-                    onClick={() => {
-                        const sharePermalink = this.props.userTopArtists?.permalink_uuid;
-                        if (navigator.share && sharePermalink !== null) {
-                            navigator.share({
-                                title: `${firstName}'s Music Interests`,
-                                text: 'Check out my music listening interests.',
-                                url: `${window.location.protocol}//${window.location.host}${window.location.pathname}?permalink=${sharePermalink}`,
-                            }).then(
-                                () => console.log('Successful sharing of music interests.')
-                            ).catch(
-                                (error) => console.log('Error sharing music interests.', error)
-                            );
-                        }
-                    }}
+                    onClick={() => this.shareFunction()}
                 >
-                    Share with friends
+                    {shareButtonText}
                 </div>
             );
-        } else {
-            shareButton = null;
-            console.log("Share sheet not supported in this browser.")
         }
 
-        let buttons = shareButton;
-        if (permalink != null && layout === Layout.Desktop) {
-            buttons = (
+        if (shareButton && resultsButton && layout === Layout.Desktop) {
+            return (
                 <div className='row'>
                     <div style={{width: '50%'}}> {shareButton} </div>
                     <div style={{width: '1em'}}/>
                     <div style={{width: '50%'}}> {resultsButton} </div>
                 </div>
             );
-        } else if (permalink != null && layout === Layout.Mobile){
-            buttons = (
+        } else if (shareButton || resultsButton){
+            return (
                 <div>
                     {shareButton}
                     {resultsButton}
                 </div>
             );
+        } else {
+            return  null;
+        }
+    }
+
+    render() {
+
+        let {byLayout, permalink} = this.props;
+        let friend;
+        if (permalink) {
+            friend = " friend's";
         }
 
         return (
@@ -188,13 +230,13 @@ class MusicResults extends Component<MusicResultsProps> {
                 <div style={styles.bodyContainer}>
                     <div style={byLayout(styles.mobileContainer, styles.desktopContainer)}>
                         <div style={styles.headerTextBlack}>
-                            Your Top 7 Artists
+                            Your{friend} Top 7 Artists
                         </div>
                         <div style={styles.subHeaderText}>
-                            We've ranked your favorite artists from the last month
+                            We've ranked your{friend} favorite artists from the last month
                         </div>
                         <div style={{paddingBottom: '2em'}}>
-                            {buttons}
+                            {this.renderButtons()}
                         </div>
                         {this.renderArtistList()}
                     </div>
@@ -210,8 +252,6 @@ export default connect(
         return {
             layout: root.layout,
             byLayout: byLayoutWrapper(root.layout),
-            authenticationStatus: root.authenticationStatus,
-            isSpotifyLinked: root.isSpotifyLinked,
             permalink: root.permalink,
             userTopArtists: root.userTopArtists,
             firstname: root.profile?.given_name,
@@ -219,9 +259,6 @@ export default connect(
         };
     },
     dispatch => ({
-        initiateLogin: initiateLoginAction(dispatch),
-        initiateSpotifyLogin: initiateSpotifyAction(dispatch),
         initiateMusicFetch: initiateMusicFetchAction(dispatch),
-        resetError: resetErrorAction(dispatch)
     })
 )(MusicResults);
