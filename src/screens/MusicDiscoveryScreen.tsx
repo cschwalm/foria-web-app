@@ -146,14 +146,13 @@ class MusicDiscoveryScreen extends Component<MusicDiscoveryScreenProps> {
         let view = DiscoveryView.SpotifyCheck;
         let renderBody;
 
-        ///TODO: handle Auth pending case
         if (permalink != null) {
             view = DiscoveryView.MusicResults;
         } else if (authenticationStatus === AuthenticationStatus.Auth && isSpotifyLinked) {
             view = DiscoveryView.MusicResults;
         } else if (authenticationStatus === AuthenticationStatus.Auth) {
             view = DiscoveryView.SpotifyCheck
-        } else if (authenticationStatus === AuthenticationStatus.NoAuth) {
+        } else if (authenticationStatus === AuthenticationStatus.NoAuth || authenticationStatus === AuthenticationStatus.Pending) {
             view = DiscoveryView.Login
         } else {
             throw new Error(
@@ -224,6 +223,7 @@ class MusicDiscoveryScreen extends Component<MusicDiscoveryScreenProps> {
                 {renderBody}
                 {Footer(this.props.byLayout)}
                 {this.renderErrorOverlay()}
+                {this.renderMetadata()}
             </>
         );
     }
