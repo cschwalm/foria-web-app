@@ -183,7 +183,7 @@ class SignUpScreen extends Component<SignUpScreenProps> {
                 </div>
             </div>
         );
-        ///TODO handle Auth pending case
+
         switch (authenticationStatus) {
             case AuthenticationStatus.Pending:
                 renderBody = this.accountCreated();
