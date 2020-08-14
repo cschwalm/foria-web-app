@@ -53,17 +53,34 @@ const styles = {
         paddingBottom: '1.5em'
     },
     artistTextMobile: {
+        color: trolleyGray,
+        fontWeight: 700,
+        fontSize: `${FONT_5}px`,
+        marginLeft: '0.5em'
+    },
+    pinkArtistTextMobile: {
         color: vividRaspberry,
         fontWeight: 700,
         fontSize: `${FONT_5}px`,
         marginLeft: '0.5em'
     },
     artistTextDesktop: {
+        color: trolleyGray,
+        fontWeight: 700,
+        fontSize: `${FONT_6}px`,
+        marginLeft: '1em'
+    },
+    pinkArtistTextDesktop: {
         color: vividRaspberry,
         fontWeight: 700,
         fontSize: `${FONT_6}px`,
         marginLeft: '1em'
     }
+}
+
+const disabledButtonStyle = {
+    ...styles.buttonStyle,
+    backgroundColor: trolleyGray
 }
 
 interface MusicResultsProps {
@@ -89,14 +106,18 @@ class MusicResults extends Component<MusicResultsProps> {
     }
 
     renderArtistRow = (item : any, index : number) => {
+        let {byLayout} = this.props;
 
         return (
             <div className='row' key={item.id} style={styles.artistRow} >
                 <img src={item.image_url} alt={item.name} width="100" height="100"/>
-                <div style={this.props.byLayout(styles.artistTextMobile,styles.artistTextDesktop)}>
+                <div style={byLayout(styles.artistTextMobile,styles.artistTextDesktop)}>
                     #{index+1}
                 </div>
-                <div style={this.props.byLayout(styles.artistTextMobile,styles.artistTextDesktop)}>
+                <div
+                    style={{cursor: 'pointer', ...byLayout(styles.pinkArtistTextMobile,styles.pinkArtistTextDesktop)}}
+                    onClick={() => window.open(item.bio_url)}
+                >
                     {item.name}
                 </div>
             </div>
@@ -139,7 +160,7 @@ class MusicResults extends Component<MusicResultsProps> {
 
             navigator.share({
                 title: `${firstName}'s Music Interests`,
-                text: 'Check out my music listening interests.',
+                text: 'Check out my top 7 artists of quarantine!',
                 url: shareLink,
             }).then(
                 () => console.log('Successful sharing of music interests.')
@@ -164,13 +185,6 @@ class MusicResults extends Component<MusicResultsProps> {
         let sharePermalink = userTopArtists?.permalink_uuid;
         let resultsButton = null;
         let shareButton = null;
-        let shareButtonText : string;
-
-        if (this.state.isTextCopied) {
-            shareButtonText = 'Link copied!';
-        } else {
-            shareButtonText = 'Share';
-        }
 
         if (permalink != null ) {
             resultsButton = (
@@ -179,7 +193,7 @@ class MusicResults extends Component<MusicResultsProps> {
                     style={styles.buttonStyle}
                     onClick={() => window.location.search = ''}
                 >
-                    See your results
+                    See your top artists
                 </div>
             );
         }
@@ -192,7 +206,19 @@ class MusicResults extends Component<MusicResultsProps> {
                     style={styles.buttonStyle}
                     onClick={() => this.shareFunction()}
                 >
-                    {shareButtonText}
+                    Share
+                </div>
+            );
+        }
+
+        if (this.state.isTextCopied) {
+            shareButton = (
+                <div
+                    className="row"
+                    style={disabledButtonStyle}
+                    onClick={() => this.shareFunction()}
+                >
+                    Link copied!
                 </div>
             );
         }

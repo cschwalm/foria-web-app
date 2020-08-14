@@ -10,7 +10,7 @@ import {
     initiateLogin as initiateLoginAction,
     initiateSpotifyLogin as initiateSpotifyAction,
 } from "../redux/auth0Saga";
-import {initiateMusicFetch as initiateMusicFetchAction, UserTopArtistsResponse} from "../redux/apiSaga";
+import {UserTopArtistsResponse} from "../redux/apiSaga";
 import NavBar from "../UI/NavBar/NavBar";
 import Footer from "../UI/Footer";
 import SpotifyButton from "../UI/SpotifyButton";
@@ -19,6 +19,7 @@ import {vividRaspberry, white} from "../utils/colors";
 import ErrorOverlay from "../UI/ErrorOverlay";
 import {resetError as resetErrorAction} from "../redux/reducers/event";
 import MusicResults from "../UI/MusicResults";
+import {Helmet} from "react-helmet";
 
 interface MusicDiscoveryScreenProps {
     layout: Layout;
@@ -28,7 +29,6 @@ interface MusicDiscoveryScreenProps {
     initiateSpotifyLogin: () => void;
     isSpotifyLinked: boolean;
     permalink: string | null;
-    initiateMusicFetch: (permalinkUUID: string | null) => void;
     userTopArtists?: UserTopArtistsResponse;
     error?: any;
     resetError: () => void;
@@ -98,6 +98,39 @@ enum DiscoveryView {
 }
 
 class MusicDiscoveryScreen extends Component<MusicDiscoveryScreenProps> {
+
+    renderMetadata = () => {
+        let {permalink, userTopArtists} = this.props;
+        let title = "Can you guess your top Spotify artists?";
+        let description = "Find out and share them with Foria";
+        let imageUrl;
+
+        if (permalink) {
+            title = "My top 7 artists of quarantine"
+            description = "Check them out and share yours back!"
+        }
+
+        if (userTopArtists?.spotify_artist_list[0]?.image_url != null) {
+            imageUrl = userTopArtists.spotify_artist_list[0].image_url;
+        }
+
+        return (
+            <div className="application">
+                <Helmet
+                    title={title}
+                    meta={[
+                        {property: "og:type", content: "website"},
+                        {property: "og:image", content: imageUrl},
+                        {property: "og:title", content: title},
+                        {property: "og:url", content: window.location.href},
+                        {property: "og:description", content: description},
+                        {property: "og:site_name", content: "Foria"},
+                        {property: "fb:app_id", content: "695063607637402"}
+                    ]}
+                />
+            </div>
+        );
+    };
 
     renderErrorOverlay() {
         let {error, resetError} = this.props;
@@ -213,7 +246,6 @@ export default connect(
     dispatch => ({
         initiateLogin: initiateLoginAction(dispatch),
         initiateSpotifyLogin: initiateSpotifyAction(dispatch),
-        initiateMusicFetch: initiateMusicFetchAction(dispatch),
         resetError: resetErrorAction(dispatch)
     })
 )(MusicDiscoveryScreen);
