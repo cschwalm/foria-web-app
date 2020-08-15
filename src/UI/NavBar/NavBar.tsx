@@ -18,7 +18,8 @@ const NavBar = (byLayout: <A, B>(a: A, b: B) => A | B) => {
             color: trolleyGray,
             fontFamily: "Roboto",
             cursor: "pointer",
-            textDecoration: "none"
+            textDecoration: "none",
+            marginLeft: "1.5em"
         }
     };
 
@@ -33,18 +34,23 @@ const NavBar = (byLayout: <A, B>(a: A, b: B) => A | B) => {
                     padding: byLayout("1em", "1em 1.5em"),
                     boxSizing: "border-box"
                 }}>
-                <div
+                <a
                     style={{display: "flex", flex: 1}}
-                    onClick={() => (window.location.href = "https://events.foriatickets.com")}>
+                    href="https://events.foriatickets.com">
                     <img src={foriaLogo} alt="Foria Logo" style={styles.logo} />
-                </div>
+                </a>
                 <div
                     style={{
                         display: "flex",
-                        flex: 1,
+                        flex: 3,
                         alignItems: "center",
                         justifyContent: "flex-end"
                     }}>
+                    <a
+                        style={styles.helpAnchor}
+                        href="https://events.foriatickets.com/about">
+                        About
+                    </a>
                     <a
                         style={styles.helpAnchor}
                         href="https://foriatickets.com/contact-us.html">

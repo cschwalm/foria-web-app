@@ -6,7 +6,7 @@ const SkipSpotifyButton = (onClick : () => void) => {
 
     const styles = {
         skipButton: {
-            margin: "0.5em 0em 0em 0em",
+            margin: "1em 0em",
             cursor: "pointer",
             height: BUTTON_HEIGHT,
             maxWidth: '400px',

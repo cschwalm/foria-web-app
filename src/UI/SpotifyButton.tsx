@@ -20,7 +20,7 @@ const SpotifyButton = (onClick : () => void) => {
             justifyContent: "space-between",
             alignItems: "center",
             boxSizing: "border-box" as "border-box",
-            margin: '1em auto',
+            margin: '1em 0em',
         }
     }
 
