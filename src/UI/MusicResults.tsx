@@ -117,6 +117,7 @@ class MusicResults extends Component<MusicResultsProps> {
                 <a
                     style={{cursor: 'pointer', ...byLayout(styles.pinkArtistTextMobile,styles.pinkArtistTextDesktop)}}
                     target="_blank"
+                    rel="noopener noreferrer"
                     href={item.bio_url}>
                     {item.name}
                 </a>
