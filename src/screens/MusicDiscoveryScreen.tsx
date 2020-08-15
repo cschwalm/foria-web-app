@@ -167,7 +167,7 @@ class MusicDiscoveryScreen extends Component<MusicDiscoveryScreenProps> {
                         <div style={styles.headerTextWhite}>
                             One last step, connect your Spotify
                         </div>
-                        <div style={{marginTop: '2em'}}>
+                        <div style={{margin: '2em auto 0em auto', alignItems: 'center', maxWidth: MAX_BUTTON_WIDTH}}>
                             {SpotifyButton(() => this.props.initiateSpotifyLogin())}
                             <div className="row" style={styles.shieldText} >
                                 <img src={shieldImage} style={{height: '1.5em', marginRight: '0.5em'}} alt="Shield"/>

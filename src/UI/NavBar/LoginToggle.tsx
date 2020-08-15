@@ -28,7 +28,7 @@ class LoginToggle extends Component<LoginProps> {
             lineHeight: "1.2em",
             cursor: "pointer",
             color: vividRaspberry,
-            marginLeft: this.props.byLayout("1.5em", "3em")
+            marginLeft: this.props.byLayout("1.5em", "1.5em")
         };
         let boldLoginAnchorStyle = {
             ...loginAnchorStyle,

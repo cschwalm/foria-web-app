@@ -114,12 +114,12 @@ class MusicResults extends Component<MusicResultsProps> {
                 <div style={byLayout(styles.artistTextMobile,styles.artistTextDesktop)}>
                     #{index+1}
                 </div>
-                <div
+                <a
                     style={{cursor: 'pointer', ...byLayout(styles.pinkArtistTextMobile,styles.pinkArtistTextDesktop)}}
-                    onClick={() => window.open(item.bio_url)}
-                >
+                    target="_blank"
+                    href={item.bio_url}>
                     {item.name}
-                </div>
+                </a>
             </div>
         );
     }
