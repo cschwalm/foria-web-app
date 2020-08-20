@@ -36,7 +36,7 @@ const NavBar = (byLayout: <A, B>(a: A, b: B) => A | B) => {
                 }}>
                 <a
                     style={{display: "flex", flex: 1}}
-                    href="https://events.foriatickets.com">
+                    href="/">
                     <img src={foriaLogo} alt="Foria Logo" style={styles.logo} />
                 </a>
                 <div
@@ -48,7 +48,7 @@ const NavBar = (byLayout: <A, B>(a: A, b: B) => A | B) => {
                     }}>
                     <a
                         style={styles.helpAnchor}
-                        href="https://events.foriatickets.com/about">
+                        href="/about">
                         About
                     </a>
                     <a

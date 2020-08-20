@@ -4,11 +4,12 @@ import Ellipsis from "../../icons/Ellipsis";
 import {vividRaspberry} from "../../utils/colors";
 import {connect} from "react-redux";
 import {AppState} from "../../redux/store";
-import {byLayout as byLayoutWrapper} from "../../layout";
+import {byLayout as byLayoutWrapper, Layout} from "../../layout";
 import {initiateLogin as initiateLoginAction, initiateLogout as initiateLogoutAction} from "../../redux/auth0Saga";
 import {Auth0UserProfile} from "auth0-js";
 
 interface LoginProps {
+    layout: Layout;
     byLayout: <A, B>(a: A, b: B) => A | B;
     authenticationStatus: AuthenticationStatus;
     profile?: Auth0UserProfile;
@@ -37,7 +38,7 @@ class LoginToggle extends Component<LoginProps> {
 
         const email = this.props.profile?.email;
         let logoutText;
-        if (email === null || email === "undefined") {
+        if (email === null || email === "undefined" || this.props.layout === Layout.Mobile) {
             logoutText = 'Log Out';
         } else {
             logoutText = 'Log Out (' + email + ')';
@@ -70,9 +71,10 @@ export default connect(
     (state: AppState) => {
         let {root} = state;
         return {
+            layout: root.layout,
             byLayout: byLayoutWrapper(root.layout),
             authenticationStatus: root.authenticationStatus,
-            profile: root.profile,
+            profile: root.profile
         };
     },
     dispatch => ({
